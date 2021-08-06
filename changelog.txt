@@ -1,0 +1,29 @@
+Master v.1 (Update 13/01/2021)
+PackageList
+    - Future Adldap2
+
+
+Master v.2 (Update 15/01/2021)
+PackageList
+    - Future Adldap2
+    - Future Spatie
+        - กำหนดสิทธิ์
+        - กำหนดบทบาท
+        - ทดสอบแสดงเมนูในแต่ละสิทธิ์
+        - ทดสอบการคลิกลิ้งค์ในแต่ละบทบาท
+
+Master V.3 (Update 20/01/2021)
+PackageList
+    - Future Spatie
+        - Add Role และ Permission แบบตามสิทธิ์
+    - เพิ่ม blade จากระบบแจ้งซ่อมเครื่องมือวิทยาศาสตร์มาบางส่วน
+    - เชื่อมต่อหน้า login ของ laravel auth มาเข้ากับ blade ของระบบแจ้งซ่อมเครื่องมือวิทยาศาสตร์มาบางส่วน
+
+Master V.4 (Update 31/01/2021)
+PackageList
+    - Future อัปโหลดรูปมากกว่า 1 รูป
+    - Future ค้นหาเลขครุภัณฑ์จาก
+    - เชื่อมต่อ classes PSU Passport เพื่อหาเลขบุคคลากรมาใส่ในตาราง user
+    - เพิ่มตาราง repair_cer, images
+    - Module แจ้งซ่อมก้าวหน้า 80% เหลือดึงรายการ
+

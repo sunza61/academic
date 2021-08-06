@@ -1,0 +1,36 @@
+@font-face {
+    font-family: 'psu-stidti-bold';
+    font-style: normal;
+    font-weight: 400;
+    src: url(psu-stidti-bold.woff2) format('woff2');
+  }
+  @font-face {
+    font-family: 'psu-stidti-bolditalic';
+    font-style: italic;
+    font-weight: 400;
+    src: url(psu-stidti-bolditalic.woff2) format('woff2');
+  }
+  @font-face {
+    font-family: 'psu-stidti-italic';
+    font-style: italic;
+    font-weight: 400;
+    src: url(psu-stidti-italic.woff2) format('woff2');
+  }
+  @font-face {
+    font-family: 'psu-stidti-light';
+    font-style: normal;
+    font-weight: 400;
+    src: url(psu-stidti-light.woff2) format('woff2');
+  }
+  @font-face {
+    font-family: 'psu-stidti-lightitalic';
+    font-style: italic;
+    font-weight: 400;
+    src: url(psu-stidti-lightitalic.woff2) format('woff2');
+  }
+  @font-face {
+    font-family: 'PSU Stidti';
+    font-style: normal;
+    font-weight: 400;
+    src: url(psu-stidti-regular.woff2) format('woff2');
+  }

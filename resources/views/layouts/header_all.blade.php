@@ -17,7 +17,7 @@
      @if (Route::has('login'))
      <li class="nav-item dropdown">
        <!-- <form class="form-inline ml-3" action="welcome" method="POST"> -->
-       <a href="{{ route('login') }}"><button type="button" class="btn btn-block btn-secondary">เข้าสู่ระบบ</button></a>
+       <a href="{{ route('login') }}"><button type="button" class="btn btn-block btn-secondary">เข้าสู่ระบบ222</button></a>
        <!-- </form> -->
      </li>
      @endif

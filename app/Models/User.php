@@ -18,10 +18,27 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
+        //สำหรับโปรเจคที่กลุ่มผู้ใช้เป็นคนใน PSU
         'name',
         'username',
         'email',
         'password',
+
+        // สำหรับโปรเจคที่กลุ่มผู้ใช้เป็นคนใน PSU และคนนอก (ตัวอย่างนี้คือ น.ศ. ที่ทำการดึงข้อมูลมากจากมหาลัย กับ บุคลากร )
+        // 'student_id',
+        // 'student_name',
+        // 'title_id',
+        // 'degree_id',
+        // 'major_id',
+        // 'division_id',
+        // 'acadmic_title_id',
+        // 'country_id',
+        // 'advisor',
+        // 'email',
+        // 'username',
+        // 'password',
+        // 'type',
+
     ];
 
     /**

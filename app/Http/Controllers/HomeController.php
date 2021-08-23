@@ -23,71 +23,21 @@ class HomeController extends Controller
      */
     public function index()
     {
-        
+
     }
 
     public function showpage()
     {
-        if (auth()->user()->hasRole("admin")) {
-            //return view('home');
-            return view('assign');
-        } elseif (auth()->user()->hasRole("manager")) {
-
-            return view('manager');
-        } elseif (auth()->user()->hasRole("technician")) {
-
-            return view('getjob');
-        } elseif (auth()->user()->hasRole("user")) {
-
-            return view('repairnoti');
+        if (auth()->user()->hasRole("role_1")) {
+            return view('home');
+        } elseif (auth()->user()->hasRole("role_2")) {
+            return view('home');
+        } elseif (auth()->user()->hasRole("role_3")) {
+            return view('home');
+        } elseif (auth()->user()->hasRole("role_44")) {
+            return view('home');
         } else {
             return abort('404');
         }
-        
     }
-
-
-    public function assign()
-    {
-        if (auth()->user()->hasRole("admin")) {
-            return view('assign');
-        } else {
-            return abort('403');
-        }
-    }
-    public function managerHome()
-    {
-        if (auth()->user()->hasRole("manager")) {
-            return view('manager');
-        } else {
-            return abort('403');
-        }
-    }
-    public function getjob()
-    {
-        if (auth()->user()->hasRole(['admin', 'technician'])) {
-            return view('getjob');
-        } else {
-            return abort('403');
-        }
-    }
-    public function repairnoti()
-    {
-        
-        if (auth()->user()->hasRole(['user', 'admin', 'technician', 'manager'])) {
-            return view('repairnoti');
-        } else {
-            return abort('403');
-        }
-    }
-    public function inform()
-    {
-        
-        if (auth()->user()->hasRole(['user', 'admin', 'technician', 'manager'])) {
-            return view('inform.inform');
-        } else {
-            return abort('403');
-        }
-    }
-    
 }

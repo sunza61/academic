@@ -10,37 +10,26 @@
                         </div>
                     @endif
 
-                    @role('admin')
-                    
+                    @role('role_1')
+
                     <div class="btn btn-primary btn-lg">
-                          You have admin Access
+                          You have role_1 Access
                         </div>
-                        
-                    @elserole('manager')
+
+                    @elserole('role_2')
                         <div class="btn btn-primary btn-lg">
-                          You have manager Access
+                          You have role_2 Access
                         </div>
-                    @elserole('technician')
+                    @elserole('role_3')
                         <div class="btn btn-primary btn-lg">
-                          You have technician Access
+                          You have role_3 Access
                         </div>
                     @else
                         <div class="btn btn-info btn-lg">
-                          You have User Access
+                          You have role_4 Access
                         </div>
                     @endrole
                     <br>
-                   
-                    
-                    <!--
-                    LINK>
-                    <br>
-                    
-                    <a href="admin" class="nav-link">admin</a> 
-                    <a href="manager" class="nav-link">manager</a> 
-                    <a href="technician" class="nav-link">technician</a> 
-                    <a href="user" class="nav-link">user</a>
--->
                 </div>
-  
+
 @endsection

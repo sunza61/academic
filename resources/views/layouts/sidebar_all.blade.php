@@ -13,7 +13,7 @@
 
   <!-- Sidebar -->
   <div class="sidebar">
-  
+
     <!-- Sidebar user panel (optional) -->
     <!--<div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="image">
@@ -23,10 +23,8 @@
           <a href="#" class="d-block">Alexander Pierce</a>
         </div>
       </div>-->
-      
+
     @section('sidebar')
-
-
 
     @guest
     @if (Route::has('login'))
@@ -36,16 +34,16 @@
         <!-- Add icons to the links using the .nav-icon class
         with font-awesome or any other icon font library -->
         <li class="nav-item">
-          <a href="/sun/ldap/public/" class="nav-link">
+          <a href="#" class="nav-link">
             <p>
-              ซ่อมเครื่องมือวิทยาศาสตร์
+              xxxxxxxxx
             </p>
           </a>
         </li>
         <li class="nav-item">
-          <a href="/blownglass_index" class="nav-link">
+          <a href="#" class="nav-link">
             <p>
-              บริการเป่าแก้ว
+              xxxxxxxxxxxxx
             </p>
           </a>
         </li>
@@ -58,37 +56,37 @@
         <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
 
-        @can('repairnoti')
+        @can('permission_1')
         <li class="nav-item has-treeview menu">
           <a href="#" class="nav-link">
             <i class="nav-icon fas fa-qrcode"></i>
             <p>
-              แจ้งซ่อม
+              xxxxxxxx
               <i class="right fas fa-angle-left"></i>
             </p>
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="repairnoti" class="nav-link">
+              <a href="#" class="nav-link">
                 <i class="far fa-circle"></i>
-                <p>ซ่อมเครื่องมือวิทยาศาสตร์</p>
+                <p>xxxxxxxxxxxxxx</p>
               </a>
             </li>
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="far fa-circle"></i>
-                <p>บริการเป่าแก้ว</p>
+                <p>xxxxxxxxxxxxxx</p>
               </a>
             </li>
           </ul>
         </li>
         @endcan
-        @can('requestlist')
+        @can('permission_2')
         <li class="nav-item has-treeview menu">
           <a href="#" class="nav-link">
             <i class="nav-icon fas fa-list-alt"></i>
             <p>
-              รายการซ่อม
+              xxxxxxxxxxxxxxxxxxxx
               <i class="right fas fa-angle-left"></i>
             </p>
           </a>
@@ -96,24 +94,24 @@
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="far fa-circle"></i>
-                <p>ซ่อมเครื่องมือวิทยาศาสตร์</p>
+                <p>xxxxxxxxxxxxxx</p>
               </a>
             </li>
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="far fa-circle"></i>
-                <p>บริการเป่าแก้ว</p>
+                <p>xxxxxxxxxxxxxxxxxxxxx</p>
               </a>
             </li>
           </ul>
         </li>
-        @endcan
-        @can('repairnotihistory')
+        @endcanx
+        @can('permission_3')
         <li class="nav-item has-treeview menu">
           <a href="#" class="nav-link">
             <i class="nav-icon fas fa-history"></i>
             <p>
-              ประวัติแจ้งซ่อมทั้งคณะ
+              xxxxxxxxxxxxxxxxxxxx
               <i class="right fas fa-angle-left"></i>
             </p>
           </a>
@@ -121,74 +119,34 @@
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="far fa-circle"></i>
-                <p>ซ่อมเครื่องมือวิทยาศาสตร์</p>
+                <p>xxxxxxxxxxxxxxxxxxx</p>
               </a>
             </li>
             <li class="nav-item">
               <a href="#" class="nav-link">
                 <i class="far fa-circle"></i>
-                <p>บริการเป่าแก้ว</p>
+                <p>xxxxxxxxxxxxxxxxxxxxxxx</p>
               </a>
             </li>
           </ul>
         </li>
         @endcan
-        @can('assign')
+        @can('permission_4')
         <li class="nav-item">
-          <a href="assign" class="nav-link">
+          <a href="#" class="nav-link">
             <i class="nav-icon fab fa-atlassian"></i>
             <p>
-              มอบหมายงาน
+              xxxxxxxxxxxx
             </p>
           </a>
         </li>
         @endcan
-        @can('getjob')
+        @can('permission_5')
         <li class="nav-item">
           <a href="getjob" class="nav-link">
             <i class="nav-icon fas fa-tools"></i>
             <p>
-              รับมอบหมายงาน
-            </p>
-          </a>
-        </li>
-        @endcan
-        @can('workschedule')
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="nav-icon fas fa-table"></i>
-            <p>
-              ตารางงานช่าง
-            </p>
-          </a>
-        </li>
-        @endcan
-        @can('evaluation')
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="nav-icon fas fa-chart-pie"></i>
-            <p>
-              ผลประเมิน
-            </p>
-          </a>
-        </li>
-        @endcan
-        @can('historytechnician')
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="nav-icon fas fa-monument"></i>
-            <p>
-              ประวัติการซ่อมของช่าง
-            </p>
-          </a>
-        </li>
-        @endcan
-        @can('report')
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="nav-icon fas fa-chart-line"></i>
-            <p>
-              รายงาน
+              xxxxxxxxxxxxx
             </p>
           </a>
         </li>

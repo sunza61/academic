@@ -14,6 +14,7 @@ class CreateUsersTable extends Migration
     public function up()
     {
         Schema::create('users', function (Blueprint $table) {
+            // สำหรับโปรเจคที่กลุ่มผู้ใช้เป็นคนใน PSU
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
@@ -23,7 +24,7 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->string('distinguishedname')->nullable();
             $table->string('personid')->nullable();
-            $table->string('citizenid')->nullable();                         
+            $table->string('citizenid')->nullable();
             $table->string('company')->nullable();
             $table->string('department')->nullable();
             $table->string('physicaldeliveryofficename')->nullable();
@@ -36,6 +37,27 @@ class CreateUsersTable extends Migration
             $table->string('userprincipalname')->nullable();
             $table->rememberToken();
             $table->timestamps();
+
+            // สำหรับโปรเจคที่กลุ่มผู้ใช้เป็นคนใน PSU และคนนอก (ตัวอย่างนี้คือ น.ศ. ที่ทำการดึงข้อมูลมากจากมหาลัย กับ บุคลากร )
+            // $table->id();
+            // $table->string('student_id');
+            // $table->string('student_name');
+            // $table->string('title_id')->nullable();
+            // $table->string('degree_id')->nullable();
+            // $table->string('major_id')->nullable();
+            // $table->string('division_id')->nullable();
+            // $table->string('acadmic_title_id')->nullable();
+            // $table->string('country_id')->nullable();
+            // $table->string('advisor')->nullable();
+            // $table->string('email')->nullable();
+            // $table->timestamp('email_verified_at')->nullable();
+            // $table->string('username')->unique();   // student_id/psu passport
+            // $table->string('password');
+            // $table->string('type')->default('s');
+            // $table->rememberToken();
+            // $table->timestamps();
+
+
         });
     }
 

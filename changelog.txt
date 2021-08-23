@@ -1,29 +1,27 @@
-Master v.1 (Update 13/01/2021)
-PackageList
-    - Future Adldap2
+วิธีใช้งาน
+    1. ให้สิทธิโฟร์เดอร์
+        - chmod -R 777 ชื่อโปรเจค
 
+    2. แตก zip ไฟล์ node_modules.tar.gz และ vendor.tar.gz
+        - tar xfz node_modules.tar.gz
+        - tar xfz vendor.tar.gz
 
-Master v.2 (Update 15/01/2021)
-PackageList
-    - Future Adldap2
-    - Future Spatie
-        - กำหนดสิทธิ์
-        - กำหนดบทบาท
-        - ทดสอบแสดงเมนูในแต่ละสิทธิ์
-        - ทดสอบการคลิกลิ้งค์ในแต่ละบทบาท
+    3. สร้าง key
+        - php artisan key:generate
+        - php artisan storage:link
 
-Master V.3 (Update 20/01/2021)
-PackageList
-    - Future Spatie
-        - Add Role และ Permission แบบตามสิทธิ์
-    - เพิ่ม blade จากระบบแจ้งซ่อมเครื่องมือวิทยาศาสตร์มาบางส่วน
-    - เชื่อมต่อหน้า login ของ laravel auth มาเข้ากับ blade ของระบบแจ้งซ่อมเครื่องมือวิทยาศาสตร์มาบางส่วน
+    4. ตรวจดูการสร้างตาราง user
+        - database > migrations > 2014_10_12_000000_create_users_table.php
+        - สร้าง migrations ใช้คำสั่ง php artisan migrate
+        - ถ้าลบ migrations ใช้คำสั่ง php artisan migrate:rollback
 
-Master V.4 (Update 31/01/2021)
-PackageList
-    - Future อัปโหลดรูปมากกว่า 1 รูป
-    - Future ค้นหาเลขครุภัณฑ์จาก
-    - เชื่อมต่อ classes PSU Passport เพื่อหาเลขบุคคลากรมาใส่ในตาราง user
-    - เพิ่มตาราง repair_cer, images
-    - Module แจ้งซ่อมก้าวหน้า 80% เหลือดึงรายการ
+    5. ตรวจสอบ Module user
+        - app > Http > Module > User.php
+
+    6. เลือกวิธีตรวจสอบ/ให้สิทธิ์/เช็คสิทธิ กลุ่มผู้ใช้งาน
+        - app > Http > Controllers > Auth > LoginController.php
+
+    7. ตรวจเช็คเงื่อนไขใน HomeController.php
+        - app > Http > Controllers > HomeController.php
+
 

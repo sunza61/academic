@@ -55,7 +55,6 @@
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
         <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
-
         @can('permission_1')
         <li class="nav-item has-treeview menu">
           <a href="#" class="nav-link">
@@ -105,7 +104,7 @@
             </li>
           </ul>
         </li>
-        @endcanx
+        @endcan
         @can('permission_3')
         <li class="nav-item has-treeview menu">
           <a href="#" class="nav-link">
@@ -159,3 +158,5 @@
   </div>
   <!-- /.sidebar -->
 </aside>
+
+

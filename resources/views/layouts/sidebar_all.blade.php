@@ -1,9 +1,4 @@
-<!-- Main Sidebar Container -->
-<!--เปลี่ยนสี sidebar "main-sidebar elevation-4 sidebar-light-primary"สีขาว
-"main-sidebar sidebar-dark-primary elevation-4"สีdark-->
 <aside class="main-sidebar elevation-4 sidebar-light-primary">
-  <!-- Brand Logo -->
-  <!-- เปลี่ยนสีพื้นหลัง logo -->
   <a href="./" class="brand-link">
     <!--<img src="{{ asset('adminlte/dist/img/AdminLTELogo.png') }}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3"
            style="opacity: .8">-->

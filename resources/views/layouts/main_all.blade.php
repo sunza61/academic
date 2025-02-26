@@ -17,38 +17,23 @@
   <link href="{{ asset('adminlte/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
   <link href="{{ asset('adminlte/plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}" rel="stylesheet">
 </head>
-<!-- ถ้าให้อักษรใหญ่ class="sidebar-mini" ถ้าให้อักษรเล็ก class="sidebar-mini layout-fixed control-sidebar-slide-open text-sm"-->
-<body class="sidebar-mini layout-fixed control-sidebar-slide-open text-sm">
+<body class="control-sidebar-slide-open sidebar-collapse text-sm">
   <div class="wrapper">
-    <!-- Header -->
     @include('layouts.header_all')
-    <!-- /.Header -->
-    <!-- Sidebar -->
     @include('layouts.sidebar_all')
-    <!-- Content Wrapper. Contains page content -->
     <div class="content-wrapper">
-      <!-- Content Header (Page header) -->
-      <div class="content-header">
-      </div>
-      <!-- /.content-header -->
-      <!-- Main content -->
+      <!-- <div class="content-header">
+      </div> -->
       <div class="content">
         <div class="container-fluid">
-          <!-- Your Page Content Here -->
           @yield('content')
           <div class="container-fluid"></div>
-        </div><!-- /.container-fluid -->
+        </div>
       </div>
-      <!-- /.content -->
     </div>
-    <!-- /.content-wrapper -->
-    <!-- Footer -->
     @include('layouts.footer')
 
   </div>
-  <!-- ./wrapper -->
-  <!-- REQUIRED SCRIPTS -->
-  <!-- jQuery -->
   <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
   <!-- Bootstrap 4 -->
   <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>

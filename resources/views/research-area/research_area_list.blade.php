@@ -78,7 +78,7 @@
     <div class="col-md-12 col-lg-12 col-xl-12">
         <div class="card mb-1 bg-gradient- position-relative">
             <img class="card-img-top custom-img" src="{{ asset('adminlte/dist/img/img-0.jpg') }}">
-            <div class="overlay-text">ACADEMIC & RESEARCHER</div>
+            <div class="overlay-text">RESEARCHER AREA</div>
         </div>
     </div>
 </div>
@@ -88,10 +88,10 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-4 px-0">
-                        <h4 class="card-title text-start">ACADEMIC & RESEARCHER</h4>
+                        <h4 class="card-title text-start">RESEARCHER AREA</h4>
                     </div>
                     <div class="col-8">
-                        <input id="searchInput" class="form-control form-control-navbar" type="search" placeholder="Search Researcher" aria-label="Search">
+                        <input id="searchInput" class="form-control form-control-navbar" type="search" placeholder="Search RearchArea" aria-label="Search">
                     </div>
                 </div>
             </div>
@@ -102,7 +102,7 @@
     <div class="col-md-12 col-lg-12 col-xl-12">
         <div class="card mb-1">
             <div class="card-body">
-                <h4 class="card-title-academic">ACADEMICS</h4>
+                <h4 class="card-title-academic">RESEARCHER AREA</h4>
                 <div class="card-body">
                     <div id="place" class="dataTables_wrapper dt-bootstrap4">
                         <div class="row">
@@ -143,12 +143,8 @@
                                     <thead>
                                         <tr role="row">
                                             <th class="sorting" tabindex="0" aria-controls="tabledata_list" rowspan="1" colspan="1" aria-label="No"><a class="d-flex justify-content-center"> No. </a></th>
-                                            <th class="sorting" tabindex="0" aria-controls="tabledata_list" rowspan="1" colspan="1" aria-label="name"><a class="d-flex justify-content-center"> NAME-SURNAME </a></th>
-                                            <th class="sorting" tabindex="0" aria-controls="tabledata_list" rowspan="1" colspan="1" aria-label="type_con"><a class="d-flex justify-content-center"> H-Index  </a></th>
-                                            <th class="sorting" tabindex="0" aria-controls="tabledata_list" rowspan="1" colspan="1" aria-label="university"><a class="d-flex justify-content-center"> Citation  </a></th>
-                                            <th class="sorting" tabindex="0" aria-controls="tabledata_list" rowspan="1" colspan="1" aria-label="faculty"><a class="d-flex justify-content-center"> Publication  </a></th>
-                                            <th class="sorting" tabindex="0" aria-controls="tabledata_list" rowspan="1" colspan="1" aria-label="price"><a class="d-flex justify-content-center"> Project  </a></th>
-                                            <th class="sorting" tabindex="0" aria-controls="tabledata_list" rowspan="1" colspan="1" aria-label="status"><a class="d-flex justify-content-center"> IP   </a></th>
+                                            <th class="sorting" tabindex="0" aria-controls="tabledata_list" rowspan="1" colspan="1" aria-label="name"><a class="d-flex justify-content-center"> RESEARCHER AREA </a></th>
+                                           
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -159,33 +155,9 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <a href="http://172.28.80.250/suny/web/scire/public/researcher">Anchana Prathep</a>
+                                                <a href="http://172.28.80.250/suny/web/scire/public/research-area-detail">เทคโนโลยีกับกลยุทธ์ในการดำเนินธุรกิจ</a>
                                             </td>
-                                            <td>
-                                                <div class="d-flex justify-content-center">
-                                                    10
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-center">
-                                                    12
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-center">
-                                                    50
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-center">
-                                                    60
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-center">
-                                                    50
-                                                </div>
-                                            </td>
+                                           
                                         </tr>
                                         <tr id="">
                                             <td>
@@ -194,33 +166,9 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <div>Wattakorn Charoensirisakul</div>
+                                                <div>การจัดการความรู้เพื่อการบริหารเทคโนโลยีและนวัตกรรม</div>
                                             </td>
-                                            <td>
-                                                <div class="d-flex justify-content-center">
-                                                    2
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-center">
-                                                    1
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-center">
-                                                    5
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-center">
-                                                    6
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-center">
-                                                    5
-                                                </div>
-                                            </td>
+                                           
                                         </tr>
                                     </tbody>
                                 </table>
@@ -261,7 +209,7 @@
             "responsive": true,
             "autoWidth": false,
             "lengthChange": false,
-            "columnDefs": [{
+             "columnDefs": [{
                 "targets": 1,
                 "render": function(data, type, row) {
                     return data; // ✅ เก็บ HTML เอาไว้

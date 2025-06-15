@@ -1,13 +1,30 @@
 @extends('layouts.main_all')
-
 @section('content')
+@if(session()->get('warning'))
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please check your username password.!',
+    })
+</script>
+@elseif(session()->get('rights'))
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'คุณไม่ได้รับสิทธิเข้าถึง',
+    })
+</script>
+@endif
+<br><br><br>
 <div class="row">
     <div class="col"></div>
     <div class="row justify-content-center">
         
         <div class="card card-secondary">
             <div class="card card-header">
-                <h3 class="card-title">เข้าสู่ระบบ</h3>
+                <h3 class="card-title">Sign in</h3>
             </div>
             <form method="POST" action="{{ route('login') }}">
                 @csrf
@@ -33,10 +50,10 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <button type="submit" class="btn btn-primary">เข้าสู่ระบบ</button>
+                    <button type="submit" class="btn btn-primary">Login</button>
                     <div>
                         <br>
-                        <label>หมายเหตุ</label> <a> หากไม่สามารถเข้าสู่ระบบได้ติดต่อ 8071</a>
+                        <label>Note : </label> <a> If you are unable to log in, please contact 8071.</a>
                     </div>
                 </div>
             </form>

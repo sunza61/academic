@@ -28,12 +28,13 @@ class HomeController extends Controller
 
     public function showpage()
     {
-        if (auth()->user()->hasRole("role_1")) {
-            return view('home');
-        } elseif (auth()->user()->hasRole("role_2")) {
-            return view('home');
-        } elseif (auth()->user()->hasRole("role_3")) {
-            return view('home');
+        if (auth()->user()->hasRole("admin")) {
+            //return view('index');
+            return redirect('/');
+        } elseif (auth()->user()->hasRole("manager")) {
+            return view('index');
+        } elseif (auth()->user()->hasRole("user")) {
+            return view('index');
         } elseif (auth()->user()->hasRole("role_44")) {
             return view('home');
         } else {

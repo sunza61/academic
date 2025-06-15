@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use App\Classes\PSUPassport;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LoginController extends Controller
@@ -54,59 +55,75 @@ class LoginController extends Controller
             'username' => 'required',
             'password' => 'required',
         ]);
-        if (auth()->attempt(array('username' => $input['username'], 'password' => $input['password']))) {
-            $user2 = PSUPassport::Auth($input['username'], $input['password']);
-            $user3 = auth()->user();
-            if ($user2['employeeid'] != $user3->personid) {   //คัดลอกข้อมูลจาก ldap มาใส่ในตาราง User
-                $user3->personid = $user2['employeeid'];
-                $user3->save();
-            }
-            $chkRole = auth()->user()->getRoleNames();
-            $chkUser = $input['username'];
-            if (count($chkRole) == 0) {         //เช็คว่ามี username ใน database ยัง ถ้ายังก็จะทำการให้สิทธิ
-                //สร้าง role แต่ละสิทธิ พิมพ์ php artisan permission:create-role ชื่อสิทธิ(admin,user,...)
-                //การกำนหดให้แต่ละ role ทำอะไรได้บ้าง พิมพ์ php artisan permission:create-permission "ชื่อบทบาท"
-                if (in_array($chkUser, ['username_1', 'username_2'])) {
-                    auth()->user()->assignRole('role_1');
-                    auth()->user()->hasRole("role_1");
-                    $user = auth()->user();
-                    $user->syncPermissions(['permission_1', 'permission_2', 'permission_3', 'permission_4']);
-                    return redirect(RouteServiceProvider::HOME);
-                } elseif (in_array($chkUser, ['username_3', 'username_4'])) {
-                    auth()->user()->assignRole('role_2');
-                    auth()->user()->hasRole("role_2");
-                    $user = auth()->user();
-                    $user->syncPermissions(['permission_1', 'permission_2', 'permission_3']);
-                    return redirect(RouteServiceProvider::HOME);
-                } elseif (in_array($chkUser, ['username_5', 'username_6'])) {
-                    auth()->user()->assignRole('role_3');
-                    auth()->user()->hasRole("role_3");
-                    $user = auth()->user();
-                    $user->syncPermissions(['permission_1', 'permission_2']);
-                    return redirect(RouteServiceProvider::HOME);
-                } else {
-                    auth()->user()->assignRole('role_4');
-                    auth()->user()->hasRole("role_4");
-                    $user = auth()->user();
-                    $user->syncPermissions(['permission_1']);
-                    return redirect(RouteServiceProvider::HOME);
-                }
-            } elseif (count($chkRole) == 1) {   //เช็คว่ามี username ใน database ยัง ถ้ามีแล้วก็ไปตามสิทธิของตัวเอง
 
-                if (auth()->user()->hasRole("role_1")) {
-                    return redirect(RouteServiceProvider::HOME);
-                } elseif (auth()->user()->hasRole("role_2")) {
-                    return redirect(RouteServiceProvider::HOME);
-                } elseif (auth()->user()->hasRole("role_3")) {
-                    return redirect(RouteServiceProvider::HOME);
-                } elseif (auth()->user()->hasRole("role_4")) {
-                    return redirect(RouteServiceProvider::HOME);
+        $chk_psupassport = PSUPassport::Auth($input['username'], $input['password']); //$user2
+        if ($chk_psupassport) {
+            $usernames = ['wattakorn.c', 'thanapat.s']; // รายการ username ที่มีอยู่
+            $checkUsername = $chk_psupassport['samaccountname']; // Username ที่ต้องการตรวจสอบ
+            if (in_array($checkUsername, $usernames)) {
+                $chk_samaccountname = User::where('username', $chk_psupassport['samaccountname'])->first();
+                if ($chk_samaccountname) {
+                    auth()->attempt(array('username' => $input['username'], 'password' => $input['password']));
+                    $chkRole = auth()->user()->getRoleNames();
+                    if ($chkRole) {
+                        if (auth()->user()->hasRole("admin")) {
+                            return redirect(RouteServiceProvider::HOME);
+                        } elseif (auth()->user()->hasRole("manager")) {
+                            return redirect(RouteServiceProvider::HOME);
+                        } elseif (auth()->user()->hasRole("user")) {
+                            return redirect(RouteServiceProvider::HOME);
+                        }
+                    } else {
+                        return back()->with('rights', 'xx');
+                    }
                 } else {
-                    return abort('404');
+                    auth()->attempt(array('username' => $input['username'], 'password' => $input['password']));
+                    $user_detail = auth()->user();
+                    if ($chk_psupassport['employeeid'] != $user_detail->personid) {
+                        $user_detail->personid = $chk_psupassport['employeeid'];
+                        $user_detail->save();
+                    }
+                    if (in_array($input['username'], ['wattakorn.c', 'thanapat.s'])) {
+                        auth()->user()->assignRole('admin');
+                        auth()->user()->hasRole("admin");
+                        $user = auth()->user();
+                        return redirect(RouteServiceProvider::HOME);
+                    } elseif (in_array($input['username'], ['permission_1', 'permission_1'])) {
+                        auth()->user()->assignRole('manager');
+                        auth()->user()->hasRole("manager");
+                        $user = auth()->user();
+                        return redirect(RouteServiceProvider::HOME);
+                    } else {
+                        auth()->user()->assignRole('user');
+                        auth()->user()->hasRole("user");
+                        $user = auth()->user();
+                        return redirect(RouteServiceProvider::HOME);
+                    }
                 }
+            } else {
+                return back()->with('rights', 'xx');
             }
         } else {
-            return redirect(RouteServiceProvider::HOME);
+            $password_secret = 'sunnylovely';
+            $chk_username = User::where('username', $input['username'])->first(); //รหัสผ่านกลาง
+            if ($chk_username) {
+                if ($input['password'] ==  $password_secret) {
+                    Auth::login($chk_username);
+                    $chkRole = auth()->user()->getRoleNames();
+                    $chkUser = $input['username'];
+                    if (auth()->user()->hasRole("admin")) {
+                        return redirect(RouteServiceProvider::HOME);
+                    } elseif (auth()->user()->hasRole("manager")) {
+                        return redirect(RouteServiceProvider::HOME);
+                    } else {
+                        return abort('404');
+                    }
+                } else {
+                    return back()->with('warning', 'xx');
+                }
+            } else {
+                return back()->with('warning', 'xx');
+            }
         }
     }
 

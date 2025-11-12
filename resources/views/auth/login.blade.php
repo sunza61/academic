@@ -63,3 +63,13 @@
     <div class="col"></div>
 </div>
 @endsection
+@section('script')
+    <!-- ChartJS -->
+    <script src="{{ asset('adminlte/plugins/chart.js/Chart.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('adminlte/dist/js/adminlte.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/jquery-knob/jquery.knob.min.js') }}"></script>
+
+    @endsection

@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <title>ทดสอบ Master</title>
+  <title>ACADEMIC SERVICE</title>
   <!-- Font Awesome Icons -->
   <link href="{{ asset('adminlte/plugins/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
   <!-- Theme style -->
@@ -26,8 +26,6 @@
     @include('layouts.header_all')
     @include('layouts.sidebar_all')
     <div class="content-wrapper">
-      <!-- <div class="content-header">
-      </div> -->
       <div class="content">
         <div class="container-fluid">
           @yield('content')
@@ -36,18 +34,8 @@
       </div>
     </div>
     @include('layouts.footer')
-
   </div>
-  <!-- <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
-  <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-  <script src="{{ asset('adminlte/dist/js/adminlte.min.js') }}"></script>
-  <script src="{{ asset('adminlte/plugins/datatables/jquery.dataTables.min.js') }}"></script>
-  <script src="{{ asset('adminlte/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
-  <script src="{{ asset('adminlte/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
-  <script src="{{ asset('adminlte/plugins/datatables-responsive/js/responsive.bootstrap4.min.js') }}"></script> -->
-
   @yield('script')
-  
 </body>
 
 </html>

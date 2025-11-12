@@ -3,6 +3,7 @@
 use App\Http\Controllers\AcademicController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InformController;
+use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ResearchAreaController;
 use App\Http\Controllers\ScopusController;
 use Illuminate\Http\Request;
@@ -40,6 +41,9 @@ Route::get('/scopus/author/{authorId}', [ScopusController::class, 'getAuthorDeta
 Route::get('/scopus/publications/{authorId}', [ScopusController::class, 'getPublications']);
 
 Route::get('/scopus', [ScopusController::class, 'showAuthor']);
+
+
+Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
 
 
 

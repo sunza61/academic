@@ -1,4 +1,4 @@
-<nav class="main-header navbar navbar-expand-md navbar-white navbar-light text-sm">
+<nav class="main-header navbar navbar-expand-md navbar-dark text-sm">
   <div class="container-fluid">
     <a href="{{ url('/') }}" class="navbar-brand d-flex align-items-center">
       <img src="{{ asset('adminlte/dist/img/AdminLTELogo.png') }}"
@@ -15,15 +15,6 @@
     <div class="collapse navbar-collapse" id="navbarCollapse">
       <ul class="navbar-nav ml-auto">
         @guest
-        <!-- <li class="nav-item">
-          <a href="{{ url('/') }}" class="nav-link {{ request()->is('/') ? 'active' : '' }}">Home</a>
-        </li>
-        <li class="nav-item">
-          <a href="{{route('academic-list')}}" class="nav-link {{ request()->routeIs('academic-list', 'researcher') ? 'active' : '' }}">List Academic</a>
-        </li>
-        <li class="nav-item">
-          <a href="{{route('research-area-list')}}" class="nav-link {{ request()->routeIs('research-area-list', 'research-area-detail') ? 'active' : '' }}">Research Areas</a>
-        </li> -->
         @if (Route::has('login'))
         <li class="nav-item">
           <a href="{{ route('login') }}" class="nav-link">Login</a>

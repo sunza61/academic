@@ -23,7 +23,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-
+        return redirect('/');
     }
 
     public function showpage()
@@ -32,11 +32,14 @@ class HomeController extends Controller
             //return view('index');
             return redirect('/');
         } elseif (auth()->user()->hasRole("manager")) {
-            return view('index');
+            // return view('index');
+            return redirect('/');
         } elseif (auth()->user()->hasRole("user")) {
-            return view('index');
+            // return view('index');
+            return redirect('/');
         } elseif (auth()->user()->hasRole("role_44")) {
-            return view('home');
+            // return view('home');
+            return redirect('/');
         } else {
             return abort('404');
         }

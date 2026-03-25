@@ -1,22 +1,6 @@
 @extends('layouts.main_all')
 @section('content')
-@if(session()->get('warning'))
-<script>
-    Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please check your username password.!',
-    })
-</script>
-@elseif(session()->get('rights'))
-<script>
-    Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'คุณไม่ได้รับสิทธิเข้าถึง',
-    })
-</script>
-@endif
+
 <br><br><br>
 <div class="row">
     <div class="col"></div>
@@ -64,12 +48,21 @@
 </div>
 @endsection
 @section('script')
-    <!-- ChartJS -->
-    <script src="{{ asset('adminlte/plugins/chart.js/Chart.min.js') }}"></script>
-    <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
-    <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('adminlte/dist/js/adminlte.min.js') }}"></script>
-    <script src="{{ asset('adminlte/plugins/datatables/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('adminlte/plugins/jquery-knob/jquery.knob.min.js') }}"></script>
-
-    @endsection
+<script>
+    $(document).ready(function() {
+        @if(session()->get('warning'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Please check your username password!',
+            });
+        @elseif(session()->get('rights'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'คุณไม่ได้รับสิทธิเข้าถึง',
+            });
+        @endif
+    });
+</script>
+@endsection

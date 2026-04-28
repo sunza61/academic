@@ -33,7 +33,6 @@
 </div>
 
 <style>
-    /* CSS เล็กน้อยเพื่อเพิ่มลูกเล่นตอนเอาเมาส์ชี้ (Hover Effect) ให้ดูเป็นปุ่มที่กดได้ */
     .project-card-hover {
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         border-radius: 10px;
@@ -45,8 +44,4 @@
         border: 1px solid #007bff !important;
     }
 </style>
-@endsection
-@section('script')
-<script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
-<script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 @endsection

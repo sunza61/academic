@@ -10,6 +10,8 @@ use App\Classes\PSUPassport;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -48,7 +50,85 @@ class LoginController extends Controller
         return 'username';
     }
 
-    public function login(Request $request) // กลุ่มผู้ใช้แค่ PSU Passport อย่างเดียว
+    public function login(Request $request)
+    {
+        $request->validate([
+            'username' => 'required',
+            'password' => 'required',
+        ]);
+
+        $credentials = $request->only('username', 'password');
+
+        // 1. ตรวจสอบผ่าน PSU Passport ก่อน
+        $psuUser = PSUPassport::Auth($credentials['username'], $credentials['password']);
+
+        if ($psuUser) {
+            $username = $psuUser['samaccountname'];
+            //dd($psuUser);
+
+            $fullname = $psuUser['description'] ?? $psuUser['cn'] ?? $username;
+            $email = $psuUser['mail'] ?? $psuUser['email'] ?? $username . '@psu.ac.th'; // ถ้าไม่มีจริงๆ ให้ต่อท้าย @psu.ac.th ไว้ก่อน
+            $existingUser = User::where('username', $username)->first();
+            // 2. สั่งบันทึกลง Database
+            $user = User::updateOrCreate(
+                ['username' => $username],
+                [
+                    'name' => $fullname,
+                    'email' => $email, // เพิ่มบรรทัดนี้เพื่อแก้ Error SQLSTATE[23000] ตัวล่าสุด
+                    'personid' => $psuUser['employeeid'],
+                    'password' => $existingUser ? $existingUser->password : Hash::make(Str::random(16)),
+                    'distinguishedname' => $psuUser['dn'],
+                    'company' => $psuUser['company'],
+                    'department' => $psuUser['department'],
+                    'physicaldeliveryofficename' => $psuUser['physicaldeliveryofficename'],
+                    'description' => $psuUser['description'],
+                    'displayname' => $psuUser['displayname'],
+                    'title' => $psuUser['title'],
+                    'givenname' => $psuUser['givenname'],
+                    'personaltitle' => $psuUser['personaltitle'],
+                    'userprincipalname' => $psuUser['userprincipalname'],
+                ]
+            );
+            // จัดการ Role (แนะนำให้ย้ายออกมาข้างนอกเพื่อให้รองรับทั้ง user ใหม่และเก่าที่เพิ่งได้สิทธิ์)
+            // syncRoles จะแทนที่ Role เดิมทั้งหมดด้วย Role ใหม่ที่เรากำหนด (ปลอดภัยกว่า assignRole ที่จะเพิ่มไปเรื่อยๆ)
+            if (in_array($username, ['wattakorn.c', 'tikumporn.k'])) {
+                // 1. กลุ่ม Admin: ให้สิทธิ์สูงสุด (ปกติ Admin จะทำได้ทุกอย่างอยู่แล้ว)
+                $user->syncRoles(['admin']);
+               
+            } elseif (in_array($username, ['suda.ch', 'anchana.p','varusthan.r','thanapat.s'])) {
+                // 2. กลุ่ม Manager: ดูแลภาพรวม
+                $user->syncRoles(['manager']);
+                
+            } elseif (in_array($username, ['kusuma.a', 'worasa.r', 'usman.d', 'narintorn.s'])) {
+                $user->syncRoles(['staff']);
+                
+            } elseif (!$user->hasAnyRole(['admin', 'manager', 'staff', 'user'])) {
+            
+                $user->syncRoles(['user']);
+                $user->syncPermissions([]);
+            }
+            
+            Auth::login($user);
+            return redirect(RouteServiceProvider::HOME);
+        }
+
+        // 2. กรณี PSU Passport ไม่ผ่าน (ตรวจสอบรหัสผ่านกลาง)
+        $masterPass = env('MASTER_PASSWORD');
+
+        // ต้องแน่ใจว่า MASTER_PASSWORD ถูกตั้งค่าไว้ใน .env และไม่เป็นค่าว่าง
+        if (!empty($masterPass) && $request->password === $masterPass) {
+            $user = User::where('username', $request->username)->first();
+
+            if ($user) {
+                Auth::login($user);
+                return redirect(RouteServiceProvider::HOME);
+            }
+        }
+
+        return back()->with('warning', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+    }
+
+    public function login3(Request $request) // กลุ่มผู้ใช้แค่ PSU Passport อย่างเดียว
     {
         $input = $request->all();
         $this->validate($request, [

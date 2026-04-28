@@ -19,4 +19,9 @@ class External extends Model
         'description',
         'is_active',
     ];
+
+    public function prefix()
+    {
+        return $this->belongsTo(Prefix::class, 'prefix_id');
+    }
 }

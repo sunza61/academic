@@ -2,6 +2,8 @@
 
 namespace App\Models\Academic;
 
+use App\Models\AcademicProjectLog;
+use App\Models\MasterData\AcademicProjectSignature;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -28,4 +30,21 @@ class AcademicProject extends Model
         'update_by',
         'del_status',
     ];
+
+    // =========================================
+    // 🌟 ความสัมพันธ์: 1 โครงการ มีผู้ลงนามได้หลายคน (hasMany)
+    // =========================================
+    public function signatures()
+    {
+        // ระบุพาทของ Model ลายเซ็นให้ตรงกับที่คุณวัชกรใช้นะครับ (อิงจากตอนที่เรา Insert)
+        return $this->hasMany(AcademicProjectSignature::class, 'academic_project_id', 'id')
+                    ->orderBy('sign_order', 'asc'); // แถมการเรียงลำดับให้ด้วยเลย ดึงปุ๊บเรียง 1-10 ให้ปั๊บ
+    }
+
+    public function latestLog()
+    {
+        return $this->hasOne(AcademicProjectLog::class, 'academic_project_id')->latest('id');
+    }
 }
+
+

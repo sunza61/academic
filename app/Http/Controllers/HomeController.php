@@ -37,7 +37,7 @@ class HomeController extends Controller
         } elseif (auth()->user()->hasRole("user")) {
             // return view('index');
             return redirect('/');
-        } elseif (auth()->user()->hasRole("role_44")) {
+        } elseif (auth()->user()->hasRole("staff")) {
             // return view('home');
             return redirect('/');
         } else {

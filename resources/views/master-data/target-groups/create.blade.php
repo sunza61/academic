@@ -55,7 +55,7 @@
                         <label for="name_en">ชื่อกลุ่มเป้าหมาย (ภาษาอังกฤษ) <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @error('name_en') is-invalid @enderror"
                             id="name_en" name="name_en" value="{{ old('name_en') }}"
-                            placeholder="เช่น Mathayom 2">
+                            placeholder="เช่น Mathayom 2" required>
                         @error('name_en')
                         <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -98,21 +98,11 @@
 @endsection
 
 @section('script')
-<script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
-<script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://npmcdn.com/flatpickr/dist/l10n/th.js"></script>
-<script>
-    $(document).ready(function() {
-        if ($('.select2-basic').length) {
-            $('.select2-basic').select2({
-                placeholder: "-- ค้นหาตำแหน่งที่ต้องการ --",
-                allowClear: true
-            });
-        }
-    });
-</script>
+<script src="{{ asset('js/master-data/target-groups/create.js?v=' . time()) }}"></script>
 @endsection

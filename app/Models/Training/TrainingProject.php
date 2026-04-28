@@ -2,6 +2,7 @@
 
 namespace App\Models\Training;
 
+use App\Models\Academic\AcademicProject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,4 +22,9 @@ class TrainingProject extends Model
         'approval_link',
         'training_status',
     ];
+
+    public function academicProject()
+    {
+        return $this->belongsTo(\App\Models\Academic\AcademicProject::class, 'academic_project_id');
+    }
 }

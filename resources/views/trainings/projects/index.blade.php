@@ -1,5 +1,8 @@
 @extends('layouts.main_all')
-
+@section('style')
+<link rel="stylesheet" href="{{ asset('adminlte/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
+<link rel="stylesheet" href="{{ asset('adminlte/plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}">
+@endsection
 @section('content')
 <div class="row mb-3">
     <div class="col-sm-6 text-left mt-2">
@@ -20,85 +23,136 @@
         <h3 class="card-title">ประวัติการสร้างโครงการของคุณ</h3>
     </div>
     <div class="card-body">
-        <table class="table table-bordered table-striped table-hover">
+        <table id="projectTable" class="table table-bordered table-striped table-hover w-100">
             <thead>
                 <tr class="text-center bg-light">
-                    <th width="5%">ลำดับ</th>
-                    <th>ชื่อโครงการ (TH)</th>
-                    <th width="15%">วันที่เริ่ม - สิ้นสุด</th>
-                    <th width="15%">สถานะภาพรวม</th>
-                    <th width="15%">จัดการ</th>
+                    <th width="5%" class="align-middle">ลำดับ</th>
+                    <th width="5%" class="align-middle">รหัสโครงการ</th>
+                    <th width="30%" class="align-middle">ชื่อโครงการ (TH)</th>
+                    <th width="15%" class="align-middle">วันที่เริ่ม - สิ้นสุด</th>
+                    <th width="15%" class="align-middle">ผู้สร้างโครงการ</th>
+                    <th width="15%" class="align-middle">สถานะภาพรวม</th>
+                    <th width="15%" class="align-middle">จัดการ</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($projects as $key => $item)
                 <tr>
                     <td class="text-center align-middle">{{ $key + 1 }}</td>
+
+                    <td class="text-center align-middle text-success font-weight-bold">
+                        {{ $item->id }}
+                    </td>
+
                     <td class="align-middle">
                         <strong>{{ $item->name_th ?? 'ยังไม่ระบุชื่อโครงการ' }}</strong>
                     </td>
+
                     <td class="text-center align-middle text-sm">
                         @if($item->start_date && $item->end_date)
-                        {{ \Carbon\Carbon::parse($item->start_date)->addYears(543)->format('d/m/Y') }} <br>ถึง<br>
-                        {{ \Carbon\Carbon::parse($item->end_date)->addYears(543)->format('d/m/Y') }}
+                        <span class="text-dark">{{ \Carbon\Carbon::parse($item->start_date)->addYears(543)->format('d/m/Y') }}</span>
+                        <span class="text-muted" style="font-size: 0.9em;">ถึง</span>
+                        <span class="text-dark">{{ \Carbon\Carbon::parse($item->end_date)->addYears(543)->format('d/m/Y') }}</span>
                         @else
                         <span class="text-muted">-</span>
                         @endif
                     </td>
-                    
+
                     <td class="text-center align-middle">
-                        @if($item->overall_status == 100)
-                            <span class="badge badge-secondary px-2 py-1"><i class="fas fa-edit"></i> เตรียมการ / ฉบับร่าง</span>
-                        @elseif($item->overall_status == 200)
-                            <span class="badge badge-warning px-2 py-1"><i class="fas fa-hourglass-half"></i> เสนอขออนุมัติ</span>
-                        @elseif($item->overall_status == 300)
-                            <span class="badge badge-info px-2 py-1"><i class="fas fa-check"></i> อนุมัติแล้ว</span>
-                        @elseif($item->overall_status == 400)
-                            <span class="badge badge-primary px-2 py-1"><i class="fas fa-bullhorn"></i> เปิดรับสมัคร</span>
-                        @elseif($item->overall_status == 500)
-                            <span class="badge badge-dark px-2 py-1"><i class="fas fa-door-closed"></i> ปิดรับสมัคร</span>
-                        @elseif($item->overall_status == 600)
-                            <span class="badge" style="background-color: #fd7e14; color: white;"><i class="fas fa-spinner fa-spin"></i> กำลังดำเนินการ</span>
-                        @elseif($item->overall_status == 700)
-                            <span class="badge badge-info px-2 py-1"><i class="fas fa-clipboard-list"></i> รอประเมินผล</span>
-                        @elseif($item->overall_status == 800)
-                            <span class="badge badge-success px-2 py-1"><i class="fas fa-flag-checkered"></i> เสร็จสิ้นโครงการ</span>
-                        @elseif($item->overall_status == 900)
-                            <span class="badge badge-danger px-2 py-1"><i class="fas fa-times-circle"></i> ยกเลิกโครงการ</span>
-                        @else
-                            <span class="badge badge-light px-2 py-1">ไม่ทราบสถานะ</span>
-                        @endif
+                        <span class="text-muted" style="font-size: 0.95em;">
+                            <i class="fas fa-user-circle mr-1 text-info"></i>
+                            {{ $item->name ?? 'ไม่ระบุ' }}
+                        </span>
                     </td>
 
                     <td class="text-center align-middle">
-                        <a href="{{ route('trainings.projects.show', $item->id) }}" class="btn btn-sm btn-info shadow-sm mb-1" title="ดูรายละเอียด">
+                        @if($item->overall_status == 100)
+                        <span class="badge badge-secondary px-2 py-1"><i class="fas fa-edit"></i> {{$item->overall_statuses_name_th}}</span>
+                        @elseif($item->overall_status == 110)
+                        <span class="badge badge-danger px-2 py-1"><i class="fas fa-hourglass-half"></i> {{$item->overall_statuses_name_th}}</span>
+                        @elseif($item->overall_status == 200)
+                        <span class="badge badge-warning px-2 py-1"><i class="fas fa-hourglass-half"></i> {{$item->overall_statuses_name_th}}</span>
+                        @elseif($item->overall_status == 300)
+                        <span class="badge badge-info px-2 py-1"><i class="fas fa-check"></i> {{$item->overall_statuses_name_th}}</span>
+                        @elseif($item->overall_status == 400)
+                        <span class="badge badge-primary px-2 py-1"><i class="fas fa-bullhorn"></i> {{$item->overall_statuses_name_th}}</span>
+                        @elseif($item->overall_status == 500)
+                        <span class="badge badge-dark px-2 py-1"><i class="fas fa-door-closed"></i> {{$item->overall_statuses_name_th}}</span>
+                        @elseif($item->overall_status == 600)
+                        <span class="badge" style="background-color: #fd7e14; color: white;"><i class="fas fa-spinner fa-spin"></i> {{$item->overall_statuses_name_th}}</span>
+                        @elseif($item->overall_status == 700)
+                        <span class="badge badge-info px-2 py-1"><i class="fas fa-clipboard-list"></i> {{$item->overall_statuses_name_th}}</span>
+                        @elseif($item->overall_status == 800)
+                        <span class="badge badge-success px-2 py-1"><i class="fas fa-flag-checkered"></i> {{$item->overall_statuses_name_th}}</span>
+                        @elseif($item->overall_status == 900)
+                        <span class="badge badge-danger px-2 py-1"><i class="fas fa-times-circle"></i> {{$item->overall_statuses_name_th}}</span>
+                        @else
+                        <span class="badge badge-light px-2 py-1">ไม่ทราบสถานะ</span>
+                        @endif
+                        @if($item->overall_status == 110 || $item->overall_status == 900)
+                        <div class="mt-1">
+                            <button type="button" class="btn btn-xs btn-outline-danger btn-view-reason"
+                                data-reason="{{ $item->log_reason }}"
+                                data-by="{{ $item->log_action_by }}"
+                                data-date="{{ $item->log_action_date }}"
+                                data-title="{{ $item->overall_status == 110 ? 'เหตุผลการตีกลับ' : 'เหตุผลการยกเลิก' }}">
+                                <i class="fas fa-comment-dots"></i> อ่านเหตุผล
+                            </button>
+                        </div>
+                        @endif
+                    </td>
+
+                    <td class="text-left align-middle text-nowrap">
+                        
+                        <a href="{{ route('trainings.projects.show', $item->id) }}" class="btn btn-sm btn-info mr-1 mb-1" data-toggle="tooltip" title="ดูรายละเอียดโครงการ">
                             <i class="fas fa-search"></i>
                         </a>
-                        
-                        <a href="{{ route('trainings.projects.edit', $item->id) }}" class="btn btn-sm btn-warning shadow-sm mb-1" title="แก้ไข">
+                     
+
+                        @can('update', $item)
+                        <a href="{{ route('trainings.projects.edit', $item->id) }}" class="btn btn-sm btn-warning mr-1 mb-1" data-toggle="tooltip" title="แก้ไขโครงการ">
                             <i class="fas fa-edit"></i>
                         </a>
-                        
+                        @endcan
+
+                        @if($item->overall_status == 700)
+                        @can('report', $item)
+                        <a href="{{ route('trainings.projects.report', $item->id) }}" class="btn btn-sm btn-success mr-1 mb-1" data-toggle="tooltip" title="รายงานผลโครงการ/ปิดโครงการ">
+                            <i class="fas fa-flag-checkered"></i>
+                        </a>
+                        @endcan
+                        @endif
+
+                        @if($item->can_cancel)
+                        <button type="button" class="btn btn-sm btn-secondary btn-cancel-project mr-1 mb-1"
+                            data-id="{{ $item->id }}"
+                            data-name="{{ $item->name_th }}"
+                            data-toggle="tooltip" title="ยกเลิกโครงการ">
+                            <i class="fas fa-ban"></i>
+                        </button>
+                        @endif
+
+                        @if($item->show_delete_btn)
                         <form action="{{ route('trainings.projects.destroy', $item->id) }}" method="POST" class="d-inline form-delete">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm shadow-sm mb-1 btn-delete-project" title="ลบ">
+                            <button type="button" class="btn btn-sm btn-danger btn-delete-project mr-1 mb-1"
+                                data-id="{{ $item->id }}"
+                                data-name="{{ $item->name_th }}"
+                                data-status="{{ $item->overall_status }}"
+                                data-is-admin="{{ auth()->user()->hasRole('admin') ? 'true' : 'false' }}"
+                                data-toggle="tooltip"
+                                title="ลบโครงการ">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
-                        @if($item->overall_status >= 300 && $item->overall_status < 800)
-                            <button type="button" class="btn btn-warning btn-sm shadow-sm mb-1 btn-cancel-project" 
-                                data-id="{{ $item->id }}" 
-                                data-name="{{ $item->name_th }}"
-                                title="ยกเลิกโครงการ">
-                                <i class="fas fa-ban"></i>
-                            </button>
                         @endif
+
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-5">
+                    <td colspan="7" class="text-center text-muted py-5">
                         <i class="fas fa-folder-open fa-3x mb-3 text-light"></i><br>
                         คุณยังไม่มีประวัติการสร้างโครงการประเภทนี้<br>
                         คลิกที่ปุ่ม <strong>"เพิ่มโครงการ"</strong> เพื่อเริ่มต้นใช้งาน
@@ -123,7 +177,7 @@
                 <form id="formCancelProject">
                     <input type="hidden" id="cancel_project_id">
                     <p class="mb-2" style="font-size: 1.1em;">คุณกำลังจะยกเลิกโครงการ: <br><strong id="cancel_project_name" class="text-danger"></strong></p>
-                    
+
                     <div class="alert alert-danger py-2 px-3 shadow-sm" style="font-size: 0.9em;">
                         <i class="fas fa-info-circle"></i> การยกเลิกโครงการจะไม่สามารถย้อนกลับได้ และจำเป็นต้องระบุเหตุผลเพื่อเก็บเป็นประวัติให้ผู้ตรวจสอบ
                     </div>
@@ -143,81 +197,57 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalViewReason" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title font-weight-bold" id="reasonTitle">เหตุผลการดำเนินการ</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="reason-content-wrapper">
+                    <h6 class="text-muted mb-2"><i class="fas fa-info-circle mr-1"></i> รายละเอียดเหตุผล:</h6>
+                    <div id="reasonText" class="p-3 border rounded bg-white" style="min-height: 100px; white-space: pre-wrap;">
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <div class="row text-sm text-muted">
+                        <div class="col-6">
+                            <strong>ดำเนินการโดย:</strong> <br>
+                            <span id="reasonBy">-</span>
+                        </div>
+                        <div class="col-6 text-right">
+                            <strong>วันที่ดำเนินการ:</strong> <br>
+                            <span id="reasonDate">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('script')
 <script src="{{ asset('js/custom-crud.js') }}?v={{ time() }}"></script>
-<script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
-<script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('adminlte/plugins/datatables/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('adminlte/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
+<script src="{{ asset('adminlte/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
+
+
 <script>
-    $(document).ready(function() {
-        
-        // 1. เมื่อกดปุ่มยกเลิกโครงการ (ดึง ID และ ชื่อ มาใส่ Modal)
-        $('.btn-cancel-project').click(function() {
-            let id = $(this).data('id');
-            let name = $(this).data('name');
-            
-            $('#cancel_project_id').val(id);
-            $('#cancel_project_name').text(name);
-            $('#cancel_reason').val(''); // เคลียร์ข้อความเก่าทิ้ง
-            
-            $('#modalCancelProject').modal('show');
-        });
-
-        // 2. เมื่อกดยืนยันใน Modal
-        $('#btn-submit-cancel').click(function() {
-            let id = $('#cancel_project_id').val();
-            let reason = $('#cancel_reason').val();
-
-            if(reason.trim() === '') {
-                Swal.fire({
-                    icon: 'warning', 
-                    title: 'ข้อมูลไม่ครบ', 
-                    text: 'กรุณาระบุเหตุผลการยกเลิกโครงการด้วยครับ'
-                });
-                return;
-            }
-
-            let btn = $(this);
-            let originalText = btn.html();
-            btn.html('<i class="fas fa-spinner fa-spin mr-1"></i> กำลังประมวลผล...').prop('disabled', true);
-
-            $.ajax({
-                url: "{{ url('trainings/projects') }}/" + id + "/cancel",
-                type: "PUT",
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    cancel_reason: reason
-                },
-                success: function(response) {
-                    if(response.success) {
-                        $('#modalCancelProject').modal('hide');
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'ยกเลิกสำเร็จ!',
-                            text: response.message,
-                            timer: 2000,
-                            showConfirmButton: false
-                        }).then(() => {
-                            location.reload(); // รีเฟรชหน้าให้ตารางอัปเดตเป็น Status 900
-                        });
-                    }
-                },
-                error: function(xhr) {
-                    btn.html(originalText).prop('disabled', false);
-                    let errMsg = 'เกิดข้อผิดพลาดในการยกเลิก';
-                    if(xhr.responseJSON && xhr.responseJSON.message) {
-                        errMsg = xhr.responseJSON.message;
-                    }
-                    Swal.fire({
-                        icon: 'error', 
-                        title: 'ผิดพลาด', 
-                        text: errMsg
-                    });
-                }
-            });
-        });
-
-    });
+    window.ROUTES = {
+        cancelProjectBaseUrl: "{{ url('trainings/projects') }}",
+        csrfToken: "{{ csrf_token() }}"
+    };
 </script>
+
+<script src="{{ asset('js/trainings/projects/index.js?v=' . time()) }}"></script>
 @endsection

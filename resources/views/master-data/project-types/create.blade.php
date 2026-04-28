@@ -39,7 +39,3 @@
     </form>
 </div>
 @endsection
-@section('script')
-<script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
-<script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-@endsection

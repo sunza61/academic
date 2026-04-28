@@ -11,6 +11,8 @@ use App\Models\Academic\AcademicSdg;
 use App\Models\Academic\AcademicTargetGroup;
 use App\Models\Academic\Committee;
 use App\Models\Academic\CustomerGroup;
+use App\Models\AcademicProjectLog;
+use App\Models\MasterData\AcademicProjectSignature;
 use App\Models\MasterData\BudgetExpenseCategorie;
 use App\Models\MasterData\BudgetExpenseMainCategory;
 use App\Models\MasterData\BudgetIncomeCategorie;
@@ -19,6 +21,7 @@ use App\Models\MasterData\Center;
 use App\Models\MasterData\CustomerType;
 use App\Models\MasterData\External;
 use App\Models\MasterData\FiscalYears;
+use App\Models\MasterData\MasterSignatureRole;
 use App\Models\MasterData\Nationality;
 use App\Models\MasterData\Prefix;
 use App\Models\MasterData\ProjectPosition;
@@ -33,8 +36,10 @@ use App\Models\Training\TrainingProject;
 use App\Models\Training\TrainingScheduleDocument;
 use App\Models\Training\TrainingSchedules;
 use App\Models\Training\TrainingSchedulesLocation;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -49,27 +54,70 @@ class TrainingProjectController extends Controller
      */
     public function index(Request $request)
     {
-        // 1. รับค่า type_id ที่แนบมากับ URL
         $typeId = $request->query('type_id');
-
-        // ถ้าไม่มีการส่ง type_id มา ให้เด้งกลับไปหน้าเลือกประเภทโครงการ
         if (!$typeId) {
             return redirect()->route('projects.select-type')
                 ->with('error', 'กรุณาเลือกประเภทโครงการก่อนเข้าใช้งานครับ');
         }
 
-        // 2. ดึงชื่อประเภทโครงการมาเพื่อแสดงบนหัวตาราง
         $projectType = ProjectType::findOrFail($typeId);
 
-        // 3. ดึงประวัติโครงการ "ประเภทนี้" ที่ User คนนี้เคยสร้างไว้
-        $projects = AcademicProject::where('project_type_id', $typeId)
-            // ->where('created_by', auth()->id()) // TODO: เอาคอมเมนต์ออกเมื่อคุณทำระบบ Login (Auth) เสร็จแล้ว เพื่อดึงเฉพาะของ User คนนั้น
-            ->where(function ($query) {
-                $query->whereNull('del_status')
-                    ->orWhere('del_status', 0); // ดึงเฉพาะข้อมูลที่ยังไม่ถูก Soft Delete
-            })
-            ->orderBy('id', 'desc')
-            ->get();
+        $query = AcademicProject::select(
+            'academic_projects.*',
+            'users.name as name',
+            'overall_statuses.name_th as overall_statuses_name_th'
+        )
+            ->leftJoin('users', 'academic_projects.created_by', '=', 'users.id')
+            ->leftJoin('overall_statuses', 'academic_projects.overall_status', '=', 'overall_statuses.code')
+            ->where('academic_projects.project_type_id', $typeId)
+            ->where(function ($q) {
+                $q->whereNull('academic_projects.del_status')
+                    ->orWhere('academic_projects.del_status', 0);
+            });
+
+        // ดึง user ปัจจุบันเพื่อเช็คสิทธิ์
+        $user = auth()->user();
+        $isAdminOrStaff = $user->hasAnyRole(['admin', 'staff']);
+
+        if (!$isAdminOrStaff && !$user->hasRole('manager')) {
+            $query->where('academic_projects.created_by', $user->id);
+        }
+
+        // 🌟 ดึงข้อมูลโปรเจกต์ทั้งหมด พ่วงเอา latestLog (และชื่อคนทำ log) ติดมาด้วย (Eager Loading) เพื่อลดการคิวรี่ซ้ำซ้อน
+        $projects = $query->with('latestLog.user')->orderBy('academic_projects.id', 'desc')->get();
+
+        $projects->map(function ($item) use ($user, $isAdminOrStaff) {
+            $isOwner = isset($item->created_by) && $item->created_by == $user->id;
+            $status = $item->overall_status;
+
+            // แนบค่าสิทธิ์ต่างๆ (เหมือนเดิมที่เราทำกันไว้)
+            $item->can_edit = ($status != 800) && ($isAdminOrStaff || $isOwner);
+            $item->show_delete_btn = ($isAdminOrStaff || $isOwner);
+            $item->can_report = ($status >= 600 && $status != 900) && ($isAdminOrStaff || $isOwner);
+
+            $canCancel = false;
+            if ($status != 800 && $status != 900) {
+                if ($isAdminOrStaff) {
+                    $canCancel = true;
+                } elseif ($isOwner && $status <= 700) {
+                    $canCancel = true;
+                }
+            }
+            $item->can_cancel = $canCancel;
+
+            // 🌟 ดึงข้อมูลจาก Log ล่าสุด มาเตรียมไว้ให้ปุ่ม "อ่านเหตุผล" ในหน้า Blade
+            if ($item->latestLog) {
+                $item->log_reason = $item->latestLog->comment;
+                $item->log_action_by = $item->latestLog->user->name ?? 'ไม่ระบุ';
+                $item->log_action_date = \Carbon\Carbon::parse($item->latestLog->created_at)->addYears(543)->format('d/m/Y H:i');
+            } else {
+                $item->log_reason = 'ไม่พบเหตุผลที่ระบุไว้';
+                $item->log_action_by = '-';
+                $item->log_action_date = '-';
+            }
+
+            return $item;
+        });
 
         return view('trainings.projects.index', compact('projectType', 'projects'));
     }
@@ -98,6 +146,7 @@ class TrainingProjectController extends Controller
         $targetGroups = TargetGroup::whereNull('parent_id')
             ->where('is_active', 1)
             ->get();
+
 
         // ส่งข้อมูลทั้งหมดไปที่หน้า Blade
         return view('trainings.projects.create', compact(
@@ -220,25 +269,17 @@ class TrainingProjectController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Request $request, $id)
-    {
         // 1. รับค่าแท็บ (ถ้าไม่มีให้เปิดแท็บ 1 เป็น Default)
         $activeTab = $request->query('tab', 'tab1');
 
         // 2. ดึงข้อมูล Project ปัจจุบัน
-        $project = AcademicProject::findOrFail($id);
+        $project = AcademicProject::with(['signatures'])->findOrFail($id);
 
+        // 🛡️ ดักจับ:
+        $this->authorize('view', $project);
         // 3. ดึง Master Data (เหมือนหน้า Create เลยครับ)
         $projectType = ProjectType::findOrFail($project->project_type_id);
         $fiscalYears = FiscalYears::orderBy('fiscal_year_be', 'desc')->get();
@@ -273,6 +314,9 @@ class TrainingProjectController extends Controller
             $query->where('is_active', 1);
         }])->where('is_active', 1)->get();
 
+        $signatureRoles = DB::table('master_signature_roles')->get();
+
+
         // 🌟 ดึงข้อมูลสำหรับแท็บ 2
         // ดึง Array ของ SDG ID ที่เคยเลือกไว้
         $selectedSdgs = AcademicSdg::where('academic_project_id', $id)->pluck('sdg_id')->toArray();
@@ -282,8 +326,212 @@ class TrainingProjectController extends Controller
         $savedCommittees = Committee::where('academic_project_id', $id)->get();
         // ดึงรายชื่อบุคลากร (อัปเดตไปใช้ View ใหม่: V_STAFF_NEWWEB)
         $staffs = DB::table('V_STAFF_NEWWEB')
-            ->select('STAFF_ID', 'TITLE_TH', 'NAME_TH', 'SURNAME_TH', 'DEPARTMENT_NAME_TH')
+            ->select(
+                'STAFF_ID',
+                'ACADEMIC_ABBR',
+                'TITLE_TH',
+                'NAME_TH',
+                'SURNAME_TH',
+                'DEPARTMENT_NAME_TH',
+                // 🌟 ท่าไม้ตาย FOR XML PATH สำหรับ SQL Server รุ่นเก่า (มัดรวมตำแหน่งคั่นด้วย ' / ')
+                DB::raw("COALESCE(
+                (
+                    SELECT STUFF((
+                        SELECT ' / ' + POSITION_FULLNAME_TH
+                        FROM V_STAFF_EXECUTIVE_NOW
+                        WHERE V_STAFF_EXECUTIVE_NOW.STAFF_ID = V_STAFF_NEWWEB.STAFF_ID
+                        FOR XML PATH(''), TYPE
+                    ).value('.', 'NVARCHAR(MAX)'), 1, 3, '')
+                ), 
+                POSITION_NAME
+            ) AS FINAL_POSITION")
+            )
+            // ✂️ สังเกตว่าแชทลบ leftJoin และ groupBy ออกไปเลยครับ โค้ดสั้นและทำงานไวกว่าเดิมเยอะ!
             ->get();
+        $savedTrainingCourses = collect();
+        if ($trainingProject) {
+            // ดึงชื่อหลักสูตรเก่า โดยใช้ไอดีของ training_projects ไม่ใช่ academic_projects
+            $savedTrainingCourses = TrainingCourses::where('training_project_id', $trainingProject->id)->get();
+        }
+
+
+
+        // ----------------------------------------------------
+        // 🌟 ไฮไลต์ของ Senior: ดึงข้อมูล Array ที่ User เคยเลือกไว้ (Pivot)
+        // ----------------------------------------------------
+        // ดึง ID ของหน่วยงานที่เลือกไว้ แปลงเป็น Array เช่น [1, 5]
+        $selectedDepartments = DB::table('academic_departments')
+            ->where('academic_project_id', $id)
+            ->pluck('department_id')->toArray();
+
+        // ดึง ID ของหลักสูตรที่เลือกไว้
+        $selectedCourses = DB::table('academic_courses')
+            ->where('academic_project_id', $id)
+            ->pluck('course_id')->toArray();
+
+        // ดึง ID ของวัตถุประสงค์ที่เลือกไว้ (จากตาราง academic_objectives)
+        $selectedObjectives = DB::table('academic_objectives')
+            ->where('academic_project_id', $id)
+            // หมายเหตุ: ถ้าในฐานข้อมูลคุณตั้งชื่อคอลัมน์นี้ว่า objective_id ให้แก้คำว่า 'target_group_id' เป็น 'objective_id' นะครับ
+            ->pluck('target_group_id')->toArray();
+
+        $allGroupsForFilter = TargetGroup::with('parent')->where('is_active', 1)->get();
+
+        $filteredTargetGroups = $allGroupsForFilter->filter(function ($group) use ($selectedObjectives) {
+            $current = $group;
+            // วนลูปเช็คตัวเองและไล่ขึ้นไปหาตัวแม่เรื่อยๆ
+            while ($current) {
+                if (in_array($current->id, $selectedObjectives)) {
+                    return true; // ถ้าตัวเองหรือแม่ อยู่ในเงื่อนไขแท็บ 1 ให้เอามาแสดง
+                }
+                $current = $current->parent;
+            }
+            return false;
+        })->sortBy('full_path')->values(); // จัดเรียงตามเส้นทาง ก-ฮ
+
+        $savedSchedules = TrainingSchedules::where('training_project_id', $project->id)
+            ->orderBy('schedule_date')
+            ->orderBy('start_time')
+            ->get();
+
+
+        return view('trainings.projects.show', compact(
+            'project',
+            'projectType',
+            'fiscalYears',
+            'departments',
+            'divisions',
+            'centers',
+            'targetGroups',
+            'selectedDepartments',
+            'selectedCourses',
+            'selectedObjectives',
+            'nationalities',
+            'projectPositions',
+            'prefixes',
+            'staffs',
+            'customerGroups',
+            'customerTypes',
+            'externals',
+            'sdgs',
+            'trainingProject',
+            'trainingStatuses',
+            'selectedSdgs',
+            'savedTargetGroups',
+            'savedCommittees',
+            'savedTrainingCourses',
+            'provinces',
+            'trainingPositions',
+            'savedSchedules',
+            'incomeCategories',
+            'expenseCategories',
+            'savedIncomes',
+            'savedExpenses',
+            'incomeCategoriesGrouped',
+            'filteredTargetGroups',
+            'projectEvaluation',
+            'expenseCategoriesGrouped',
+            'signatureRoles'
+        ));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Request $request, $id)
+    {
+
+        $project = AcademicProject::findOrFail($id);
+
+        // 🌟 1. ตรวจสอบสิทธิ์การเข้าถึงหน้า Edit โดยใช้ Policy (ผ่าน Gate)
+        $this->authorize('update', $project);
+
+        // 🌟 2. ดักสถานะ 800 (เสร็จสิ้น) สำหรับคนทั่วไป
+        if ($project->overall_status == 800 && !auth()->user()->hasAnyRole(['admin', 'staff'])) {
+            return redirect()->route('trainings.projects.index', ['type_id' => $project->project_type_id])
+                ->with('error', 'โครงการนี้เสร็จสิ้นแล้ว ไม่สามารถแก้ไขข้อมูลได้ครับ');
+        }
+
+
+
+        // 1. รับค่าแท็บ (ถ้าไม่มีให้เปิดแท็บ 1 เป็น Default)
+        $activeTab = $request->query('tab', 'tab1');
+
+        // 2. ดึงข้อมูล Project ปัจจุบัน
+        $project = AcademicProject::findOrFail($id);
+        // 🛡️ ดักจับ:
+        $this->authorize('update', $project);
+        // 3. ดึง Master Data (เหมือนหน้า Create เลยครับ)
+        $projectType = ProjectType::findOrFail($project->project_type_id);
+        $fiscalYears = FiscalYears::orderBy('fiscal_year_be', 'desc')->get();
+        $departments = DB::table('V_DEPARTMENT')->get();
+        $divisions = DB::table('V_DIVISION')->get();
+        $centers = Center::where('is_active', 1)->get();
+        $targetGroups = TargetGroup::whereNull('parent_id')
+            ->where('is_active', 1)
+            ->get();
+        $nationalities = Nationality::where('is_active', 1)->get();
+        $projectPositions = ProjectPosition::all();
+        $prefixes = Prefix::all();
+        $customerGroups = CustomerGroup::all();
+        $customerTypes = CustomerType::all();
+        $externals = External::all();
+        $sdgs = Sdg::where('is_active', 1)->get();
+        $trainingProject = TrainingProject::where('academic_project_id', $id)->first(); // ดึงข้อมูลเดิมมาโชว์
+        $trainingStatuses = TrainingStatus::all();
+        $provinces = DB::table('provinces_csv')->get();
+        $trainingPositions = TrainingPosition::all();
+        $incomeCategories = BudgetIncomeCategorie::where('is_active', 1)->get();
+        $expenseCategories = BudgetExpenseCategorie::where('is_active', 1)->get();
+        $savedIncomes = AcademicBudgetIncomes::where('academic_project_id', $id)->get();
+        $savedExpenses = AcademicBudgetExpenses::where('academic_project_id', $id)->get();
+        $projectEvaluation = AcademicProjectEvaluation::where('academic_project_id', $id)->first();
+        $signatureRoles = MasterSignatureRole::where('is_active', 1)->get();
+
+        $incomeCategoriesGrouped = BudgetIncomeMainCategory::with(['subCategories' => function ($query) {
+            $query->where('is_active', 1);
+        }])->where('is_active', 1)->get();
+
+        $expenseCategoriesGrouped = BudgetExpenseMainCategory::with(['subCategories' => function ($query) {
+            $query->where('is_active', 1);
+        }])->where('is_active', 1)->get();
+
+        // 🌟 ดึงข้อมูลสำหรับแท็บ 2
+        // ดึง Array ของ SDG ID ที่เคยเลือกไว้
+        $selectedSdgs = AcademicSdg::where('academic_project_id', $id)->pluck('sdg_id')->toArray();
+        // ดึงข้อมูลกลุ่มเป้าหมายเดิม
+        $savedTargetGroups = AcademicTargetGroup::where('academic_project_id', $id)->get();
+        // ดึงข้อมูลคณะทำงานเดิม
+        $savedCommittees = Committee::where('academic_project_id', $id)->get();
+        // ดึงรายชื่อบุคลากร (อัปเดตไปใช้ View ใหม่: V_STAFF_NEWWEB)
+        $staffs = DB::table('V_STAFF_NEWWEB')
+            ->select(
+                'STAFF_ID',
+                'ACADEMIC_ABBR',
+                'TITLE_TH',
+                'NAME_TH',
+                'SURNAME_TH',
+                'DEPARTMENT_NAME_TH',
+                // 🌟 ท่าไม้ตาย FOR XML PATH สำหรับ SQL Server รุ่นเก่า (มัดรวมตำแหน่งคั่นด้วย ' / ')
+                DB::raw("COALESCE(
+                    (
+                        SELECT STUFF((
+                            SELECT ' / ' + POSITION_FULLNAME_TH
+                            FROM V_STAFF_EXECUTIVE_NOW
+                            WHERE V_STAFF_EXECUTIVE_NOW.STAFF_ID = V_STAFF_NEWWEB.STAFF_ID
+                            FOR XML PATH(''), TYPE
+                        ).value('.', 'NVARCHAR(MAX)'), 1, 3, '')
+                    ), 
+                    POSITION_NAME
+                ) AS FINAL_POSITION")
+            )
+            // ✂️ สังเกตว่าแชทลบ leftJoin และ groupBy ออกไปเลยครับ โค้ดสั้นและทำงานไวกว่าเดิมเยอะ!
+            ->get();
+
+
 
         $savedTrainingCourses = collect();
         if ($trainingProject) {
@@ -368,7 +616,8 @@ class TrainingProjectController extends Controller
             'incomeCategoriesGrouped',
             'expenseCategoriesGrouped',
             'filteredTargetGroups',
-            'projectEvaluation'
+            'projectEvaluation',
+            'signatureRoles'
         ));
     }
 
@@ -381,8 +630,10 @@ class TrainingProjectController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $step = $request->input('step');
         $academicProject = AcademicProject::findOrFail($id);
+        $this->authorize('update', $academicProject);
+
+        $step = $request->input('step');
 
         // =========================================
         // กรณีบันทึกข้อมูลจาก "แท็บ 1" (ข้อมูลพื้นฐาน)
@@ -759,6 +1010,102 @@ class TrainingProjectController extends Controller
                 return redirect()->back()->withInput()->with('error', 'เกิดข้อผิดพลาดในการบันทึกผลการประเมิน: ' . $e->getMessage());
             }
         }
+
+        // =========================================
+        // 🌟 ดักจับการบันทึกข้อมูล Tab 6 (ภาพรวม & ลงนาม)
+        // =========================================
+        if ($step == '6') {
+            DB::beginTransaction();
+            try {
+                // --------------------------------------------------
+                // 1. จัดการข้อมูลรายชื่อผู้ลงนาม (Signatures) (ของเดิม ไม่แตะ)
+                // --------------------------------------------------
+                if ($request->has('signatures')) {
+                    AcademicProjectSignature::where('academic_project_id', $academicProject->id)->delete();
+
+                    $signatureData = [];
+                    foreach ($request->signatures as $index => $sig) {
+                        if (!empty($sig['staff_id']) && !empty($sig['signature_role_id'])) {
+                            $signatureData[] = [
+                                'academic_project_id' => $academicProject->id,
+                                'staff_id'            => $sig['staff_id'],
+                                'signature_role_id'   => $sig['signature_role_id'],
+                                'executive_position'  => $sig['executive_position'] ?? null,
+                                'sign_order'          => $index + 1,
+                                'created_at'          => now(),
+                                'updated_at'          => now(),
+                            ];
+                        }
+                    }
+
+                    if (count($signatureData) > 0) {
+                        AcademicProjectSignature::insert($signatureData);
+                    }
+                }
+
+                // --------------------------------------------------
+                // 🌟 2. จัดการสถานะ (Workflow) ตาม "สิทธิ์ของผู้สร้างโครงการ"
+                // --------------------------------------------------
+                $currentUser = auth()->user(); // คนที่กำลังล็อกอินและกดปุ่มเซฟ
+                $currentStatus = (int) $academicProject->overall_status;
+                $newStatus = $currentStatus; // ตั้งค่าเริ่มต้นให้เท่าเดิมไว้ก่อน
+                $actionName = 'updated_overview';
+
+                // --- ดึงข้อมูล "คนสร้างโครงการ" มาเพื่อเช็คเส้นทาง Workflow ---
+                // (แชทใส่ไว้ให้ทั้ง created_by และ create_by เผื่อระบบคุณวัชกรใช้ตัวไหน)
+                $creatorId = $academicProject->created_by ?? $academicProject->create_by;
+                $creator = User::find($creatorId);
+
+                // เช็คว่า "คนสร้าง" เป็นกลุ่ม Admin หรือ Staff ใช่หรือไม่?
+                $isCreatorAdminOrStaff = $creator ? $creator->hasAnyRole(['admin', 'staff']) : false;
+
+                if ($isCreatorAdminOrStaff) {
+                    // 💂‍♂️ กรณีโครงการนี้ "สร้างโดย Admin / Staff"
+                    // ถ้าเดิมเป็น 100 ให้ข้ามไป 300
+                    if ($currentStatus == 100) {
+                        $newStatus = 300;
+                        $actionName = 'approved_auto';
+                    }
+                } else {
+                    // 👨‍💼 กรณีโครงการนี้ "สร้างโดย Manager / User"
+                    // (ไม่ว่า User จะกดเอง หรือ Admin เข้ามาช่วยกดเซฟให้ ก็ต้องไป 200 ก่อน)
+                    if (in_array($currentStatus, [100, 110])) {
+                        $newStatus = 200;
+                        $actionName = 'submitted';
+                    }
+                }
+
+                // อัปเดตข้อมูลลงฐานข้อมูล
+                $academicProject->overall_status = $newStatus;
+                $academicProject->update_by = $currentUser->id; // 🌟 บันทึก ID ของคนที่กดเซฟ (ไม่ว่าจะเป็นใครก็ตาม)
+                $academicProject->save();
+
+                // --------------------------------------------------
+                // 3. เก็บประวัติลง Timeline (Audit Trail)
+                // --------------------------------------------------
+                AcademicProjectLog::create([
+                    'academic_project_id' => $academicProject->id,
+                    'user_id'             => $currentUser->id, // เก็บชื่อคนที่กดกระทำจริงลง Log
+                    'action'              => $actionName,
+                    'status_code'         => $newStatus,
+                    'comment'             => null,
+                ]);
+
+                DB::commit();
+
+                // --------------------------------------------------
+                // 4. ตอบกลับผลลัพธ์และเด้งไปหน้าตาราง
+                // --------------------------------------------------
+                $msg = ($actionName == 'submitted') ? 'ยื่นขออนุมัติโครงการเรียบร้อยแล้ว' : 'บันทึกภาพรวมโครงการเรียบร้อยแล้ว';
+
+                return redirect()->route('trainings.projects.index', ['type_id' => $academicProject->project_type_id])
+                    ->with('success', $msg);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Error saving Tab 6 (Project ID: ' . $academicProject->id . '): ' . $e->getMessage());
+                return back()->with('error', 'เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
+            }
+        }
         // กันเหนียว กรณีหลุดจากเงื่อนไข
         return redirect()->back();
     }
@@ -774,10 +1121,12 @@ class TrainingProjectController extends Controller
         try {
             // 1. ดึงข้อมูลโครงการมาตรวจสอบ
             $project = AcademicProject::findOrFail($id);
+            $user = auth()->user();
 
-            // 2. 🛡️ เช็คสถานะ: โครงการที่อนุมัติไปแล้ว (>= 300) ห้ามลบทิ้งเด็ดขาด!
-            if ($project->overall_status >= 300) {
-                $errorMessage = 'ไม่สามารถลบได้ เนื่องจากโครงการผ่านขั้นตอนการอนุมัติไปแล้ว (หากไม่ต้องการจัดกิจกรรม ให้ทำการ "ยกเลิกโครงการ" แทน)';
+            // 2. 🛡️ เช็คสิทธิ์ด้วย Policy (ครอบคลุมทั้ง Role, Owner และ Status == 100 แล้ว!)
+            // ใช้ cannot() แทน authorize() เพื่อให้เรา Custom ข้อความ Error กลับไปหา AJAX (SweetAlert) ได้
+            if ($user->cannot('delete', $project)) {
+                $errorMessage = 'ไม่สามารถลบได้! คุณไม่มีสิทธิ์ หรือ โครงการไม่อยู่ในสถานะฉบับร่าง (100) แล้ว';
 
                 // ดักจับเผื่อกรณี Custom CRUD JS ของคุณวัชกรยิงมาเป็น AJAX
                 if ($request->ajax() || $request->wantsJson()) {
@@ -786,24 +1135,9 @@ class TrainingProjectController extends Controller
                 return redirect()->back()->with('error', $errorMessage);
             }
 
-            // 3. 🛡️ เช็คสิทธิ์ด้วย Spatie Roles
-            $user = auth()->user();
-            
-            // เช็คว่า: "ไม่ใช่คนสร้างโครงการ" และ "ไม่มี Role เป็น admin หรือ manager" ใช่หรือไม่?
-            if ($project->created_by != $user->id && !$user->hasAnyRole(['admin', 'manager'])) {
-                $errorAuthMessage = 'คุณไม่มีสิทธิ์ลบโครงการนี้ (อนุญาตเฉพาะเจ้าของโครงการ, Admin หรือ Manager เท่านั้น)';
-                
-                // ตอบกลับแบบ AJAX สำหรับ SweetAlert
-                if ($request->ajax() || $request->wantsJson()) {
-                    return response()->json(['success' => false, 'message' => $errorAuthMessage], 403);
-                }
-                // ตอบกลับแบบปกติ
-                return redirect()->back()->with('error', $errorAuthMessage);
-            }
-
             DB::beginTransaction();
 
-            // 4. 💾 ทำการ Soft Delete (อัปเดต del_status แทนการลบทิ้งจริงๆ)
+            // 3. 💾 ทำการ Soft Delete (อัปเดต del_status แทนการลบทิ้งจริงๆ)
             // พร้อมเก็บ Log ว่าใครเป็นคนกดลบ
             $project->update([
                 'del_status' => 1,
@@ -1182,38 +1516,174 @@ class TrainingProjectController extends Controller
             $project = AcademicProject::findOrFail($id);
             $user = auth()->user();
 
-            // 1. 🛡️ เช็คสิทธิ์: คนยกเลิกต้องเป็นเจ้าของ หรือมี Role admin/manager
-            if ($project->created_by != $user->id && !$user->hasAnyRole(['admin', 'manager'])) {
-                return response()->json(['success' => false, 'message' => 'คุณไม่มีสิทธิ์ยกเลิกโครงการนี้'], 403);
+            // 1. 🛡️ เช็คสิทธิ์ด้วย Policy (แนะนำให้ใช้ 'cancel' ที่เราเขียนดักไว้ใน Policy ครับ)
+            if ($user->cannot('cancel', $project)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'คุณไม่มีสิทธิ์ยกเลิกโครงการนี้ หรือสถานะปัจจุบันไม่สามารถยกเลิกได้'
+                ], 403);
             }
 
-            // 2. 🛡️ เช็คสถานะ: ต้องไม่อยู่ในฉบับร่าง (100-200 ลบทิ้งได้เลย) และยังไม่เสร็จสิ้น (800)
-            if ($project->overall_status < 300 || $project->overall_status >= 800) {
-                return response()->json(['success' => false, 'message' => 'สถานะโครงการปัจจุบันไม่สามารถยกเลิกได้'], 400);
-            }
-
-            // 3. Validate เหตุผล
+            // 2. Validate เหตุผล
             $request->validate([
                 'cancel_reason' => 'required|string|max:1000'
             ], [
                 'cancel_reason.required' => 'กรุณาระบุเหตุผลที่ยกเลิกโครงการด้วยครับ'
             ]);
 
-            // 4. 💾 อัปเดตข้อมูล
             DB::beginTransaction();
+
+            // 3. 💾 อัปเดตสถานะโครงการในตารางแม่ (ไม่เก็บเหตุผลที่นี่แล้ว)
             $project->update([
                 'overall_status' => 900,
-                'cancel_reason'  => trim($request->cancel_reason), // ต้องมีฟิลด์นี้ใน DB นะครับ
                 'update_by'      => $user->id
             ]);
+
+            // 4. 📝 บันทึกลงตาราง academic_project_logs เพื่อเก็บประวัติ
+            AcademicProjectLog::create([
+                'academic_project_id' => $project->id,
+                'user_id'             => $user->id,
+                'action'              => 'ยกเลิกโครงการ',
+                'status_code'         => 900,
+                'comment'             => trim($request->cancel_reason),
+            ]);
+
             DB::commit();
 
-            return response()->json(['success' => true, 'message' => 'ยกเลิกโครงการและเก็บประวัติเรียบร้อยแล้ว']);
-
+            return response()->json([
+                'success' => true,
+                'message' => 'ยกเลิกโครงการและบันทึกประวัติประวัติเรียบร้อยแล้ว'
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Cancel Project Error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'เกิดข้อผิดพลาดในระบบฐานข้อมูล: ' . $e->getMessage()], 500);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในระบบ: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function changeStatus(Request $request, $id)
+    {
+        //dd('🎉 เย้! วิ่งมาถึง Controller แล้วจ้าาา', $request->all(), 'ID โครงการคือ: ' . $id);
+        try {
+            $project = AcademicProject::findOrFail($id);
+            $user = auth()->user();
+
+            // 1. 🛡️ เช็คสิทธิ์ขั้นเด็ดขาด (เฉพาะ Admin เท่านั้น)
+            if (!$user->hasRole('admin')) {
+                return response()->json(['success' => false, 'message' => 'คุณไม่มีสิทธิ์เข้าถึงการจัดการส่วนนี้'], 403);
+            }
+
+            // 2. ตรวจสอบข้อมูล
+            $request->validate([
+                'new_status' => 'required|integer'
+            ]);
+
+            $oldStatus = $project->overall_status;
+            $newStatus = $request->new_status;
+
+            // ถ้าสถานะเดิมตรงกับที่เลือกมา ไม่ต้องทำอะไร
+            if ($oldStatus == $newStatus) {
+                return response()->json(['success' => false, 'message' => 'โครงการมีสถานะนี้อยู่แล้วครับ'], 400);
+            }
+
+            DB::beginTransaction();
+
+            // 3. 💾 อัปเดตสถานะในตารางแม่
+            $project->update([
+                'overall_status' => $newStatus,
+                'update_by'      => $user->id
+            ]);
+
+            // 4. 📝 บันทึกประวัติลง Log
+            AcademicProjectLog::create([
+                'academic_project_id' => $project->id,
+                'user_id'             => $user->id,
+                'action'              => 'Admin บังคับเปลี่ยนสถานะ',
+                'status_code'         => $newStatus,
+                'comment'             => "ผู้ดูแลระบบ (Admin) ใช้สิทธิ์พิเศษปรับเปลี่ยนสถานะข้ามขั้นตอน จาก $oldStatus เป็น $newStatus",
+            ]);
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'อัปเดตสถานะโครงการเรียบร้อยแล้ว']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Admin Change Status Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'เกิดข้อผิดพลาดในระบบ: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function report($id)
+    {
+        $project = AcademicProject::findOrFail($id);
+
+        // ดึงข้อมูลประเมินผลเดิมมา (ถ้ามี)
+        $projectEvaluation = AcademicProjectEvaluation::where('academic_project_id', $id)->first();
+        // ไปที่ไฟล์ blade ใหม่ที่เรากำลังจะสร้าง
+        return view('trainings.projects.report', compact('project', 'projectEvaluation'));
+    }
+
+    public function saveReport(Request $request, $id)
+    {
+        //dd($request, $id);
+        DB::beginTransaction();
+        try {
+            $project = AcademicProject::findOrFail($id);
+
+            // 🌟 1. ก๊อปปี้โค้ดบันทึกของ Tab 5 เดิมมาวางตรงนี้ได้เลย!
+            AcademicProjectEvaluation::updateOrCreate(
+                ['academic_project_id' => $id],
+                [
+                    // 5.1 ความพึงพอใจ (บันทึกทั้งคะแนนดิบ และ %)
+                    'satisfaction_score' => $request->satisfaction_score,
+                    'satisfaction_percent' => $request->satisfaction_percent,
+                    'satisfaction_range' => $request->satisfaction_range,
+                    'satisfaction_level' => $request->satisfaction_level,
+
+                    // ความไม่พึงพอใจ
+                    'dissatisfaction_score' => $request->dissatisfaction_score,
+                    'dissatisfaction_percent' => $request->dissatisfaction_percent,
+                    'dissatisfaction_range' => $request->dissatisfaction_range,
+                    'dissatisfaction_level' => $request->dissatisfaction_level,
+
+                    // 5.2 อื่นๆ
+                    'improvement_apply' => $request->improvement_apply,
+                    'impact' => $request->impact,
+                    'integration' => $request->integration,
+                    'integration_eval' => $request->integration_eval,
+
+                    // 5.3 ผลสัมฤทธิ์ (เอา evaluation_score ออกแล้ว)
+                    'sroi_score' => $request->sroi_score,
+                    'award_count' => $request->award_count,
+                    'industrial_value' => $request->industrial_value,
+                    'project_achievement' => $request->project_achievement,
+                ]
+            );
+
+            // 🌟 2. จุดไคลแม็กซ์: อัปเดตสถานะเป็น 800 (เสร็จสิ้นโครงการ)
+            $project->update([
+                'overall_status' => 800,
+                'update_by' => auth()->id()
+            ]);
+
+            // 🌟 3. เก็บ Log ประวัติไว้ด้วยว่าปิดโครงการแล้ว
+            AcademicProjectLog::create([
+                'academic_project_id' => $project->id,
+                'user_id'             => auth()->id(),
+                'action'              => 'completed',
+                'status_code'         => 800,
+            ]);
+
+            DB::commit();
+            return redirect()->route('trainings.projects.index', ['type_id' => $project->project_type_id])
+            ->with('success', 'บันทึกรายงานผลและปิดโครงการเรียบร้อยแล้ว!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Save Report Error: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' . $e->getMessage());
         }
     }
 }

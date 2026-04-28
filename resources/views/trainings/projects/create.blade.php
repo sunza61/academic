@@ -245,7 +245,6 @@
     </div>
 
 </div> <style>
-    /* 🌟 จัดระเบียบเมนูแท็บให้สีและขนาดเหมือนกันทั้งระบบ */
     .wizard-nav .nav-link {
         border-radius: 0;
         border-bottom: 4px solid #dee2e6;
@@ -265,7 +264,6 @@
         color: #dc3545 !important;
     }
 
-    /* 🌟 ปุ่ม Select2 สีเข้ม */
     .select2-container .select2-selection--multiple {
         min-height: 38px;
         border: 1px solid #ced4da;
@@ -291,27 +289,10 @@
 @endsection
 
 @section('script')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://npmcdn.com/flatpickr/dist/l10n/th.js"></script>
-<script>
-    $(document).ready(function() {
-        // 1. ตั้งค่า Select2
-        $('.select2-multiple').select2({
-            width: '100%',
-            placeholder: "คลิกเพื่อเลือกข้อมูล (เลือกได้มากกว่า 1)"
-        });
-
-        // 2. ตั้งค่า Datepicker
-        flatpickr(".datepicker", {
-            dateFormat: "Y-m-d", 
-            altInput: true,
-            altFormat: "d/m/Y",  
-            locale: "th",
-            allowInput: true
-        });
-    });
-</script>
+<link rel="stylesheet" href="{{ asset('plugins/select2/select2.min.css') }}">
+<link rel="stylesheet" href="{{ asset('plugins/flatpickr/flatpickr.min.css') }}">
+<script src="{{ asset('plugins/select2/select2.min.js') }}"></script>
+<script src="{{ asset('plugins/flatpickr/flatpickr.js') }}"></script>
+<script src="{{ asset('plugins/flatpickr/th.js') }}"></script>
+<script src="{{ asset('js/trainings/projects/create.js?v=' . time()) }}"></script>
 @endsection

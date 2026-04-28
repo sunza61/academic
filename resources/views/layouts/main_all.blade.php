@@ -24,12 +24,10 @@
 
 
   <style>
-    /* ปรับสีพื้นหลัง Navbar ให้ตรงกับดีไซน์ UI (สีเทาเข้ม) */
     .bg-custom-dark {
       background-color: #2c3136 !important;
     }
 
-    /* ปรับฟอนต์ Navbar ให้ดูโปร่งและอ่านง่ายขึ้น */
     .main-header .nav-link {
       font-weight: 400;
       font-size: 15px;
@@ -49,15 +47,17 @@
       </div>
     </div>
 
-  @include('layouts.footer')
-  
-  <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
-  <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-  <script src="{{ asset('adminlte/dist/js/adminlte.min.js') }}"></script>
-  <script src="{{ asset('adminlte/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
-  <script src="{{ asset('js/custom-crud.js') }}?v={{ time() }}"></script>
-  @yield('script')
- 
+    @include('layouts.footer')
+
+    <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('adminlte/dist/js/adminlte.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
+    <script src="{{ asset('js/custom-crud.js') }}?v={{ time() }}"></script>
+    <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    @yield('script')
+
 </body>
 
 </html>

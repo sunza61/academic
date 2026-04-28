@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\MasterData;
 
 use App\Http\Controllers\Controller;
+use App\Models\Academic\AcademicTargetGroup;
 use App\Models\MasterData\TargetGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,20 +53,22 @@ class TargetGroupController extends Controller
     {
         // 🛡️ 1. Validation: ตรวจสอบความถูกต้องและดักจับข้อมูลขยะ
         $validated = $request->validate([
-            // ตรวจสอบว่า parent_id ถ้ามีส่งมา ต้องเป็นตัวเลข และ "ต้องมีอยู่จริงในตาราง target_groups"
             'parent_id'   => 'nullable|integer|exists:target_groups,id',
-
-            // name_th บังคับกรอก, ต้องเป็นข้อความ, ความยาวไม่เกิน 255
             'name_th'     => 'required|string|max:255',
-
-            'name_en'     => 'nullable|string|max:255',
+            
+            // 📌 1. เปลี่ยนจาก nullable เป็น required
+            'name_en'     => 'required|string|max:255', 
+            
             'group_type'  => 'nullable|string|max:100',
             'description' => 'nullable|string',
         ], [
-            // ข้อความแจ้งเตือนภาษาไทย (Custom Error Messages)
             'parent_id.exists' => 'ไม่พบข้อมูลกลุ่มเป้าหมายหลัก (ตัวแม่) ในระบบ กรุณาเลือกใหม่',
             'name_th.required' => 'กรุณาระบุชื่อกลุ่มเป้าหมาย (ภาษาไทย)',
             'name_th.max'      => 'ชื่อกลุ่มเป้าหมายต้องไม่เกิน 255 ตัวอักษร',
+            
+            // 📌 2. เพิ่มข้อความแจ้งเตือนเมื่อไม่กรอกภาษาอังกฤษ
+            'name_en.required' => 'กรุณาระบุชื่อกลุ่มเป้าหมาย (ภาษาอังกฤษ)',
+            'name_en.max'      => 'ชื่อกลุ่มเป้าหมาย (ภาษาอังกฤษ) ต้องไม่เกิน 255 ตัวอักษร',
         ]);
 
         // 🛡️ 2. Database Transaction: ป้องกันข้อมูลเข้าไม่ครบถ้วน
@@ -157,12 +160,18 @@ class TargetGroupController extends Controller
         $validated = $request->validate([
             'parent_id'   => 'nullable|integer|exists:target_groups,id|not_in:' . $id,
             'name_th'     => 'required|string|max:255',
-            'name_en'     => 'nullable|string|max:255',
+            
+            // 📌 1. เปลี่ยนตรงนี้เป็น required
+            'name_en'     => 'required|string|max:255', 
+            
             'group_type'  => 'nullable|string|max:100',
             'description' => 'nullable|string',
         ], [
             'parent_id.not_in' => 'ไม่สามารถเลือกกลุ่มเป้าหมายนี้ให้อยู่ภายใต้ตัวเองได้',
             'name_th.required' => 'กรุณาระบุชื่อกลุ่มเป้าหมาย (ภาษาไทย)',
+            
+            // 📌 2. เพิ่มข้อความแจ้งเตือนเมื่อไม่กรอกภาษาอังกฤษ
+            'name_en.required' => 'กรุณาระบุชื่อกลุ่มเป้าหมาย (ภาษาอังกฤษ)',
         ]);
 
         try {
@@ -209,18 +218,38 @@ class TargetGroupController extends Controller
      */
     public function destroy($id)
     {
-        //
         try {
             $targetGroup = TargetGroup::findOrFail($id);
             
-            // สั่งลบ (ฟังก์ชัน boot() ใน Model ที่เราเขียนไว้ จะจัดการลบตัวลูกๆ ให้เองอัตโนมัติ)
+            // ---------------------------------------------------------
+            // 🕵️‍♂️ สเต็ป 1: เช็คก่อนว่าถูกใช้งานใน "ตารางอื่น" แล้วหรือยัง
+            // ---------------------------------------------------------
+            // เช็คตารางที่ 1: ตารางบันทึกกลุ่มเป้าหมายในโครงการ
+            $isUsedInTargetGroups = AcademicTargetGroup::where('target_group_id', $id)->exists();
+            
+            // เช็คตารางที่ 2: ตารางวัตถุประสงค์โครงการ (เพราะเห็นตอนดึงข้อมูลใช้ตารางนี้ด้วย)
+            $isUsedInObjectives = DB::table('academic_objectives')->where('target_group_id', $id)->exists();
+            
+            // เช็คตารางที่ 3: เช็คว่ามีลูกๆ (Sub-group) อยู่ภายใต้ตัวมันไหม
+            $hasChildren = TargetGroup::where('parent_id', $id)->exists();
+
+            // ถ้าเจอว่าถูกใช้อยู่ที่ใดที่หนึ่ง ให้เบรกการทำงานและแจ้งเตือนทันที!
+            if ($isUsedInTargetGroups || $isUsedInObjectives || $hasChildren) {
+                return redirect()->back()->with('error', 'ไม่สามารถลบได้ เนื่องจากกลุ่มเป้าหมายนี้ "ถูกนำไปใช้งานในโครงการแล้ว" หรือ "มีกลุ่มย่อยอยู่" (แนะนำให้แก้ไขเป็น ปิดการใช้งาน แทน)');
+            }
+
+            //dd($id);
+            // ---------------------------------------------------------
+            // 🗑️ สเต็ป 2: ถ้าไม่มีใครใช้ ค่อยสั่งลบจริง
+            // ---------------------------------------------------------
             $targetGroup->delete();
 
             return redirect()->route('master-data.target-groups.index')
                              ->with('success', 'ลบข้อมูลกลุ่มเป้าหมายเรียบร้อยแล้ว');
+
         } catch (\Exception $e) {
             Log::error('TargetGroup Delete Error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'ไม่สามารถลบข้อมูลได้ อาจมีการใช้งานข้อมูลนี้อยู่');
+            return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในระบบฐานข้อมูล ไม่สามารถลบข้อมูลได้');
         }
     }
 }

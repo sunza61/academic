@@ -51,9 +51,11 @@
                 </div>
 
                 <div class="col-md-6 form-group">
-                    <label for="name_en">ชื่อกลุ่มเป้าหมาย (ภาษาอังกฤษ)</label>
+                    <label for="name_en">ชื่อกลุ่มเป้าหมาย (ภาษาอังกฤษ) <span class="text-danger">*</span></label>
+                    
                     <input type="text" class="form-control @error('name_en') is-invalid @enderror" 
-                           id="name_en" name="name_en" value="{{ old('name_en', $targetGroup->name_en) }}">
+                           id="name_en" name="name_en" value="{{ old('name_en', $targetGroup->name_en) }}" required>
+                    
                     @error('name_en') 
                         <div class="invalid-feedback">{{ $message }}</div> 
                     @enderror
@@ -93,19 +95,7 @@
 @endsection
 
 @section('script')
-    <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
-    <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('adminlte/plugins/select2/js/select2.full.min.js') }}"></script>
 
-    <script>
-        $(document).ready(function() {
-            if($('.select2-basic').length) {
-                $('.select2-basic').select2({
-                    theme: 'bootstrap4',
-                    placeholder: "-- เปลี่ยนตำแหน่งที่ต้องการ (ถ้ามี) --",
-                    allowClear: true
-                });
-            }
-        });
-    </script>
+    <script src="{{ asset('js/master-data/target-groups/edit.js?v=' . time()) }}"></script>
 @endsection

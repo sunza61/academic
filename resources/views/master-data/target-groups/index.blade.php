@@ -69,10 +69,15 @@
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 
-                                <form action="{{ route('master-data.target-groups.destroy', $group->id) }}" method="POST" class="d-inline" onsubmit="return confirm('ยืนยันการลบข้อมูล? (หากลบกลุ่มหลัก กลุ่มย่อยที่อยู่ภายใต้จะถูกลบไปด้วยทั้งหมด!)');">
+                                <form action="{{ route('master-data.target-groups.destroy', $group->id) }}" method="POST" class="d-inline form-delete">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" title="ลบข้อมูล">
+                                    
+                                    @php
+                                        $fullPath = ($group->parent_id ? $group->parent->full_path . ' > ' : '') . $group->name_th;
+                                    @endphp
+                                    
+                                    <button type="button" class="btn btn-sm btn-danger btn-delete" data-name="{{ $fullPath }}" title="ลบข้อมูล">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
@@ -94,37 +99,13 @@
 @endsection
 
 @section('script')
-    <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
-    <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+   
     
-    <script src="{{ asset('adminlte/plugins/datatables/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('adminlte/plugins/datatables/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('adminlte/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
     <script src="{{ asset('adminlte/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
     <script src="{{ asset('adminlte/plugins/datatables-responsive/js/responsive.bootstrap4.min.js') }}"></script>
+ 
 
-    <script>
-        $(document).ready(function() {
-            $(document).ready(function() {
-            $('#targetGroupTable').DataTable({
-                "paging": true,
-                "lengthChange": true,
-                "searching": true,
-                "ordering": true,        // 🌟 1. เปลี่ยนจาก false เป็น true เพื่อเปิดการเรียงลำดับ
-                "order": [[2, "asc"]],   // 🌟 2. สั่งให้ตอนเปิดหน้ามา โฟกัสการเรียง (ก-ฮ) ไปที่คอลัมน์ที่ 1 (Hierarchy Path)
-                "columnDefs": [          // 🌟 3. กำหนดเงื่อนไขรายคอลัมน์
-                    { 
-                        "orderable": false, 
-                        "targets": [0, 5] // ปิดการกดเรียงลำดับที่คอลัมน์ 0 (ลำดับ #) และคอลัมน์ 5 (ปุ่มจัดการ)
-                    }
-                ],
-                "info": true,
-                "autoWidth": false,
-                "responsive": true,
-                "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Thai.json" 
-                }
-            });
-        });
-        });
-    </script>
+    <script src="{{ asset('js/master-data/target-groups/index.js?v=' . time()) }}"></script>
 @endsection

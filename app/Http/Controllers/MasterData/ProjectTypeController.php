@@ -132,7 +132,7 @@ class ProjectTypeController extends Controller
                 ->route('master-data.project-types.index')
                 ->with('error', 'ไม่สามารถลบได้ เนื่องจากมีโครงการใช้งานประเภทนี้อยู่');
         }
-    
+   
         $projectType->delete();
     
         return redirect()

@@ -24,4 +24,7 @@
     7. ตรวจเช็คเงื่อนไขใน HomeController.php
         - app > Http > Controllers > HomeController.php
 
+--------------------------------------------------------------------------
+รัน php gather_context.php เพื่อให้ได้ไฟล์ GEMINI.md
+
 

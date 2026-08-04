@@ -1,10 +1,69 @@
 @extends('layouts.main_all')
 
 @section('content')
+<style>
+    .wizard-nav .nav-link {
+        border-radius: 0;
+        border-bottom: 4px solid #dee2e6;
+        color: #6c757d;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .wizard-nav .nav-link:hover {
+        color: #dc3545;
+        background-color: #f8f9fa;
+    }
+
+    .nav-pills .nav-link.active,
+    .nav-pills .show>.nav-link {
+        border-bottom: 4px solid #dc3545 !important;
+        background-color: transparent !important;
+        color: #dc3545 !important;
+        font-weight: bold;
+    }
+
+    .select2-container .select2-selection--multiple {
+        min-height: 38px;
+        border: 1px solid #ced4da;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #343a40 !important;
+        border: 1px solid #23272b !important;
+        color: #ffffff !important;
+        border-radius: 4px;
+        padding: 2px 8px;
+        margin-top: 6px;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: #ced4da !important;
+        margin-right: 5px;
+        border-right: none !important;
+    }
+
+    .form-control-sm {
+        font-size: 0.85rem;
+    }
+
+    .card-header {
+        padding: 0.5rem 1rem !important;
+    }
+
+    .card-body {
+        padding: 1rem !important;
+    }
+
+    label {
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+</style>
 <div class="row mb-3 mt-2">
     <div class="col-sm-8">
         <h3 class="m-0 font-weight-bold">
-            แก้ไขโครงการ : <span class="text-primary">{{ $projectType->name_th ?? 'ฝึกอบรม' }}</span>
+            แก้ไขโครงการ: <span class="text-primary">{{ $projectType->name_th ?? 'บริการวิชาการ/สัญญาจ้าง' }}</span>
         </h3>
         <p class="text-muted mb-0 mt-1">
             รหัสโครงการ: <span class="badge badge-success px-2 py-1" style="font-size: 1em;">{{ $project->id }}</span>
@@ -26,7 +85,7 @@
         </p>
     </div>
     <div class="col-sm-4 text-right">
-        <a href="{{ route('trainings.projects.index', ['type_id' => $project->project_type_id]) }}" class="btn btn-secondary shadow-sm mt-2">
+        <a href="{{ route('contracts.projects.index', ['type_id' => $project->project_type_id]) }}" class="btn btn-secondary shadow-sm mt-2">
             <i class="fas fa-arrow-left"></i> กลับไปหน้าตาราง
         </a>
     </div>
@@ -50,15 +109,6 @@
 </div>
 @endif
 
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-    <i class="fas fa-times-circle mr-2"></i> <strong>เกิดข้อผิดพลาดจากระบบ!</strong> {{ session('error') }}
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-    </button>
-</div>
-@endif
-
 <div class="card shadow-sm border-0 mb-4">
     <div class="card-body p-0">
         <ul class="nav nav-pills nav-justified wizard-nav" id="project-tabs" role="tablist">
@@ -74,22 +124,17 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab == 'tab3' ? 'active' : '' }} font-weight-bold py-3" data-toggle="pill" href="#tab3" role="tab">
-                    <i class="fas fa-calendar-alt mr-1"></i> 3. กำหนดการ
+                    <i class="fas fa-coins mr-1"></i> 3. งบประมาณ
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab == 'tab4' ? 'active' : '' }} font-weight-bold py-3" data-toggle="pill" href="#tab4" role="tab">
-                    <i class="fas fa-coins mr-1"></i> 4. งบประมาณ
+                    <i class="fas fa-chart-line mr-1"></i> 4. ผลลัพธ์ & ประเมิน
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab == 'tab5' ? 'active' : '' }} font-weight-bold py-3" data-toggle="pill" href="#tab5" role="tab">
-                    <i class="fas fa-chart-line mr-1"></i> 5. ผลลัพธ์ & ประเมิน
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ $activeTab == 'tab6' ? 'active' : '' }} font-weight-bold py-3" data-toggle="pill" href="#tab6" role="tab">
-                    <i class="fas fa-clipboard-check mr-1"></i> 6. ภาพรวม
+                    <i class="fas fa-clipboard-check mr-1"></i> 5. ภาพรวม
                 </a>
             </li>
         </ul>
@@ -98,8 +143,9 @@
 
 <div class="tab-content" id="project-tabs-content">
 
+    <!-- แท็บที่ 1: ข้อมูลพื้นฐาน -->
     <div class="tab-pane fade {{ $activeTab == 'tab1' ? 'show active' : '' }}" id="tab1" role="tabpanel">
-        <form action="{{ route('trainings.projects.update', $project->id) }}" method="POST">
+        <form action="{{ route('contracts.projects.update', $project->id) }}" method="POST">
             @csrf
             @method('PUT')
             <input type="hidden" name="step" value="1">
@@ -111,7 +157,7 @@
                     <div class="row">
                         <div class="col-md-3 form-group">
                             <label>ปีงบประมาณ <span class="text-danger">*</span></label>
-                            <select class="form-control @error('fiscal_year_id') is-invalid @enderror" name="fiscal_year_id" required>
+                            <select class="form-control form-control-sm @error('fiscal_year_id') is-invalid @enderror" name="fiscal_year_id" required>
                                 <option value="">-- เลือกปีงบประมาณ --</option>
                                 @foreach($fiscalYears as $year)
                                 <option value="{{ $year->id }}" {{ old('fiscal_year_id', $project->fiscal_year_id) == $year->id ? 'selected' : '' }}>
@@ -123,12 +169,12 @@
 
                         <div class="col-md-9 form-group">
                             <label>ชื่อโครงการ (ภาษาไทย) <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('name_th') is-invalid @enderror" name="name_th" value="{{ old('name_th', $project->name_th) }}" required>
+                            <input type="text" class="form-control form-control-sm @error('name_th') is-invalid @enderror" name="name_th" value="{{ old('name_th', $project->name_th) }}" required>
                         </div>
 
                         <div class="col-md-6 form-group">
-                            <label>หน่วยงานผู้รับผิดชอบ <span class="text-danger">* เลือกได้มากกว่า 1</span></label>
-                            <select class="form-control select2-multiple" name="department_ids[]" multiple="multiple" required>
+                            <label>หน่วยงานผู้รับผิดชอบ <span class="text-danger">*</span></label>
+                            <select class="form-control form-control-sm select2-multiple" name="department_ids[]" multiple="multiple" required>
                                 @foreach($departments as $dept)
                                 <option value="{{ $dept->DEPARTMENT_ID }}" {{ in_array($dept->DEPARTMENT_ID, old('department_ids', $selectedDepartments)) ? 'selected' : '' }}>
                                     {{ $dept->DEPARTMENT_NAME_TH }}
@@ -138,19 +184,8 @@
                         </div>
 
                         <div class="col-md-6 form-group">
-                            <label>หลักสูตร <span class="text-danger">* เลือกได้มากกว่า 1</span></label>
-                            <select class="form-control select2-multiple" name="course_ids[]" multiple="multiple" required>
-                                @foreach($divisions as $div)
-                                <option value="{{ $div->DIVISION_ID }}" {{ in_array($div->DIVISION_ID, old('course_ids', $selectedCourses)) ? 'selected' : '' }}>
-                                    {{ $div->DIVISION_NAME }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-6 form-group">
                             <label>ศูนย์ (Center)</label>
-                            <select class="form-control" name="center_id">
+                            <select class="form-control form-control-sm" name="center_id">
                                 <option value="">-- เลือกศูนย์ (ถ้ามี) --</option>
                                 @foreach($centers as $center)
                                 <option value="{{ $center->id }}" {{ old('center_id', $project->center_id) == $center->id ? 'selected' : '' }}>
@@ -162,21 +197,53 @@
 
                         <div class="col-md-6 form-group">
                             <label>ระดับโครงการ</label>
-                            <select class="form-control" name="region_type">
+                            <select class="form-control form-control-sm" name="region_type">
                                 <option value="1" {{ old('region_type', $project->region_type) == '1' ? 'selected' : '' }}>ระดับชาติ</option>
                                 <option value="2" {{ old('region_type', $project->region_type) == '2' ? 'selected' : '' }}>ระดับนานาชาติ</option>
                             </select>
                         </div>
 
-                        <div class="col-md-12 form-group">
-                            <label>วัตถุประสงค์ <span class="text-danger">* เลือกได้มากกว่า 1</span></label>
-                            <select class="form-control select2-multiple" name="target_group_ids[]" multiple="multiple" required>
-                                @foreach($targetGroups as $tg)
-                                <option value="{{ $tg->id }}" {{ in_array($tg->id, old('target_group_ids', $selectedObjectives)) ? 'selected' : '' }}>
-                                    {{ $tg->name_th }}
-                                </option>
-                                @endforeach
-                            </select>
+                        <!-- 🎯 วัตถุประสงค์โครงการ (Header Only Once) -->
+                        <div class="col-md-12 form-group mt-2">
+                            <label class="font-weight-bold">วัตถุประสงค์โครงการ <span class="text-danger">*</span></label>
+                            <div class="sub-card" style="border: 1px solid #ced4da; border-radius: 8px; overflow: hidden;">
+                                <div class="sub-card-header d-flex justify-content-end align-items-center" style="background-color: #f8f9fa; border-bottom: 1px solid #ced4da; padding: 8px 15px;">
+                                    <button type="button" class="btn btn-xs rounded-pill px-3 shadow-sm bg-custom-dark text-white" id="btn-add-objective" style="font-size: 0.75rem;">
+                                        <i class="fas fa-plus-circle mr-1"></i> เพิ่มวัตถุประสงค์
+                                    </button>
+                                </div>
+                                <div id="objective-container" class="bg-white p-2">
+                                    <div class="row px-3 mb-2 d-none d-md-flex objective-header-row">
+                                        <div class="col-md-3 text-muted small font-weight-bold">กลุ่มผู้ว่าจ้าง/แหล่งทุน <span class="text-danger">*</span></div>
+                                        <div class="col-md-8 text-muted small font-weight-bold">รายละเอียดวัตถุประสงค์</div>
+                                        <div class="col-md-1"></div>
+                                    </div>
+
+                                    @foreach($savedObjectives as $index => $obj)
+                                    <div class="objective-box p-2 border-bottom">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-3">
+                                                <label class="small font-weight-bold text-muted d-md-none mb-1">กลุ่มผู้ว่าจ้าง/แหล่งทุน *</label>
+                                                <select class="form-control form-control-sm select2-objective" name="objectives[{{ $index }}][group_id]" required>
+                                                    @foreach($customerGroups as $group)
+                                                    <option value="{{ $group->id }}" {{ $obj->target_group_id == $group->id ? 'selected' : '' }}>{{ $group->name_th }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-8 col-10">
+                                                <label class="small font-weight-bold text-muted d-md-none mb-1">รายละเอียดวัตถุประสงค์</label>
+                                                <input type="text" class="form-control form-control-sm w-100" name="objectives[{{ $index }}][detail]" value="{{ $obj->detail }}" placeholder="เช่น เพื่อพัฒนาสารตั้งต้นตัวอย่าง...">
+                                            </div>
+                                            <div class="col-md-1 col-2 text-right pl-0">
+                                                <button type="button" class="btn btn-sm btn-link text-danger btn-remove-objective px-1" title="ลบข้อนี้" {{ count($savedObjectives) == 1 ? 'style=display:none;' : '' }}>
+                                                    <i class="fas fa-trash-alt fa-lg"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
 
                         <div class="col-md-12 form-group">
@@ -199,7 +266,7 @@
                     </div>
                 </div>
                 <div class="card-footer bg-white text-right py-3">
-                    <button type="submit" id="btn-submit-tab1" class="btn btn-primary btn-lg shadow-sm">
+                    <button type="submit" class="btn btn-primary btn-lg shadow-sm">
                         <i class="fas fa-save mr-1"></i> บันทึกข้อมูลพื้นฐาน & ถัดไป <i class="fas fa-arrow-right ml-1"></i>
                     </button>
                 </div>
@@ -207,106 +274,47 @@
         </form>
     </div>
 
+    <!-- แท็บที่ 2: ข้อมูลเฉพาะ & บุคคล -->
     <div class="tab-pane fade {{ $activeTab == 'tab2' ? 'show active' : '' }}" id="tab2" role="tabpanel">
-        <form action="{{ route('trainings.projects.update', $project->id) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('contracts.projects.update', $project->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             <input type="hidden" name="step" value="2">
 
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-info-circle mr-2"></i> ส่วนที่ 2.1: รายละเอียด อบรม ประชุม สัมมนาฯ</h5>
+                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-info-circle mr-2"></i> ส่วนที่ 2.1: รายละเอียดข้อมูลสัญญาจ้าง / บริการวิชาการ</h5>
                 </div>
                 <div class="card-body bg-light">
                     <div class="row">
-                        <div class="col-md-4 form-group">
-                            <label>เลขที่หนังสืออนุมัติ (ถ้ามี)</label>
-                            <input type="text" name="document_number" class="form-control" value="{{ old('document_number', $trainingProject->document_number ?? '') }}" placeholder="เช่น ศธ 0000/000">
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label>ประเภทโครงการ <span class="text-danger">*</span></label>
-                            <select name="project_types" class="form-control" required>
-                                <option value="">-- เลือกประเภทโครงการ --</option>
-                                <option value="0" {{ (old('project_types', $trainingProject->project_types ?? '') == '0') ? 'selected' : '' }}>มีรายได้</option>
-                                <option value="1" {{ (old('project_types', $trainingProject->project_types ?? '') == '1') ? 'selected' : '' }}>ให้เปล่า</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label>ประเภทลักษณะหลักสูตร <span class="text-danger">*</span></label>
-                            <select name="course_type" class="form-control" required>
-                                <option value="">-- เลือกลักษณะหลักสูตร --</option>
-                                <option value="1" {{ (old('course_type', $trainingProject->course_type ?? '') == '1') ? 'selected' : '' }}>Upskill</option>
-                                <option value="2" {{ (old('course_type', $trainingProject->course_type ?? '') == '2') ? 'selected' : '' }}>Reskill</option>
-                                <option value="3" {{ (old('course_type', $trainingProject->course_type ?? '') == '3') ? 'selected' : '' }}>New skill</option>
-                            </select>
-                        </div>
-
                         <div class="col-md-12 form-group">
-                            <label>ชื่อหลักสูตรในโครงการ <span class="text-danger">* (เพิ่มได้มากกว่า 1 หลักสูตร)</span></label>
-                            <div id="course-names-container">
-                                @if(isset($savedTrainingCourses) && $savedTrainingCourses->count() > 0)
-                                @foreach($savedTrainingCourses as $index => $course)
-                                <div class="input-group mb-2 course-row">
-                                    <input type="text" name="course_names[]" class="form-control" value="{{ $course->course_name }}" required placeholder="ระบุชื่อหลักสูตร...">
-                                    <div class="input-group-append">
-                                        <button class="btn btn-outline-danger btn-remove-course" type="button" {{ $index == 0 ? 'disabled title="ต้องมีอย่างน้อย 1 หลักสูตร"' : '' }}>
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                @endforeach
-                                @else
-                                <div class="input-group mb-2 course-row">
-                                    <input type="text" name="course_names[]" class="form-control" required placeholder="ระบุชื่อหลักสูตร...">
-                                    <div class="input-group-append">
-                                        <button class="btn btn-outline-danger btn-remove-course" type="button" disabled title="ต้องมีอย่างน้อย 1 หลักสูตร">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                @endif
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-success mt-1" id="btn-add-course">
-                                <i class="fas fa-plus"></i> เพิ่มหลักสูตร
-                            </button>
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>วันที่เปิดรับสมัคร <span class="text-danger">*</span></label>
-                            <input type="text" name="start_regis_date" class="form-control datepicker" value="{{ old('start_regis_date', $trainingProject->start_regis_date ?? '') }}" placeholder="วว/ดด/ปปปป" required>
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>วันที่ปิดรับสมัคร <span class="text-danger">*</span></label>
-                            <input type="text" name="end_regis_date" class="form-control datepicker" value="{{ old('end_regis_date', $trainingProject->end_regis_date ?? '') }}" placeholder="วว/ดด/ปปปป" required>
-                        </div>
-
-                        <div class="col-md-12 form-group">
-                            <label>สถานประกอบการ (ถ้ามี)</label>
-                            <input type="text" name="has_collaboration" class="form-control" value="{{ old('has_collaboration', $trainingProject->has_collaboration ?? '') }}" placeholder="ชื่อสถานประกอบการที่ร่วมมือ">
+                            <label>เลขที่สัญญา (ถ้ามี)</label>
+                            <input type="text" name="contract_number" class="form-control" value="{{ old('contract_number', $projectContract->contract_number ?? '') }}" placeholder="ระบุเลขที่สัญญา...">
                         </div>
 
                         <div class="col-md-6 form-group">
-                            <label>เอกสารอนุมัติโครงการ (PDF) (ถ้ามี)</label>
-                            <input type="file" name="approval_file" class="form-control-file" accept=".pdf">
-                            @if(!empty($trainingProject->approval_file))
+                            <label>เอกสารสัญญา (PDF) (ถ้ามี)</label>
+                            <input type="file" name="contract_file" class="form-control-file" accept=".pdf">
+                            @if(!empty($projectContract->contract_file_path))
                             <div id="file-link-zone" class="mt-2 p-2 border rounded bg-white">
-                                <small class="text-success d-block"><i class="fas fa-check-circle"></i> มีไฟล์แนบแล้ว: <a href="{{ asset('storage/'.$trainingProject->approval_file) }}" target="_blank">ดูไฟล์เดิม</a></small>
-                                <button type="button" class="btn btn-sm btn-outline-danger mt-1" onclick="removeApprovalFile()">
+                                <small class="text-success d-block"><i class="fas fa-check-circle"></i> มีไฟล์แนบแล้ว: <a href="{{ asset('storage/'.$projectContract->contract_file_path) }}" target="_blank">ดูไฟล์เดิม</a></small>
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-1 btn-remove-file" data-field="remove_contract_file">
                                     <i class="fas fa-trash"></i> ลบไฟล์นี้
                                 </button>
                             </div>
-                            <input type="hidden" name="remove_approval_file" id="remove_approval_file" value="0">
+                            <input type="hidden" name="remove_contract_file" id="remove_contract_file" value="0">
                             @endif
                         </div>
                         <div class="col-md-6 form-group">
-                            <label>ลิ้งค์เอกสารอนุมัติโครงการ (ถ้ามี)</label>
-                            <input type="url" name="approval_link" class="form-control" value="{{ old('approval_link', $trainingProject->approval_link ?? '') }}" placeholder="https://...">
+                            <label>ลิ้งค์เอกสารประกอบ (ถ้ามี)</label>
+                            <input type="url" name="contract_file_link" class="form-control" value="{{ old('contract_file_link', $projectContract->contract_file_link ?? '') }}" placeholder="https://...">
                         </div>
 
                         <div class="col-md-12 form-group">
-                            <label>เกี่ยวข้องกับ SDGs <span class="text-danger">* เลือกได้มากกว่า 1</span></label>
+                            <label>เกี่ยวข้องกับ SDGs <span class="text-danger">*</span></label>
                             <select name="sdgs[]" class="form-control select2-multiple" multiple="multiple" required>
                                 @foreach($sdgs as $sdg)
-                                <option value="{{ $sdg->id }}" {{ (isset($selectedSdgs) && in_array($sdg->id, $selectedSdgs)) ? 'selected' : '' }}>
+                                <option value="{{ $sdg->id }}" {{ in_array($sdg->id, old('sdgs', $selectedSdgs)) ? 'selected' : '' }}>
                                     SDGs {{ $sdg->id }} : {{ $sdg->name_th }}
                                 </option>
                                 @endforeach
@@ -318,24 +326,22 @@
 
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
-                    <h5 class="card-title mb-0 d-inline-block mt-1"><i class="fas fa-users mr-2"></i> ส่วนที่ 2.2: กลุ่มเป้าหมาย</h5>
+                    <h5 class="card-title mb-0 d-inline-block mt-1"><i class="fas fa-users mr-2"></i> ส่วนที่ 2.2: กลุ่มผู้ว่าจ้าง/แหล่งทุน</h5>
                     <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-target">
-                        <i class="fas fa-plus"></i> เพิ่มกลุ่มเป้าหมาย
+                        <i class="fas fa-plus"></i> เพิ่มกลุ่มผู้ว่าจ้าง/แหล่งทุน
                     </button>
                 </div>
                 <div class="card-body bg-light p-0">
                     <table class="table table-bordered table-hover mb-0" id="table-target-group">
                         <thead class="bg-white">
                             <tr>
-                                <th width="45%">กลุ่มเป้าหมาย <span class="text-danger">*</span></th>
-                                <th width="30%">เชื้อชาติ <span class="text-danger">*</span></th>
-                                <th width="15%">จำนวน (คน) <span class="text-danger">*</span></th>
+                                <th width="55%">กลุ่มเป้าหมาย <span class="text-danger">*</span></th>
+                                <th width="35%">เชื้อชาติ <span class="text-danger">*</span></th>
                                 <th width="10%" class="text-center">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @if(isset($savedTargetGroups) && $savedTargetGroups->count() > 0)
-                            @foreach($savedTargetGroups as $stg)
+                            @forelse($savedTargetGroups as $stg)
                             <tr>
                                 <td>
                                     <select name="target_groups[customer_group_id][]" class="form-control select2-customer" required>
@@ -355,15 +361,11 @@
                                         @endforeach
                                     </select>
                                 </td>
-                                <td>
-                                    <input type="number" name="target_groups[count][]" class="form-control text-center" value="{{ $stg->total }}" min="1" required>
-                                </td>
                                 <td class="text-center align-middle">
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" {{ $loop->first ? 'disabled title="ต้องมีอย่างน้อย 1 แถว"' : '' }}><i class="fas fa-trash"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" {{ $loop->first ? 'disabled' : '' }}><i class="fas fa-trash"></i></button>
                                 </td>
                             </tr>
-                            @endforeach
-                            @else
+                            @empty
                             <tr>
                                 <td>
                                     <select name="target_groups[customer_group_id][]" class="form-control select2-customer" required>
@@ -381,14 +383,11 @@
                                         @endforeach
                                     </select>
                                 </td>
-                                <td>
-                                    <input type="number" name="target_groups[count][]" class="form-control text-center" min="1" required>
-                                </td>
                                 <td class="text-center align-middle">
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" disabled title="ต้องมีอย่างน้อย 1 แถว"><i class="fas fa-trash"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" disabled><i class="fas fa-trash"></i></button>
                                 </td>
                             </tr>
-                            @endif
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -413,8 +412,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @if(isset($savedCommittees) && $savedCommittees->count() > 0)
-                            @foreach($savedCommittees as $comm)
+                            @forelse($savedCommittees as $comm)
                             <tr class="committee-row">
                                 <td class="align-top">
                                     <select name="committees[member_type][]" class="form-control member-type-select">
@@ -428,7 +426,7 @@
                                             <option value="">-- ค้นหาชื่อบุคลากรในคณะ --</option>
                                             @foreach($staffs as $staff)
                                             <option value="{{ $staff->STAFF_ID }}" {{ $comm->personnel_id == $staff->STAFF_ID ? 'selected' : '' }}>
-                                                {{ $staff->TITLE_TH }}{{ $staff->NAME_TH }} {{ $staff->SURNAME_TH }}
+                                                {{ $staff->ACADEMIC_ABBR ?: $staff->TITLE_TH }}{{ $staff->NAME_TH }} {{ $staff->SURNAME_TH }}
                                             </option>
                                             @endforeach
                                         </select>
@@ -436,13 +434,11 @@
                                     <div class="external-zone" style="{{ $comm->member_type == '1' ? 'display: none;' : '' }}">
                                         <select name="committees[external_id][]" class="form-control select2-external" {{ $comm->member_type == '0' ? 'required' : '' }}>
                                             <option value="">-- ค้นหาชื่อบุคคลภายนอก --</option>
-                                            @if(isset($externals))
                                             @foreach($externals as $ext)
                                             <option value="{{ $ext->id }}" {{ $comm->external_id == $ext->id ? 'selected' : '' }}>
                                                 {{ $ext->firstname }} {{ $ext->lastname }}
                                             </option>
                                             @endforeach
-                                            @endif
                                         </select>
                                     </div>
                                 </td>
@@ -461,8 +457,7 @@
                                     <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" {{ $loop->first ? 'disabled' : '' }}><i class="fas fa-trash"></i></button>
                                 </td>
                             </tr>
-                            @endforeach
-                            @else
+                            @empty
                             <tr class="committee-row">
                                 <td class="align-top">
                                     <select name="committees[member_type][]" class="form-control member-type-select">
@@ -475,18 +470,16 @@
                                         <select name="committees[personnel_id][]" class="form-control select2-staff" required>
                                             <option value="">-- ค้นหาชื่อบุคลากรในคณะ --</option>
                                             @foreach($staffs as $staff)
-                                            <option value="{{ $staff->STAFF_ID }}">{{ $staff->TITLE_TH }}{{ $staff->NAME_TH }} {{ $staff->SURNAME_TH }}</option>
+                                            <option value="{{ $staff->STAFF_ID }}">{{ $staff->ACADEMIC_ABBR ?: $staff->TITLE_TH }}{{ $staff->NAME_TH }} {{ $staff->SURNAME_TH }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="external-zone" style="display: none;">
                                         <select name="committees[external_id][]" class="form-control select2-external">
                                             <option value="">-- ค้นหาชื่อบุคคลภายนอก --</option>
-                                            @if(isset($externals))
                                             @foreach($externals as $ext)
                                             <option value="{{ $ext->id }}">{{ $ext->firstname }} {{ $ext->lastname }}</option>
                                             @endforeach
-                                            @endif
                                         </select>
                                     </div>
                                 </td>
@@ -505,7 +498,7 @@
                                     <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" disabled><i class="fas fa-trash"></i></button>
                                 </td>
                             </tr>
-                            @endif
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -514,272 +507,24 @@
                     <button type="button" class="btn btn-secondary mr-2" onclick="$('a[href=\'#tab1\']').tab('show')">
                         <i class="fas fa-arrow-left"></i> ย้อนกลับ
                     </button>
-                    <button type="submit" id="btn-submit-tab2" class="btn btn-primary shadow-sm">
-                        <i class="fas fa-save mr-1"></i> บันทึกข้อมูลการจัดกิจกรรมและคณะทำงาน & ถัดไป <i class="fas fa-arrow-right ml-1"></i>
+                    <button type="submit" class="btn btn-primary shadow-sm">
+                        <i class="fas fa-save mr-1"></i> บันทึกข้อมูลเฉพาะและคณะทำงาน & ถัดไป <i class="fas fa-arrow-right ml-1"></i>
                     </button>
                 </div>
             </div>
         </form>
     </div>
 
-    <div class="tab-pane fade {{ $activeTab == 'tab3' ? 'show active' : '' }}" id="tab3" role="tabpanel">
-        <form action="{{ route('trainings.projects.update', $project->id) }}" method="POST" id="form-tab3-next">
+    <!-- แท็บที่ 3: งบประมาณ -->
+    <div class="tab-pane fade {{ ($activeTab ?? '') == 'tab3' ? 'show active' : '' }}" id="tab3" role="tabpanel">
+        <form action="{{ route('contracts.projects.update', $project->id) }}" method="POST" id="form-tab3-budget" novalidate>
             @csrf
             @method('PUT')
             <input type="hidden" name="step" value="3">
-        </form>
 
-        <div class="card shadow-sm border-0 mb-4 project-section">
-            <div class="card-header bg-custom-dark text-white py-2">
-                <h5 class="card-title mb-0 mt-1"><i class="fas fa-calendar-alt mr-2"></i> ส่วนที่ 3: กำหนดการจัดกิจกรรม</h5>
-            </div>
-            <div class="card-body bg-light">
-
-                <div id="schedule-summary-zone">
-                    <div class="d-flex justify-content-end mb-3">
-                        <button type="button" class="btn btn-success shadow-sm" id="btn-create-schedule">
-                            <i class="fas fa-plus-circle"></i> เพิ่มกิจกรรมใหม่
-                        </button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover bg-white" id="table-schedule-summary">
-                            <thead class="bg-dark text-white text-center">
-                                <tr>
-                                    <th width="5%">ลำดับ</th>
-                                    <th width="15%">วัน-เวลา</th>
-                                    <th width="25%">รายละเอียดกิจกรรม</th>
-                                    <th width="25%">วิทยากร / ผู้เกี่ยวข้อง</th>
-                                    <th width="20%">สถานที่จัดกิจกรรม</th>
-                                    <th width="10%">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if(isset($savedSchedules) && $savedSchedules->count() > 0)
-                                @foreach($savedSchedules as $index => $sch)
-                                @php
-                                $schMembers = \App\Models\Training\TrainingMember::where('training_schedule_id', $sch->id)->get();
-                                $schLocations = \App\Models\Training\TrainingSchedulesLocation::where('training_schedule_id', $sch->id)->get();
-                                $schDocs = \App\Models\Training\TrainingScheduleDocument::where('training_schedule_id', $sch->id)->get();
-                                @endphp
-                                <tr id="sum-tr-{{ $sch->id }}" class="sum-row" data-date="{{ \Carbon\Carbon::parse($sch->schedule_date)->format('Y-m-d') }}" data-time="{{ \Carbon\Carbon::parse($sch->start_time)->format('H:i') }}">
-                                    <td class="text-center align-middle font-weight-bold row-index">{{ $index + 1 }}</td>
-                                    <td class="text-center align-middle">
-                                        {{ \Carbon\Carbon::parse($sch->schedule_date)->addYears(543)->format('d/m/Y') }}<br>
-                                        <small class="text-muted">{{ \Carbon\Carbon::parse($sch->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($sch->end_time)->format('H:i') }} น.</small>
-                                    </td>
-                                    <td class="align-middle">
-                                        {!! nl2br(e($sch->topic)) !!}
-                                        @foreach($schDocs as $doc)
-                                        <div class="mt-1">
-                                            <small class="text-primary"><i class="fas fa-paperclip"></i> <a href="{{ asset('storage/'.$doc->file_path) }}" target="_blank"><u>{{ $doc->document_name }}</u></a></small>
-                                        </div>
-                                        @endforeach
-                                    </td>
-                                    <td class="align-middle">
-                                        @foreach($schMembers as $mem)
-                                        @php
-                                        $posName = $trainingPositions->where('id', $mem->training_position_id)->first()->name_th ?? '';
-                                        if($mem->member_type == '1') {
-                                        $staff = $staffs->where('STAFF_ID', $mem->personnel_id)->first();
-                                        $name = $staff ? $staff->TITLE_TH . $staff->NAME_TH . ' ' . $staff->SURNAME_TH : '';
-                                        } else {
-                                        $ext = $externals->where('id', $mem->external_id)->first();
-                                        $name = $ext ? $ext->firstname . ' ' . $ext->lastname : '';
-                                        }
-                                        @endphp
-                                        <div class="mb-1"><i class="fas fa-user-tie text-secondary mr-1"></i> <b>{{ $posName }}</b>: {{ $name }}</div>
-                                        @endforeach
-                                    </td>
-                                    <td class="align-middle">
-                                        @foreach($schLocations as $loc)
-                                        @php
-                                        $prov = $provinces->where('ProvinceNo', $loc->province_id)->first();
-                                        $provName = $prov ? ' ('.$prov->ProvinceNameThai.')' : '';
-                                        @endphp
-                                        <div class="mb-1"><i class="fas fa-map-marker-alt text-danger mr-1"></i> {{ $loc->location_name }}{{ $provName }}</div>
-                                        @endforeach
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <button type="button" class="btn btn-sm btn-outline-info btn-edit-schedule mb-1" data-id="{{ $sch->id }}" title="แก้ไขกิจกรรม"><i class="fas fa-edit"></i></button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-delete-schedule mb-1" data-id="{{ $sch->id }}" title="ลบกิจกรรม"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                @endforeach
-                                @else
-                                <tr id="empty-schedule-row">
-                                    <td colspan="6" class="text-center text-muted py-4">
-                                        <i class="fas fa-calendar-times fa-2x mb-2 text-light"></i><br>
-                                        ยังไม่มีข้อมูลกิจกรรม กรุณากดปุ่ม <b>"เพิ่มกิจกรรมใหม่"</b>
-                                    </td>
-                                </tr>
-                                @endif
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <form id="form-schedule" enctype="multipart/form-data" style="display: none;">
-                    <input type="hidden" name="training_project_id" value="{{ $project->id ?? '' }}">
-                    <input type="hidden" name="schedule_id" id="current_schedule_id" value="">
-
-                    <div id="schedule-editor-zone">
-                        <div class="card border-dark mb-0 shadow-sm">
-                            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                                <h6 class="m-0"><i class="fas fa-edit"></i> <span id="editor-title">กรอกข้อมูลกิจกรรม</span></h6>
-                            </div>
-                            <div class="card-body" id="editor-form-container"></div>
-                            <div class="card-footer text-right bg-white border-top">
-                                <button type="button" class="btn btn-secondary mr-2" id="btn-cancel-editor">ยกเลิก</button>
-                                <button type="submit" class="btn btn-success" id="btn-save-editor"><i class="fas fa-save"></i> บันทึกกิจกรรมนี้</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-
-                <div id="schedule-vault-zone" style="display: none;"></div>
-
-                <div id="template-schedule-block" style="display: none;">
-                    <div class="schedule-block" data-id="{ID}">
-                        <div class="row">
-                            <div class="col-md-3 form-group"><label>วันที่ทำกิจกรรม <span class="text-danger">*</span></label><input type="text" name="schedule_date" class="form-control date-input" required placeholder="วว/ดด/ปปปป"></div>
-                            <div class="col-md-2 form-group"><label>เวลาเริ่ม <span class="text-danger">*</span></label><input type="text" name="start_time" class="form-control time-start" required placeholder="00:00"></div>
-                            <div class="col-md-2 form-group"><label>เวลาสิ้นสุด <span class="text-danger">*</span></label><input type="text" name="end_time" class="form-control time-end" required placeholder="00:00"></div>
-                            <div class="col-md-5 form-group"><label>รายละเอียด / หัวข้อ <span class="text-danger">*</span></label><textarea name="topic" class="form-control topic-input" rows="2" required></textarea></div>
-                        </div>
-                        <hr class="mt-1 mb-3 border-secondary">
-                        <div class="row">
-                            <div class="col-md-6 border-right">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="font-weight-bold text-dark m-0"><i class="fas fa-user-tie"></i> วิทยากร / ผู้เกี่ยวข้อง</label>
-                                    <button type="button" class="btn btn-sm btn-outline-dark btn-add-member"><i class="fas fa-plus"></i> เพิ่ม</button>
-                                </div>
-                                <table class="table table-sm table-bordered member-table">
-                                    <thead class="bg-light text-center">
-                                        <tr>
-                                            <th width="30%">ประเภท</th>
-                                            <th width="40%">ชื่อ-สกุล</th>
-                                            <th width="20%">ตำแหน่ง</th>
-                                            <th width="10%"><i class="fas fa-cog"></i></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr class="member-row">
-                                            <td>
-                                                <select name="members[member_type][]" class="form-control form-control-sm schedule-member-type">
-                                                    <option value="1">บุคลากรในคณะ</option>
-                                                    <option value="0">บุคคลภายนอก</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <div class="internal-zone">
-                                                    <select name="members[personnel_id][]" class="form-control select2-staff-temp">
-                                                        <option value="">-- ค้นหา --</option>
-                                                        @if(isset($staffs)) @foreach($staffs as $staff) <option value="{{ $staff->STAFF_ID }}">{{ $staff->TITLE_TH }}{{ $staff->NAME_TH }} {{ $staff->SURNAME_TH }}</option> @endforeach @endif
-                                                    </select>
-                                                </div>
-                                                <div class="external-zone" style="display: none;">
-                                                    <select name="members[external_id][]" class="form-control select2-external-temp">
-                                                        <option value="">-- ค้นหา --</option>
-                                                        @if(isset($externals)) @foreach($externals as $ext) <option value="{{ $ext->id }}">{{ $ext->firstname }} {{ $ext->lastname }}</option> @endforeach @endif
-                                                    </select>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <select name="members[training_position_id][]" class="form-control form-control-sm">
-                                                    <option value="">-- เลือก --</option>
-                                                    @if(isset($trainingPositions)) @foreach($trainingPositions as $tpos) <option value="{{ $tpos->id }}">{{ $tpos->name_th }}</option> @endforeach @endif
-                                                </select>
-                                            </td>
-                                            <td class="text-center align-middle"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-subrow"><i class="fas fa-times"></i></button></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="font-weight-bold text-dark m-0"><i class="fas fa-map-marker-alt text-danger"></i> สถานที่จัดกิจกรรม</label>
-                                    <button type="button" class="btn btn-sm btn-outline-dark btn-add-location"><i class="fas fa-plus"></i> เพิ่ม</button>
-                                </div>
-                                <table class="table table-sm table-bordered location-table">
-                                    <thead class="bg-light text-center">
-                                        <tr>
-                                            <th width="35%">สถานที่/ห้อง</th>
-                                            <th width="25%">จังหวัด</th>
-                                            <th width="15%">Lat</th>
-                                            <th width="15%">Lng</th>
-                                            <th width="10%"><i class="fas fa-cog"></i></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr class="location-row">
-                                            <td><input type="text" name="locations[location_name][]" class="form-control form-control-sm location-name-input" placeholder="เช่น ห้อง A"></td>
-                                            <td>
-                                                <select name="locations[province_id][]" class="form-control form-control-sm select2-province-temp">
-                                                    <option value="">-- เลือก --</option>
-                                                    @if(isset($provinces)) @foreach($provinces as $prov) <option value="{{ $prov->ProvinceNo }}">{{ $prov->ProvinceNameThai }}</option> @endforeach @endif
-                                                </select>
-                                            </td>
-                                            <td><input type="text" name="locations[latitude][]" class="form-control form-control-sm" placeholder="ละติจูด"></td>
-                                            <td><input type="text" name="locations[longitude][]" class="form-control form-control-sm" placeholder="ลองติจูด"></td>
-                                            <td class="text-center align-middle"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-subrow"><i class="fas fa-times"></i></button></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <hr class="mt-3 mb-3 border-secondary">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="font-weight-bold m-0"><i class="fas fa-file-pdf"></i> เอกสารประกอบกิจกรรม (ถ้ามี)</label>
-                                    <button type="button" class="btn btn-sm btn-outline-dark btn-add-document"><i class="fas fa-plus"></i> เพิ่มไฟล์</button>
-                                </div>
-                                <table class="table table-sm table-bordered document-table">
-                                    <thead class="bg-light text-center">
-                                        <tr>
-                                            <th width="45%">ชื่อเอกสาร (เช่น สไลด์เช้า)</th>
-                                            <th width="45%">ไฟล์แนบ (PDF, Word, Excel, PPT)</th>
-                                            <th width="10%"><i class="fas fa-cog"></i></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr class="document-row">
-                                            <td>
-                                                <input type="hidden" name="documents[old_id][]" class="doc-old-id" value="">
-                                                <input type="text" name="documents[document_name][]" class="form-control form-control-sm doc-name-input" placeholder="ระบุชื่อเอกสาร">
-                                            </td>
-                                            <td><input type="file" name="documents[file][]" class="form-control-file form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"></td>
-                                            <td class="text-center align-middle"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-subrow"><i class="fas fa-times"></i></button></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer bg-white text-right py-3 border-top">
-                <button type="button" class="btn btn-secondary mr-2" onclick="$('a[href=\'#tab2\']').tab('show')">
-                    <i class="fas fa-arrow-left"></i> ย้อนกลับ
-                </button>
-                <button type="button" class="btn btn-primary shadow-sm" id="btn-submit-tab3">
-                    ตรวจสอบข้อมูลเรียบร้อย & ถัดไป <i class="fas fa-arrow-right ml-1"></i>
-                </button>
-            </div>
-
-        </div>
-    </div>
-
-    <div class="tab-pane fade {{ ($activeTab ?? '') == 'tab4' ? 'show active' : '' }}" id="tab4" role="tabpanel">
-        <form action="{{ route('trainings.projects.update', $project->id) }}" method="POST" id="form-tab4-budget" novalidate>
-            @csrf
-            @method('PUT')
-            <input type="hidden" name="step" value="4">
-
-            <!-- 4.1: แผนรายรับ -->
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-money-bill-wave mr-2"></i> ส่วนที่ 4.1: แผนรายรับ</h5>
+                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-money-bill-wave mr-2"></i> ส่วนที่ 3.1: แผนรายรับ</h5>
                     <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-income">
                         <i class="fas fa-plus-circle"></i> เพิ่มแถวรายรับ
                     </button>
@@ -872,7 +617,7 @@
                                 <tr>
                                     <td colspan="5" class="text-right font-weight-bold p-3">รวมเป็นเงินทั้งสิ้น (บาท)</td>
                                     <td>
-                                        <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-summary" id="income-grand-total" placeholder="0.00" value="{{ isset($savedIncomes) ? number_format($savedIncomes->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
+                                        <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-number-3-1 format-number-budget" id="income-grand-total" placeholder="0.00" value="{{ isset($savedIncomes) ? number_format($savedIncomes->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
                                     </td>
                                     <td></td>
                                 </tr>
@@ -882,10 +627,9 @@
                 </div>
             </div>
 
-            <!-- 4.2: แผนรายจ่าย (ค่าดำเนินการ) -->
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> ส่วนที่ 4.2: แผนรายจ่าย (ค่าดำเนินการ)</h5>
+                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> ส่วนที่ 3.2: แผนรายจ่าย (ค่าดำเนินการ)</h5>
                     <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-expense">
                         <i class="fas fa-plus-circle"></i> เพิ่มแถวรายจ่าย
                     </button>
@@ -901,9 +645,9 @@
                                     <th width="10%">ราคาต่อหน่วย (บาท)</th>
                                     <th width="8%">ตัวคูณ 1</th>
                                     <th width="8%">ตัวคูณ 2</th>
-                                    <th width="10%">หน่วยนับ</th>
+                                    <th width="10%">หน่วยนับ (เช่น มื้อ, คน)</th>
                                     <th width="12%">จำนวนเงินรวม (บาท)</th>
-                                    <th width="8%">ถัวเฉลี่ยได้?</th>
+                                    <th width="8%">ถัวเฉลี่ยได้? <span class="text-info" title="ระบบ Backend จะบังคับค่านี้อัตโนมัติตามหมวดหมู่"><i class="fas fa-info-circle"></i></span></th>
                                     <th width="5%">จัดการ</th>
                                 </tr>
                             </thead>
@@ -916,26 +660,28 @@
                                             @foreach($expenseCategoriesGrouped as $mainCat)
                                             <optgroup label="📌 {{ $mainCat->name_th }}">
                                                 @foreach($mainCat->subCategories as $subCat)
-                                                <option value="{{ $subCat->id }}">{{ $subCat->name_th }}</option>
+                                                <option value="{{ $subCat->id }}" data-is-service-fee="{{ $subCat->is_service_fee }}">
+                                                    {{ $subCat->name_th }}
+                                                </option>
                                                 @endforeach
                                             </optgroup>
                                             @endforeach
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[description][]" class="form-control" placeholder="เช่น ค่าอาหารว่าง">
+                                        <input type="text" name="expenses[description][]" class="form-control" placeholder="เช่น ค่าอาหารว่าง (50 คน x 3 วัน)">
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[cost_per_unit][]" class="form-control form-control-sm text-right expense-cost format-number-budget" placeholder="0.00">
+                                        <input type="text" name="expenses[cost_per_unit][]" class="form-control form-control-sm text-right expense-cost format-number-budget" placeholder="0.00" step="0.01" min="0">
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[factor_1][]" class="form-control form-control-sm text-center expense-factor1 format-number-budget" placeholder="จำนวน" min="1">
+                                        <input type="text" name="expenses[factor_1][]" class="form-control form-control-sm text-center expense-factor1 format-number-budget format-expense" placeholder="จำนวนคน" min="1">
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[factor_2][]" class="form-control form-control-sm text-center expense-factor2 format-number-budget" placeholder="มื้อ/วัน" min="1">
+                                        <input type="text" name="expenses[factor_2][]" class="form-control form-control-sm text-center expense-factor2 format-number-budget format-expense" placeholder="จำนวนวัน/มื้อ" min="1">
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[uom][]" class="form-control form-control-sm text-center" placeholder="หน่วย">
+                                        <input type="text" name="expenses[uom][]" class="form-control form-control-sm text-center" placeholder="เช่น คน/มื้อ">
                                     </td>
                                     <td>
                                         <input type="text" name="expenses[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold expense-total-amount format-number-budget" placeholder="0.00" readonly style="background-color: #f1f3f5;">
@@ -961,7 +707,7 @@
                                             @foreach($expenseCategoriesGrouped as $mainCat)
                                             <optgroup label="📌 {{ $mainCat->name_th }}">
                                                 @foreach($mainCat->subCategories as $subCat)
-                                                <option value="{{ $subCat->id }}" {{ $expense->category_id == $subCat->id ? 'selected' : '' }}>
+                                                <option value="{{ $subCat->id }}" data-is-service-fee="{{ $subCat->is_service_fee }}" {{ $expense->category_id == $subCat->id ? 'selected' : '' }}>
                                                     {{ $subCat->name_th }}
                                                 </option>
                                                 @endforeach
@@ -973,13 +719,13 @@
                                         <input type="text" name="expenses[description][]" class="form-control" value="{{ $expense->description }}">
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[cost_per_unit][]" class="form-control form-control-sm text-right expense-cost format-number-budget" value="{{ number_format($expense->cost_per_unit, 2) }}" required>
+                                        <input type="text" name="expenses[cost_per_unit][]" class="form-control form-control-sm text-right expense-cost format-number-budget" value="{{ number_format($expense->cost_per_unit, 2) }}" step="0.01" min="0" required>
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[factor_1][]" class="form-control form-control-sm text-center expense-factor1 format-number-budget" value="{{ $expense->factor_1 }}">
+                                        <input type="text" name="expenses[factor_1][]" class="form-control form-control-sm text-center expense-factor1 format-number-budget format-expense" value="{{ $expense->factor_1 }}">
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[factor_2][]" class="form-control form-control-sm text-center expense-factor2 format-number-budget" value="{{ $expense->factor_2 }}">
+                                        <input type="text" name="expenses[factor_2][]" class="form-control form-control-sm text-center expense-factor2 format-number-budget format-expense" value="{{ $expense->factor_2 }}">
                                     </td>
                                     <td>
                                         <input type="text" name="expenses[uom][]" class="form-control form-control-sm text-center" value="{{ $expense->uom }}">
@@ -1005,7 +751,7 @@
                                 <tr>
                                     <td colspan="7" class="text-right font-weight-bold p-3">รวมเป็นเงินทั้งสิ้น (บาท)</td>
                                     <td>
-                                        <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-summary" id="expense-grand-total" placeholder="0.00" value="{{ isset($savedExpenses) ? number_format($savedExpenses->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
+                                        <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-expense" id="expense-grand-total" placeholder="0.00" value="0.00" readonly style="background-color: #f1f3f5;">
                                     </td>
                                     <td></td>
                                     <td></td>
@@ -1016,10 +762,9 @@
                 </div>
             </div>
 
-            <!-- 4.3: แผนรายจ่าย (ค่าตอบแทน) -->
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> ส่วนที่ 4.3: แผนรายจ่าย (ค่าตอบแทน)</h5>
+                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> ส่วนที่ 3.3: แผนรายจ่าย (ค่าตอบแทน)</h5>
                     <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-remuneration">
                         <i class="fas fa-plus-circle"></i> เพิ่มแถวรายจ่าย
                     </button>
@@ -1035,9 +780,9 @@
                                     <th width="10%">ราคาต่อหน่วย (บาท)</th>
                                     <th width="8%">ตัวคูณ 1</th>
                                     <th width="8%">ตัวคูณ 2</th>
-                                    <th width="10%">หน่วยนับ</th>
+                                    <th width="10%">หน่วยนับ (เช่น มื้อ, คน)</th>
                                     <th width="12%">จำนวนเงินรวม (บาท)</th>
-                                    <th width="8%">ถัวเฉลี่ยได้?</th>
+                                    <th width="8%">ถัวเฉลี่ยได้? <span class="text-info" title="ระบบ Backend จะบังคับค่านี้อัตโนมัติตามหมวดหมู่"><i class="fas fa-info-circle"></i></span></th>
                                     <th width="5%">จัดการ</th>
                                 </tr>
                             </thead>
@@ -1140,7 +885,7 @@
                                 <tr>
                                     <td colspan="7" class="text-right font-weight-bold p-3">รวมเป็นเงินทั้งสิ้น (บาท)</td>
                                     <td>
-                                        <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-summary" id="remuneration-grand-total" placeholder="0.00" value="{{ isset($savedRemunerations) ? number_format($savedRemunerations->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
+                                        <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-remuneration" id="remuneration-grand-total" placeholder="0.00" value="{{ isset($savedRemunerations) ? number_format($savedRemunerations->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
                                     </td>
                                     <td></td>
                                     <td></td>
@@ -1151,10 +896,9 @@
                 </div>
             </div>
 
-            <!-- 4.4: สรุปจัดสรรค่าธรรมเนียม -->
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-calculator mr-2"></i> ส่วนที่ 4.4: ข้อมูลลงงบประมาณโครงการ (สรุปค่าธรรมเนียม)</h5>
+                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-calculator mr-2"></i> ส่วนที่ 3.4: ข้อมูลลงงบประมาณโครงการ (สรุปค่าธรรมเนียม)</h5>
                 </div>
                 <div class="card-body bg-light">
                     <div class="row">
@@ -1162,21 +906,21 @@
                             <div class="form-group row align-items-center">
                                 <label class="col-sm-5 col-form-label text-right">งบประมาณทั้งโครงการ <span class="text-danger">*</span></label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control text-right font-weight-bold text-dark format-summary" name="total_budget_summary" value="{{ isset($savedBudget->total_budget_summary) ? number_format($savedBudget->total_budget_summary, 2) : '0.00' }}" readonly style="background-color: #f8f9fa;">
+                                    <input type="text" class="form-control text-right font-weight-bold text-dark format-summary" class="form-control text-right font-weight-bold text-dark" name="total_budget_summary" value="0.00" readonly style="background-color: #f8f9fa;">
                                 </div>
                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                             </div>
                             <div class="form-group row align-items-center">
                                 <label class="col-sm-5 col-form-label text-right">เงินค่าล่วงหน้าทั้งหมด</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control text-right format-summary" name="total_advance_amount" value="{{ isset($savedBudget->total_advance_amount) ? number_format($savedBudget->total_advance_amount, 2) : '0.00' }}">
+                                    <input type="text" class="form-control text-right format-summary" class="form-control text-right" name="total_advance_amount" value="0.00" readonly style="background-color: #f8f9fa;">
                                 </div>
                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                             </div>
                             <div class="form-group row align-items-center">
                                 <label class="col-sm-5 col-form-label text-right text-danger">ค่าปรับรวมทั้งหมด</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control text-right text-danger bg-light format-summary" name="total_fine_amount" value="{{ isset($savedBudget->total_fine_amount) ? number_format($savedBudget->total_fine_amount, 2) : '0.00' }}">
+                                    <input type="text" class="form-control text-right text-danger bg-light format-summary" class="form-control text-right text-danger bg-light" name="total_fine_amount" value="0.00" readonly style="background-color: #f8f9fa;">
                                 </div>
                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                             </div>
@@ -1205,19 +949,19 @@
                                             </div>
                                             <div class="form-group row mb-0">
                                                 <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมบริการวิชาการ</label>
-                                                <div class="col-sm-5"><input type="number" class="form-control form-control-sm text-right" name="service_fee_percent" value="{{ isset($savedBudget->service_fee_percent) ? $savedBudget->service_fee_percent : '0.00' }}" step="0.01"></div>
+                                                <div class="col-sm-5"><input type="number" class="form-control form-control-sm text-right" name="service_fee_percent" value="0.00" step="0.01"></div>
                                                 <label class="col-sm-2 col-form-label px-0">%</label>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group row mb-2">
                                                 <label class="col-sm-5 col-form-label text-right">ค่าดำเนินการ</label>
-                                                <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right format-summary" name="operation_fee" value="{{ isset($savedExpenses) ? number_format($savedExpenses->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f8f9fa;"></div>
+                                                <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right format-summary" class="form-control form-control-sm text-right" name="operation_fee" value="0.00" step="0.01"></div>
                                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                                             </div>
                                             <div class="form-group row mb-0">
                                                 <label class="col-sm-5 col-form-label text-right">คิดเป็น</label>
-                                                <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="service_fee_amount" value="{{ isset($savedBudget->service_fee_amount) ? number_format($savedBudget->service_fee_amount, 2) : '0.00' }}" readonly></div>
+                                                <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="service_fee_amount" value="0.00" readonly></div>
                                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                                             </div>
                                         </div>
@@ -1233,21 +977,21 @@
                                             <div class="form-group row mb-2">
                                                 <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมมหาวิทยาลัย</label>
                                                 <div class="col-sm-5">
-                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_uni_percent" value="{{ isset($savedBudget->alloc_uni_percent) ? $savedBudget->alloc_uni_percent : '1.50' }}" step="0.01">
+                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_uni_percent" value="{{ old('alloc_uni_percent', $project->alloc_uni_percent ?? '1.50') }}" step="0.01">
                                                 </div>
                                                 <label class="col-sm-2 col-form-label px-0">%</label>
                                             </div>
                                             <div class="form-group row mb-2">
                                                 <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมวิทยาเขต</label>
                                                 <div class="col-sm-5">
-                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_campus_percent" value="{{ isset($savedBudget->alloc_campus_percent) ? $savedBudget->alloc_campus_percent : '2.50' }}" step="0.01">
+                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_campus_percent" value="{{ old('alloc_campus_percent', $project->alloc_campus_percent ?? '2.50') }}" step="0.01">
                                                 </div>
                                                 <label class="col-sm-2 col-form-label px-0">%</label>
                                             </div>
                                             <div class="form-group row mb-0">
                                                 <label class="col-sm-5 col-form-label text-right font-weight-bold">ค่าธรรมเนียมคณะ/หน่วยงาน</label>
                                                 <div class="col-sm-5">
-                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_dept_percent" value="{{ isset($savedBudget->alloc_dept_percent) ? $savedBudget->alloc_dept_percent : '11.00' }}" step="0.01">
+                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_dept_percent" value="{{ old('alloc_dept_percent', $project->alloc_dept_percent ?? '11.00') }}" step="0.01">
                                                 </div>
                                                 <label class="col-sm-2 col-form-label px-0">%</label>
                                             </div>
@@ -1257,21 +1001,21 @@
                                             <div class="form-group row mb-2">
                                                 <label class="col-sm-5 col-form-label text-right">คิดเป็น</label>
                                                 <div class="col-sm-5">
-                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_uni_amount" value="{{ isset($savedBudget->alloc_uni_amount) ? number_format($savedBudget->alloc_uni_amount, 2) : '0.00' }}" readonly>
+                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_uni_amount" value="{{ old('alloc_uni_amount', number_format($project->alloc_uni_amount ?? 0, 2)) }}" readonly>
                                                 </div>
                                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                                             </div>
                                             <div class="form-group row mb-2">
                                                 <label class="col-sm-5 col-form-label text-right">คิดเป็น</label>
                                                 <div class="col-sm-5">
-                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_campus_amount" value="{{ isset($savedBudget->alloc_campus_amount) ? number_format($savedBudget->alloc_campus_amount, 2) : '0.00' }}" readonly>
+                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_campus_amount" value="{{ old('alloc_campus_amount', number_format($project->alloc_campus_amount ?? 0, 2)) }}" readonly>
                                                 </div>
                                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                                             </div>
                                             <div class="form-group row mb-0">
                                                 <label class="col-sm-5 col-form-label text-right font-weight-bold">คิดเป็น</label>
                                                 <div class="col-sm-5">
-                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_dept_amount" value="{{ isset($savedBudget->alloc_dept_amount) ? number_format($savedBudget->alloc_dept_amount, 2) : '0.00' }}" readonly>
+                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_dept_amount" value="{{ old('alloc_dept_amount', number_format($project->alloc_dept_amount ?? 0, 2)) }}" readonly>
                                                 </div>
                                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                                             </div>
@@ -1281,6 +1025,7 @@
                                     <div class="row mt-3">
                                         <div class="col-12">
                                             <div class="border border-info rounded p-3" style="background-color: #f8fbff;">
+
                                                 <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-info">
                                                     <span class="badge badge-info mr-2" style="font-size: 0.85rem;">จัดสรรย่อย</span>
                                                     <strong class="text-info" style="font-size: 0.95rem;">สัดส่วนย่อยภายในคณะ/หน่วยงาน (คำนวณอัตโนมัติ)</strong>
@@ -1291,21 +1036,21 @@
                                                         <div class="form-group row mb-2">
                                                             <label class="col-sm-5 col-form-label text-right text-info font-weight-bold">กองทุนวิจัย</label>
                                                             <div class="col-sm-5">
-                                                                <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="fund_research_percent" value="{{ isset($savedBudget->fund_research_percent) ? $savedBudget->fund_research_percent : '0.550' }}" step="0.001" readonly>
+                                                                <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="fund_research_percent" value="{{ old('fund_research_percent', $project->fund_research_percent ?? '0.550') }}" step="0.001" readonly>
                                                             </div>
                                                             <label class="col-sm-2 col-form-label px-0 text-info">%</label>
                                                         </div>
                                                         <div class="form-group row mb-2">
                                                             <label class="col-sm-5 col-form-label text-right text-info font-weight-bold">คณะ</label>
                                                             <div class="col-sm-5">
-                                                                <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="faculty_percent" value="{{ isset($savedBudget->faculty_percent) ? $savedBudget->faculty_percent : '5.225' }}" step="0.001" readonly>
+                                                                <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="faculty_percent" value="{{ old('faculty_percent', $project->faculty_percent ?? '5.225') }}" step="0.001" readonly>
                                                             </div>
                                                             <label class="col-sm-2 col-form-label px-0 text-info">%</label>
                                                         </div>
                                                         <div class="form-group row mb-0">
                                                             <label class="col-sm-5 col-form-label text-right text-info font-weight-bold">ศูนย์</label>
                                                             <div class="col-sm-5">
-                                                                <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="center_percent" value="{{ isset($savedBudget->center_percent) ? $savedBudget->center_percent : '5.225' }}" step="0.001" readonly>
+                                                                <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="center_percent" value="{{ old('center_percent', $project->center_percent ?? '5.225') }}" step="0.001" readonly>
                                                             </div>
                                                             <label class="col-sm-2 col-form-label px-0 text-info">%</label>
                                                         </div>
@@ -1315,21 +1060,21 @@
                                                         <div class="form-group row mb-2">
                                                             <label class="col-sm-5 col-form-label text-right text-info">คิดเป็น</label>
                                                             <div class="col-sm-5">
-                                                                <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="fund_research_amount" value="{{ isset($savedBudget->fund_research_amount) ? number_format($savedBudget->fund_research_amount, 2) : '0.00' }}" readonly>
+                                                                <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="fund_research_amount" value="{{ old('fund_research_amount', number_format($project->fund_research_amount ?? 0, 2)) }}" readonly>
                                                             </div>
                                                             <label class="col-sm-2 col-form-label px-0 text-info">บาท</label>
                                                         </div>
                                                         <div class="form-group row mb-2">
                                                             <label class="col-sm-5 col-form-label text-right text-info">คิดเป็น</label>
                                                             <div class="col-sm-5">
-                                                                <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="faculty_amount" value="{{ isset($savedBudget->faculty_amount) ? number_format($savedBudget->faculty_amount, 2) : '0.00' }}" readonly>
+                                                                <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="faculty_amount" value="{{ old('faculty_amount', number_format($project->faculty_amount ?? 0, 2)) }}" readonly>
                                                             </div>
                                                             <label class="col-sm-2 col-form-label px-0 text-info">บาท</label>
                                                         </div>
                                                         <div class="form-group row mb-0">
                                                             <label class="col-sm-5 col-form-label text-right text-info">คิดเป็น</label>
                                                             <div class="col-sm-5">
-                                                                <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="center_amount" value="{{ isset($savedBudget->center_amount) ? number_format($savedBudget->center_amount, 2) : '0.00' }}" readonly>
+                                                                <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="center_amount" value="{{ old('center_amount', number_format($project->center_amount ?? 0, 2)) }}" readonly>
                                                             </div>
                                                             <label class="col-sm-2 col-form-label px-0 text-info">บาท</label>
                                                         </div>
@@ -1340,33 +1085,175 @@
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="card shadow-sm border-0 mb-4 project-section">
+                <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
+                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-list-ol mr-2"></i> ส่วนที่ 3.5: ข้อมูลลงงวดงาน</h5>
+                    <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-installment">
+                        <i class="fas fa-plus-circle mr-1"></i> เพิ่มงวดงาน
+                    </button>
+                </div>
+                <div class="card-body bg-light p-3">
+                    <div id="installments-container">
+                        @if(isset($savedInstallments) && count($savedInstallments) > 0)
+                        @foreach($savedInstallments as $index => $inst)
+                        <div class="installment-block p-4 mb-3 bg-white border rounded shadow-sm">
+                            <div class="row form-group align-items-center mb-3 border-bottom pb-2">
+                                <div class="col-md-6 d-flex align-items-center">
+                                    <h6 class="mb-0 text-primary font-weight-bold"><i class="fas fa-tasks mr-2"></i>งวดที่ <span class="installment-number-label ml-1">{{ $inst->installment_no }}</span></h6>
+                                    <input type="hidden" name="installments[installment_no][]" class="installment-no-input" value="{{ $inst->installment_no }}">
+                                </div>
+                                <div class="col-md-6 d-flex align-items-center justify-content-end">
+                                    <label class="mb-0 mr-2 text-muted">จำนวนวัน</label>
+                                    <input type="number" name="installments[duration_days][]" class="form-control form-control-sm text-center mx-2 install-duration" style="width: 100px;" min="0" value="{{ $inst->duration_days }}" readonly>
+                                    <label class="mb-0 text-muted">วัน</label>
+                                </div>
+                            </div>
+                            <div class="row form-group align-items-center mb-3">
+                                <div class="col-md-6 d-flex align-items-center">
+                                    <label class="col-sm-3 mb-0 text-right pr-2">วันที่เริ่มงาน <span class="text-danger">*</span></label>
+                                    <div class="col-sm-6 pl-0">
+                                        <input type="text" name="installments[start_date][]" class="form-control form-control-sm start-date bg-white" placeholder="--/--/----" value="{{ $inst->start_date_show ?? '' }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-center">
+                                    <label class="col-sm-3 mb-0 text-right pr-2">วันที่สิ้นสุด <span class="text-danger">*</span></label>
+                                    <div class="col-sm-6 pl-0">
+                                        <input type="text" name="installments[end_date][]" class="form-control form-control-sm end-date bg-white" placeholder="--/--/----" value="{{ $inst->end_date_show ?? '' }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row form-group align-items-center mb-2">
+                                <div class="col-md-6 d-flex align-items-center">
+                                    <label class="col-sm-4 mb-0 text-right pr-2">จำนวนเงินค่าจ้าง <span class="text-danger">*</span></label>
+                                    <input type="text" name="installments[amount][]" class="form-control form-control-sm text-right install-amount format-number-budget text-primary font-weight-bold" required value="{{ number_format($inst->amount, 2) }}">
+                                    <label class="col-sm-2 mb-0 px-0">บาท</label>
+                                </div>
+                            </div>
 
+                            <div class="row form-group align-items-center mb-4">
+                                <div class="col-md-6 d-flex align-items-center">
+                                    <label class="col-sm-4 mb-0 text-right pr-2">หักเงินค่าประกันผลงาน</label>
+                                    <div class="col-sm-6 pl-0">
+                                        <input type="number" name="installments[guarantee_pct][]" class="form-control form-control-sm text-right install-guar-pct" step="0.01" min="0" value="{{ $inst->guarantee_pct }}">
+                                    </div>
+                                    <label class="col-sm-2 mb-0 px-0">%</label>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-center">
+                                    <label class="col-sm-3 mb-0 text-right pr-2">คิดเป็น</label>
+                                    <input type="text" name="installments[guarantee_amt][]" class="form-control form-control-sm text-right bg-light install-guar-amt" readonly value="{{ number_format($inst->guarantee_amt, 2) }}">
+                                    <label class="col-sm-2 mb-0 px-0">บาท</label>
+                                </div>
+                            </div>
+                            <div class="row align-items-center bg-light p-2 mx-0 rounded">
+                                <div class="col-md-12 d-flex align-items-center justify-content-end">
+                                    <label class="mb-0 font-weight-bold mr-3 text-dark">คงเหลือค่าจ้างประจำงวด:</label>
+                                    <span class="font-weight-bold text-success install-net-text mr-3" style="font-size: 1.2em;">{{ number_format($inst->net_amount, 2) }}</span>
+                                    <input type="hidden" name="installments[net_amount][]" class="install-net-input" value="{{ $inst->net_amount }}">
+                                    <label class="mb-0 font-weight-bold mr-4 text-dark">บาท</label>
+
+                                    <button type="button" class="btn btn-sm btn-outline-danger mr-2 font-weight-bold btn-remove-installment">
+                                        <i class="fas fa-trash-alt"></i> ยกเลิก/ลบ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                        @endif
+
+                    </div>
+                </div>
+
+                <div class="installment-template d-none">
+                    <div class="installment-block p-4 mb-3 bg-white border rounded shadow-sm">
+
+                        <div class="row form-group align-items-center mb-3 border-bottom pb-2">
+                            <div class="col-md-6 d-flex align-items-center">
+                                <h6 class="mb-0 text-primary font-weight-bold"><i class="fas fa-tasks mr-2"></i>งวดที่ <span class="installment-number-label ml-1">1</span></h6>
+                                <input type="hidden" name="installments[installment_no][]" class="installment-no-input" value="1" disabled>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center justify-content-end">
+                                <label class="mb-0 mr-2 text-muted">จำนวนวัน</label>
+                                <input type="number" name="installments[duration_days][]" class="form-control form-control-sm text-center mx-2 install-duration bg-light" style="width: 100px;" min="0" readonly>
+                                <label class="mb-0 text-muted">วัน</label>
+                            </div>
+                        </div>
+                        <div class="row form-group align-items-center mb-3">
+                            <div class="col-md-6 d-flex align-items-center">
+                                <label class="col-sm-3 mb-0 text-right pr-2">วันที่เริ่มงาน <span class="text-danger">*</span></label>
+                                <div class="col-sm-6 pl-0">
+                                    <input type="text" name="installments[start_date][]" class="form-control form-control-sm start-date bg-white" placeholder="--/--/----" required disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center">
+                                <label class="col-sm-3 mb-0 text-right pr-2">วันที่สิ้นสุด <span class="text-danger">*</span></label>
+                                <div class="col-sm-6 pl-0">
+                                    <input type="text" name="installments[end_date][]" class="form-control form-control-sm end-date bg-white" placeholder="--/--/----" required disabled>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row form-group align-items-center mb-2">
+                            <div class="col-md-6 d-flex align-items-center">
+                                <label class="col-sm-4 mb-0 text-right pr-2">จำนวนเงินค่าจ้าง <span class="text-danger">*</span></label>
+                                <input type="text" name="installments[amount][]" class="form-control form-control-sm text-right install-amount format-number-budget text-primary font-weight-bold" required disabled>
+                                <label class="col-sm-2 mb-0 px-0">บาท</label>
+                            </div>
+                        </div>
+
+                        <div class="row form-group align-items-center mb-4">
+                            <div class="col-md-6 d-flex align-items-center">
+                                <label class="col-sm-4 mb-0 text-right pr-2">หักเงินค่าประกันผลงาน</label>
+                                <div class="col-sm-6 pl-0"><input type="number" name="installments[guarantee_pct][]" class="form-control form-control-sm text-right install-guar-pct" step="0.01" min="0" disabled></div>
+                                <label class="col-sm-2 mb-0 px-0">%</label>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center">
+                                <label class="col-sm-3 mb-0 text-right pr-2">คิดเป็น</label>
+                                <input type="text" name="installments[guarantee_amt][]" class="form-control form-control-sm text-right bg-light install-guar-amt" disabled readonly>
+                                <label class="col-sm-2 mb-0 px-0">บาท</label>
+                            </div>
+                        </div>
+                        <div class="row align-items-center bg-light p-2 mx-0 rounded">
+                            <div class="col-md-12 d-flex align-items-center justify-content-end">
+                                <label class="mb-0 font-weight-bold mr-3 text-dark">คงเหลือค่าจ้างประจำงวด:</label>
+                                <span class="font-weight-bold text-success install-net-text mr-3" style="font-size: 1.2em;">0.00</span>
+                                <input type="hidden" name="installments[net_amount][]" class="install-net-input" value="0" disabled>
+                                <label class="mb-0 font-weight-bold mr-4 text-dark">บาท</label>
+
+                                <button type="button" class="btn btn-sm btn-outline-danger mr-2 font-weight-bold btn-remove-installment">
+                                    <i class="fas fa-trash-alt"></i> ยกเลิก/ลบ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="card-footer bg-white text-right py-3 border-top">
-                <button type="button" class="btn btn-secondary mr-2" onclick="$('.wizard-nav a[href=\'#tab3\']').tab('show')">
+                <button type="button" class="btn btn-secondary mr-2" onclick="$('.wizard-nav a[href=\'#tab2\']').tab('show')">
                     <i class="fas fa-arrow-left"></i> ย้อนกลับ
                 </button>
-                <button type="button" class="btn btn-primary shadow-sm" id="btn-submit-tab4">
+                <button type="submit" class="btn btn-primary shadow-sm" id="btn-submit-tab3">
                     <i class="fas fa-save mr-1"></i> บันทึกข้อมูลงบประมาณ & ถัดไป <i class="fas fa-arrow-right ml-1"></i>
                 </button>
             </div>
         </form>
     </div>
 
-    <div class="tab-pane fade {{ ($activeTab ?? '') == 'tab5' ? 'show active' : '' }}" id="tab5" role="tabpanel">
+    <!-- แท็บที่ 4: ผลลัพธ์ & ประเมิน -->
+    <div class="tab-pane fade {{ ($activeTab ?? '') == 'tab4' ? 'show active' : '' }}" id="tab4" role="tabpanel">
 
         @if(isset($project->overall_status) && $project->overall_status >= 600)
-        <form action="{{ route('trainings.projects.update', $project->id) }}" method="POST" id="form-tab5-evaluation">
+        <form action="{{ route('contracts.projects.update', $project->id) }}" method="POST" id="form-tab4-evaluation">
             @csrf
             @method('PUT')
-            <input type="hidden" name="step" value="5">
+            <input type="hidden" name="step" value="4">
 
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-smile mr-2"></i> ส่วนที่ 5.1: ประเมินความพึงพอใจ</h5>
+                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-smile mr-2"></i> ส่วนที่ 4.1: ประเมินความพึงพอใจ</h5>
                 </div>
                 <div class="card-body bg-light">
                     <div class="row">
@@ -1394,8 +1281,8 @@
                                     <label>ระดับ</label>
                                     <select name="satisfaction_level" class="form-control">
                                         <option value="">-- เลือก --</option>
-                                        <option value="5" {{ (old('satisfaction_level', $projectEvaluation->satisfaction_level ?? '') == '5') ? 'selected' : '' }}>มากที่สุด</option>
-                                        <option value="4" {{ (old('satisfaction_level', $projectEvaluation->satisfaction_level ?? '') == '4') ? 'selected' : '' }}>มาก</option>
+                                        <option value="4" {{ (old('satisfaction_level', $projectEvaluation->satisfaction_level ?? '') == '5') ? 'selected' : '' }}>มากที่สุด</option>
+                                        <option value="3" {{ (old('satisfaction_level', $projectEvaluation->satisfaction_level ?? '') == '4') ? 'selected' : '' }}>มาก</option>
                                         <option value="3" {{ (old('satisfaction_level', $projectEvaluation->satisfaction_level ?? '') == '3') ? 'selected' : '' }}>ปานกลาง</option>
                                         <option value="2" {{ (old('satisfaction_level', $projectEvaluation->satisfaction_level ?? '') == '2') ? 'selected' : '' }}>น้อย</option>
                                         <option value="1" {{ (old('satisfaction_level', $projectEvaluation->satisfaction_level ?? '') == '1') ? 'selected' : '' }}>น้อยที่สุด</option>
@@ -1430,8 +1317,8 @@
                                         <option value="1" {{ (old('dissatisfaction_level', $projectEvaluation->dissatisfaction_level ?? '') == '1') ? 'selected' : '' }}>น้อยที่สุด</option>
                                         <option value="2" {{ (old('dissatisfaction_level', $projectEvaluation->dissatisfaction_level ?? '') == '2') ? 'selected' : '' }}>น้อย</option>
                                         <option value="3" {{ (old('dissatisfaction_level', $projectEvaluation->dissatisfaction_level ?? '') == '3') ? 'selected' : '' }}>ปานกลาง</option>
-                                        <option value="4" {{ (old('dissatisfaction_level', $projectEvaluation->dissatisfaction_level ?? '') == '4') ? 'selected' : '' }}>มาก</option>
-                                        <option value="5" {{ (old('dissatisfaction_level', $projectEvaluation->dissatisfaction_level ?? '') == '5') ? 'selected' : '' }}>มากที่สุด</option>
+                                        <option value="3" {{ (old('dissatisfaction_level', $projectEvaluation->dissatisfaction_level ?? '') == '4') ? 'selected' : '' }}>มาก</option>
+                                        <option value="4" {{ (old('dissatisfaction_level', $projectEvaluation->dissatisfaction_level ?? '') == '5') ? 'selected' : '' }}>มากที่สุด</option>
                                     </select>
                                 </div>
                             </div>
@@ -1442,7 +1329,7 @@
 
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-clipboard-check mr-2"></i> ส่วนที่ 5.2: อื่นๆ (การบูรณาการ และ ผลกระทบ)</h5>
+                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-clipboard-check mr-2"></i> ส่วนที่ 4.2: อื่นๆ (การบูรณาการ และ ผลกระทบ)</h5>
                 </div>
                 <div class="card-body bg-light">
                     <div class="row">
@@ -1472,7 +1359,7 @@
 
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-chart-pie mr-2"></i> ส่วนที่ 5.3: ผลสัมฤทธิ์และมูลค่าโครงการ (ถ้ามี)</h5>
+                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-chart-pie mr-2"></i> ส่วนที่ 4.3: ผลสัมฤทธิ์และมูลค่าโครงการ (ถ้ามี)</h5>
                 </div>
                 <div class="card-body bg-light">
                     <div class="row">
@@ -1501,16 +1388,15 @@
                 </div>
 
                 <div class="card-footer bg-white text-right py-3 border-top">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="$('.wizard-nav a[href=\'#tab4\']').tab('show')">
+                    <button type="button" class="btn btn-secondary mr-2" onclick="$('.wizard-nav a[href=\'#tab3\']').tab('show')">
                         <i class="fas fa-arrow-left"></i> ย้อนกลับ
                     </button>
-                    <button type="button" class="btn btn-primary shadow-sm" id="btn-submit-tab5">
+                    <button type="submit" class="btn btn-primary shadow-sm" id="btn-submit-tab4">
                         <i class="fas fa-save mr-1"></i> บันทึกข้อมูลการประเมิน & ถัดไป <i class="fas fa-arrow-right ml-1"></i>
                     </button>
                 </div>
             </div>
         </form>
-
         @else
         <div class="card shadow-sm border-0 mb-4 project-section">
             <div class="card-body text-center py-5">
@@ -1530,10 +1416,10 @@
                     คุณจะสามารถกรอกข้อมูลส่วนนี้ได้ ก็ต่อเมื่อโครงการเข้าสู่สถานะ <strong>"อยู่ระหว่างดำเนินการ"</strong> ขึ้นไปแล้วเท่านั้น
                 </p>
 
-                <button type="button" class="btn btn-secondary mr-2" onclick="$('.wizard-nav a[href=\'#tab4\']').tab('show')">
+                <button type="button" class="btn btn-secondary mr-2" onclick="$('.wizard-nav a[href=\'#tab3\']').tab('show')">
                     <i class="fas fa-arrow-left"></i> ย้อนกลับไปแท็บก่อนหน้า
                 </button>
-                <button type="button" class="btn btn-primary shadow-sm" onclick="$('.wizard-nav a[href=\'#tab6\']').tab('show')">
+                <button type="button" class="btn btn-primary shadow-sm" onclick="$('.wizard-nav a[href=\'#tab5\']').tab('show')">
                     ข้ามไปดูภาพรวมโครงการ <i class="fas fa-arrow-right ml-1"></i>
                 </button>
             </div>
@@ -1542,15 +1428,17 @@
 
     </div>
 
-    <div class="tab-pane fade {{ $activeTab == 'tab6' ? 'show active' : '' }}" id="tab6" role="tabpanel">
-        <form action="{{ route('trainings.projects.update', $project->id) }}" method="POST" id="form-tab6-overview">
+    <!-- แท็บที่ 5: ภาพรวม (อัปเดตใหม่ แสดงข้อมูลครบ 100%) -->
+    <div class="tab-pane fade {{ $activeTab == 'tab5' ? 'show active' : '' }}" id="tab5" role="tabpanel">
+        <form action="{{ route('contracts.projects.update', $project->id) }}" method="POST" id="form-tab5-overview">
             @csrf
             @method('PUT')
-            <input type="hidden" name="step" value="6">
+            <input type="hidden" name="step" value="5">
             <div class="alert alert-info shadow-sm border-0 mb-4">
                 <i class="fas fa-search-plus mr-2"></i> <strong>ตรวจสอบข้อมูล:</strong> กรุณาตรวจสอบภาพรวมของโครงการทั้งหมด หากถูกต้องครบถ้วนแล้ว สามารถกดปุ่มเพื่อยื่นขออนุมัติโครงการได้ที่ด้านล่างสุด
             </div>
 
+            <!-- 1. ข้อมูลพื้นฐานโครงการ -->
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-custom-dark text-white py-2">
                     <h6 class="mb-0 mt-1"><i class="fas fa-file-alt mr-2"></i> 1. ข้อมูลพื้นฐานโครงการ</h6>
@@ -1575,31 +1463,11 @@
                                 </td>
                             </tr>
                             <tr>
-                                <th class="bg-light text-right align-middle">ระยะเวลาโครงการ :</th>
-                                <td colspan="3" class="align-middle">
-                                    {{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->addYears(543)->format('d/m/Y') : '-' }}
-                                    <strong class="mx-2">ถึง</strong>
-                                    {{ $project->end_date ? \Carbon\Carbon::parse($project->end_date)->addYears(543)->format('d/m/Y') : '-' }}
-                                </td>
-                            </tr>
-                            <tr>
                                 <th class="bg-light text-right align-top pt-3">หน่วยงานผู้รับผิดชอบ :</th>
                                 <td colspan="3" class="align-middle">
                                     @if(!empty($selectedDepartments))
                                     @foreach($departments->whereIn('DEPARTMENT_ID', $selectedDepartments) as $dept)
                                     <span class="badge badge-info px-2 py-1 mr-1 mb-1" style="font-size: 0.9em; font-weight: normal;">{{ $dept->DEPARTMENT_NAME_TH }}</span>
-                                    @endforeach
-                                    @else
-                                    -
-                                    @endif
-                                </td>
-                            </tr>
-                            <tr>
-                                <th class="bg-light text-right align-top pt-3">หลักสูตร :</th>
-                                <td colspan="3" class="align-middle">
-                                    @if(!empty($selectedCourses))
-                                    @foreach($divisions->whereIn('DIVISION_ID', $selectedCourses) as $div)
-                                    <span class="badge badge-secondary px-2 py-1 mr-1 mb-1" style="font-size: 0.9em; font-weight: normal;">{{ $div->DIVISION_NAME }}</span>
                                     @endforeach
                                     @else
                                     -
@@ -1619,12 +1487,24 @@
                                 </td>
                             </tr>
                             <tr>
-                                <th class="bg-light text-right align-top pt-3">วัตถุประสงค์ :</th>
+                                <th class="bg-light text-right align-middle">ระยะเวลาโครงการ :</th>
                                 <td colspan="3" class="align-middle">
-                                    @if(!empty($selectedObjectives))
+                                    {{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->addYears(543)->format('d/m/Y') : '-' }}
+                                    <strong class="mx-2">ถึง</strong>
+                                    {{ $project->end_date ? \Carbon\Carbon::parse($project->end_date)->addYears(543)->format('d/m/Y') : '-' }}
+                                </td>
+                            </tr>
+                            <!-- เพิ่มส่วนที่ขาดหาย: วัตถุประสงค์, รายละเอียดโดยย่อ, หลักการและเหตุผล -->
+                            <tr>
+                                <th class="bg-light text-right align-top pt-3">วัตถุประสงค์โครงการ :</th>
+                                <td colspan="3" class="align-middle">
+                                    @if(isset($savedObjectives) && count($savedObjectives) > 0)
                                     <ul class="pl-3 mb-0" style="line-height: 1.6;">
-                                        @foreach($targetGroups->whereIn('id', $selectedObjectives) as $tg)
-                                        <li>{{ $tg->name_th }}</li>
+                                        @foreach($savedObjectives as $obj)
+                                        @php
+                                        $groupName = $customerGroups->where('id', $obj->target_group_id)->first()->name_th ?? '-';
+                                        @endphp
+                                        <li><strong>{{ $groupName }}</strong> : {{ $obj->detail }}</li>
                                         @endforeach
                                     </ul>
                                     @else
@@ -1633,15 +1513,15 @@
                                 </td>
                             </tr>
                             <tr>
-                                <th class="bg-light text-right align-top pt-3">รายละเอียดโดยย่อ :</th>
+                                <th class="bg-light text-right align-top pt-3">รายละเอียดโครงการโดยย่อ :</th>
                                 <td colspan="3" class="align-middle" style="line-height: 1.6;">
-                                    {!! $project->brief_description ? nl2br(e($project->brief_description)) : '-' !!}
+                                    {!! !empty($project->brief_description) ? nl2br(e($project->brief_description)) : '<span class="text-muted">-</span>' !!}
                                 </td>
                             </tr>
                             <tr>
                                 <th class="bg-light text-right align-top pt-3">หลักการและเหตุผล :</th>
                                 <td colspan="3" class="align-middle" style="line-height: 1.6;">
-                                    {!! $project->rationale ? nl2br(e($project->rationale)) : '-' !!}
+                                    {!! !empty($project->rationale) ? nl2br(e($project->rationale)) : '<span class="text-muted">-</span>' !!}
                                 </td>
                             </tr>
                         </tbody>
@@ -1649,76 +1529,29 @@
                 </div>
             </div>
 
+            <!-- 2. ข้อมูลเฉพาะ & คณะทำงาน -->
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-custom-dark text-white py-2">
-                    <h6 class="mb-0 mt-1"><i class="fas fa-chalkboard-teacher mr-2"></i> 2. ข้อมูลการจัดกิจกรรม & คณะทำงาน</h6>
+                    <h6 class="mb-0 mt-1"><i class="fas fa-info-circle mr-2"></i> 2. ข้อมูลเฉพาะ & คณะทำงาน</h6>
                 </div>
                 <div class="card-body p-0">
                     <table class="table table-bordered mb-0">
                         <tbody>
+                            <!-- เพิ่มส่วนที่ขาดหาย: เอกสารสัญญา -->
                             <tr>
-                                <th width="20%" class="bg-light text-right align-middle">เลขที่หนังสืออนุมัติ :</th>
+                                <th width="20%" class="bg-light text-right align-middle">เลขที่สัญญา :</th>
                                 <td width="30%" class="align-middle text-dark font-weight-bold">
-                                    {{ $trainingProject->document_number ?? '-' }}
+                                    {{ $projectContract->contract_number ?? '-' }}
                                 </td>
-                                <th width="20%" class="bg-light text-right align-middle">สถานประกอบการ :</th>
+                                <th width="20%" class="bg-light text-right align-middle">เอกสารสัญญา/ลิ้งค์ :</th>
                                 <td width="30%" class="align-middle">
-                                    {{ $trainingProject->has_collaboration ?? '-' }}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th class="bg-light text-right align-middle">ประเภทโครงการ :</th>
-                                <td class="align-middle">
-                                    @if(($trainingProject->project_types ?? '') == '0') มีรายได้
-                                    @elseif(($trainingProject->project_types ?? '') == '1') ให้เปล่า
-                                    @else - @endif
-                                </td>
-                                <th class="bg-light text-right align-middle">ลักษณะหลักสูตร :</th>
-                                <td class="align-middle">
-                                    @if(($trainingProject->course_type ?? '') == '1') Upskill
-                                    @elseif(($trainingProject->course_type ?? '') == '2') Reskill
-                                    @elseif(($trainingProject->course_type ?? '') == '3') New skill
-                                    @else - @endif
-                                </td>
-                            </tr>
-                            <tr>
-                                <th class="bg-light text-right align-top pt-3">ชื่อหลักสูตรในโครงการ :</th>
-                                <td colspan="3" class="align-middle">
-                                    @if(isset($savedTrainingCourses) && $savedTrainingCourses->count() > 0)
-                                    <ul class="pl-3 mb-0" style="line-height: 1.6;">
-                                        @foreach($savedTrainingCourses as $course)
-                                        <li class="font-weight-bold text-primary">{{ $course->course_name }}</li>
-                                        @endforeach
-                                    </ul>
-                                    @else
-                                    -
+                                    @if(!empty($projectContract->contract_file_path))
+                                    <a href="{{ asset('storage/'.$projectContract->contract_file_path) }}" target="_blank" class="badge badge-info p-2 mb-1"><i class="fas fa-file-pdf"></i> ดูไฟล์แนบเดิม</a>
                                     @endif
-                                </td>
-                            </tr>
-                            <tr>
-                                <th class="bg-light text-right align-middle">วันรับสมัคร :</th>
-                                <td colspan="3" class="align-middle">
-                                    {{ ($trainingProject->start_regis_date ?? false) ? \Carbon\Carbon::parse($trainingProject->start_regis_date)->addYears(543)->format('d/m/Y') : '-' }}
-                                    <strong class="mx-2">ถึง</strong>
-                                    {{ ($trainingProject->end_regis_date ?? false) ? \Carbon\Carbon::parse($trainingProject->end_regis_date)->addYears(543)->format('d/m/Y') : '-' }}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th class="bg-light text-right align-top pt-3">เอกสารอ้างอิง :</th>
-                                <td colspan="3" class="align-middle" style="line-height: 1.8;">
-                                    @if(!empty($trainingProject->approval_file))
-                                    <div>
-                                        <i class="fas fa-file-pdf text-danger mr-1"></i> ไฟล์เอกสารอนุมัติ:
-                                        <a href="{{ asset('storage/'.$trainingProject->approval_file) }}" target="_blank" class="text-primary"><u>เปิดดูไฟล์</u></a>
-                                    </div>
+                                    @if(!empty($projectContract->contract_file_link))
+                                    <a href="{{ $projectContract->contract_file_link }}" target="_blank" class="badge badge-primary p-2 mb-1"><i class="fas fa-link"></i> ลิ้งค์เอกสาร</a>
                                     @endif
-                                    @if(!empty($trainingProject->approval_link))
-                                    <div>
-                                        <i class="fas fa-link text-info mr-1"></i> ลิงก์เอกสารอ้างอิง:
-                                        <a href="{{ $trainingProject->approval_link }}" target="_blank" class="text-primary"><u>{{ $trainingProject->approval_link }}</u></a>
-                                    </div>
-                                    @endif
-                                    @if(empty($trainingProject->approval_file) && empty($trainingProject->approval_link))
+                                    @if(empty($projectContract->contract_file_path) && empty($projectContract->contract_file_link))
                                     <span class="text-muted">-</span>
                                     @endif
                                 </td>
@@ -1738,7 +1571,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <th class="bg-light text-right align-top pt-3">กลุ่มเป้าหมาย :<br><small class="text-success font-weight-normal">(รวม {{ isset($savedTargetGroups) ? number_format($savedTargetGroups->sum('total')) : '0' }} คน)</small></th>
+                                <th class="bg-light text-right align-top pt-3">กลุ่มผู้ว่าจ้าง/แหล่งทุน :</th>
                                 <td colspan="3" class="align-middle">
                                     @if(isset($savedTargetGroups) && $savedTargetGroups->count() > 0)
                                     <ul class="pl-3 mb-0" style="line-height: 1.6;">
@@ -1750,8 +1583,6 @@
                                         <li>
                                             {{ $tg ? $tg->full_path : '-' }}
                                             <span class="text-muted">(เชื้อชาติ: {{ $nat ? $nat->name_th : '-' }})</span>
-                                            <i class="fas fa-arrow-right mx-1 text-secondary" style="font-size: 0.8em;"></i>
-                                            <strong class="text-success">{{ number_format($stg->total) }}</strong> คน
                                         </li>
                                         @endforeach
                                     </ul>
@@ -1798,111 +1629,6 @@
                 </div>
             </div>
 
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-custom-dark text-white py-2">
-                    <h6 class="mb-0 mt-1"><i class="fas fa-calendar-alt mr-2"></i> 3. กำหนดการจัดกิจกรรม ({{ isset($savedSchedules) ? $savedSchedules->count() : '0' }} กิจกรรม)</h6>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-bordered mb-0">
-                            <thead class="bg-light text-center">
-                                <tr>
-                                    <th width="5%" class="align-middle">ที่</th>
-                                    <th width="15%" class="align-middle">วัน-เวลา</th>
-                                    <th width="30%" class="align-middle">รายละเอียดกิจกรรม & เอกสาร</th>
-                                    <th width="25%" class="align-middle">วิทยากร / ผู้เกี่ยวข้อง</th>
-                                    <th width="25%" class="align-middle">สถานที่จัดกิจกรรม</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($savedSchedules ?? [] as $index => $sch)
-                                @php
-                                // ดึงข้อมูลความสัมพันธ์ของแต่ละกิจกรรม (เหมือนที่ทำใน Tab 3)
-                                $schMembers = \App\Models\Training\TrainingMember::where('training_schedule_id', $sch->id)->get();
-                                $schLocations = \App\Models\Training\TrainingSchedulesLocation::where('training_schedule_id', $sch->id)->get();
-                                $schDocs = \App\Models\Training\TrainingScheduleDocument::where('training_schedule_id', $sch->id)->get();
-                                @endphp
-                                <tr>
-                                    <td class="text-center align-top pt-3 font-weight-bold text-muted">{{ $index + 1 }}</td>
-                                    <td class="text-center align-top pt-3">
-                                        <div class="font-weight-bold text-dark">{{ \Carbon\Carbon::parse($sch->schedule_date)->addYears(543)->format('d/m/Y') }}</div>
-                                        <div class="text-muted small mt-1">
-                                            <i class="far fa-clock"></i> {{ \Carbon\Carbon::parse($sch->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($sch->end_time)->format('H:i') }} น.
-                                        </div>
-                                    </td>
-                                    <td class="align-top pt-3">
-                                        <div style="line-height: 1.6;" class="text-dark font-weight-bold">{!! nl2br(e($sch->topic)) !!}</div>
-
-                                        @if($schDocs->count() > 0)
-                                        <hr class="my-2 border-secondary" style="opacity: 0.1;">
-                                        <div class="small">
-                                            <strong class="text-muted"><i class="fas fa-paperclip"></i> เอกสารแนบ:</strong>
-                                            @foreach($schDocs as $doc)
-                                            <div class="mt-1 ml-3">
-                                                <i class="fas fa-file-alt text-primary mr-1"></i>
-                                                <a href="{{ asset('storage/'.$doc->file_path) }}" target="_blank" class="text-primary"><u>{{ $doc->document_name }}</u></a>
-                                            </div>
-                                            @endforeach
-                                        </div>
-                                        @endif
-                                    </td>
-                                    <td class="align-top pt-3">
-                                        @if($schMembers->count() > 0)
-                                        <ul class="pl-3 mb-0 small" style="line-height: 1.6;">
-                                            @foreach($schMembers as $mem)
-                                            @php
-                                            $posName = $trainingPositions->where('id', $mem->training_position_id)->first()->name_th ?? '-';
-                                            if($mem->member_type == '1') {
-                                            $staff = $staffs->where('STAFF_ID', $mem->personnel_id)->first();
-                                            $name = $staff ? $staff->TITLE_TH . $staff->NAME_TH . ' ' . $staff->SURNAME_TH : '-';
-                                            $badge = '<span class="badge badge-primary px-1 ml-1" style="font-size:0.7em; font-weight:normal;">คนใน</span>';
-                                            } else {
-                                            $ext = $externals->where('id', $mem->external_id)->first();
-                                            $name = $ext ? $ext->firstname . ' ' . $ext->lastname : '-';
-                                            $badge = '<span class="badge badge-secondary px-1 ml-1" style="font-size:0.7em; font-weight:normal;">คนนอก</span>';
-                                            }
-                                            @endphp
-                                            <li class="mb-1">
-                                                <strong class="text-dark">{{ $posName }}:</strong>
-                                                <span class="text-info">{{ $name }}</span> {!! $badge !!}
-                                            </li>
-                                            @endforeach
-                                        </ul>
-                                        @else
-                                        <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                    <td class="align-top pt-3">
-                                        @if($schLocations->count() > 0)
-                                        <ul class="pl-4 mb-0 small" style="line-height: 1.6;">
-                                            @foreach($schLocations as $loc)
-                                            @php
-                                            $prov = $provinces->where('ProvinceNo', $loc->province_id)->first();
-                                            $provName = $prov ? ' <span class="text-muted">(จ.'.$prov->ProvinceNameThai.')</span>' : '';
-                                            @endphp
-                                            <li class="mb-1">
-                                                <i class="fas fa-map-marker-alt text-danger mr-1" style="margin-left: -15px;"></i>
-                                                <span class="font-weight-bold">{{ $loc->location_name }}</span> {!! $provName !!}
-                                            </li>
-                                            @endforeach
-                                        </ul>
-                                        @else
-                                        <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">
-                                        <i class="fas fa-calendar-times fa-2x mb-2 text-light"></i><br>ยังไม่มีข้อมูลกำหนดการจัดกิจกรรม
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
             @php
             $totalIncome = isset($savedIncomes) ? $savedIncomes->sum('total_amount') : 0;
             $totalExpense = isset($savedExpenses) ? $savedExpenses->sum('total_amount') : 0;
@@ -1913,13 +1639,13 @@
 
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-custom-dark text-white py-2">
-                    <h6 class="mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> 4. รายละเอียดแผนงบประมาณ</h6>
+                    <h6 class="mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> 3. รายละเอียดแผนงบประมาณ</h6>
                 </div>
                 <div class="card-body p-0">
 
                     <!-- 3.1 แผนรายรับ (โค้ดเดิม) -->
                     <div class="bg-light text-dark px-3 py-2 font-weight-bold border-bottom">
-                        <i class="fas fa-arrow-down mr-1 text-muted"></i> 4.1 แผนรายรับ
+                        <i class="fas fa-arrow-down mr-1 text-muted"></i> 3.1 แผนรายรับ
                     </div>
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm mb-0">
@@ -1971,7 +1697,7 @@
 
                     <!-- 3.2 แผนรายจ่าย (ค่าดำเนินการ) (โค้ดเดิม) -->
                     <div class="bg-light text-dark px-3 py-2 font-weight-bold border-top border-bottom mt-0">
-                        <i class="fas fa-arrow-up mr-1 text-muted"></i> 4.2 แผนรายจ่าย (ค่าดำเนินการ)
+                        <i class="fas fa-arrow-up mr-1 text-muted"></i> 3.2 แผนรายจ่าย (ค่าดำเนินการ)
                     </div>
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm mb-0">
@@ -2027,7 +1753,7 @@
 
                     <!-- 3.3 แผนรายจ่าย (ค่าตอบแทน)-->
                     <div class="bg-light text-dark px-3 py-2 font-weight-bold border-top border-bottom mt-0">
-                        <i class="fas fa-hand-holding-usd mr-1 text-muted"></i> 4.3 แผนรายจ่าย (ค่าตอบแทน)
+                        <i class="fas fa-hand-holding-usd mr-1 text-muted"></i> 3.3 แผนรายจ่าย (ค่าตอบแทน)
                     </div>
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm mb-0">
@@ -2083,7 +1809,7 @@
 
                     <!-- 🛑 3.4 สรุปค่าธรรมเนียม (แก้ไขเป็น $savedBudget ทั้งหมด) -->
                     <div class="bg-light text-dark px-3 py-2 font-weight-bold border-top border-bottom mt-0" style="background-color: #fffdf5 !important;">
-                        <i class="fas fa-calculator mr-1 text-muted"></i> 4.4 สรุปจัดสรรค่าธรรมเนียม
+                        <i class="fas fa-calculator mr-1 text-muted"></i> 3.4 สรุปจัดสรรค่าธรรมเนียม
                     </div>
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm mb-0">
@@ -2116,7 +1842,40 @@
                         </table>
                     </div>
 
-
+                    <!-- เพิ่มส่วนที่ขาดหาย: 3.5 งวดงาน -->
+                    <div class="bg-light text-dark px-3 py-2 font-weight-bold border-top border-bottom mt-0">
+                        <i class="fas fa-list-ol mr-1 text-muted"></i> 3.5 ข้อมูลลงงวดงาน
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm mb-0">
+                            <thead class="bg-white text-center text-muted" style="font-size: 0.9em;">
+                                <tr>
+                                    <th width="10%">งวดที่</th>
+                                    <th width="15%">ระยะเวลา (วัน)</th>
+                                    <th width="20%">วันที่เริ่มต้น</th>
+                                    <th width="20%">วันที่สิ้นสุด</th>
+                                    <th width="20%">หักประกันผลงาน</th>
+                                    <th width="15%">ยอดสุทธิ (บาท)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-center" style="font-size: 0.95em;">
+                                @forelse($savedInstallments ?? [] as $inst)
+                                <tr>
+                                    <td class="align-middle font-weight-bold">{{ $inst->installment_no }}</td>
+                                    <td class="align-middle">{{ $inst->duration_days ?? '-' }}</td>
+                                    <td class="align-middle">{{ $inst->start_date_show ? \Carbon\Carbon::parse($inst->start_date_show)->addYears(543)->format('d/m/Y') : '-' }}</td>
+                                    <td class="align-middle">{{ $inst->end_date_show ? \Carbon\Carbon::parse($inst->end_date_show)->addYears(543)->format('d/m/Y') : '-' }}</td>
+                                    <td class="align-middle">{{ $inst->guarantee_pct ?? '0' }}% <br><small class="text-muted">({{ number_format($inst->guarantee_amt ?? 0, 2) }} บ.)</small></td>
+                                    <td class="text-right align-middle font-weight-bold text-success">{{ number_format($inst->net_amount ?? 0, 2) }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-muted py-2">ไม่มีข้อมูลงวดงาน</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
 
                     <div class="bg-white p-3 border-top text-right" style="font-size: 1em;">
                         <span class="text-dark font-weight-bold mr-2">
@@ -2130,14 +1889,15 @@
                 </div>
             </div>
 
+            <!-- 4. สรุปผลลัพธ์โครงการ (แสดงเฉพาะสถานะที่กำหนด) -->
             @if(isset($project->overall_status) && $project->overall_status >= 700)
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-custom-dark text-white py-2">
-                    <h6 class="mb-0 mt-1"><i class="fas fa-chart-pie mr-2"></i> 5. สรุปผลลัพธ์โครงการ</h6>
+                    <h6 class="mb-0 mt-1"><i class="fas fa-chart-pie mr-2"></i> 4. สรุปผลลัพธ์โครงการ</h6>
                 </div>
                 <div class="card-body p-0">
                     <div class="bg-light text-dark px-3 py-2 font-weight-bold border-bottom">
-                        5.1 ประเมินความพึงพอใจ
+                        4.1 ประเมินความพึงพอใจ
                     </div>
                     <table class="table table-bordered table-sm mb-0">
                         <thead class="bg-white text-center text-muted" style="font-size: 0.95em;">
@@ -2188,7 +1948,7 @@
                     </table>
 
                     <div class="bg-light text-dark px-3 py-2 font-weight-bold border-top border-bottom mt-0">
-                        5.2 อื่นๆ (การบูรณาการ และ ผลกระทบ)
+                        4.2 อื่นๆ (การบูรณาการ และ ผลกระทบ)
                     </div>
                     <table class="table table-bordered table-sm mb-0">
                         <tbody>
@@ -2220,7 +1980,7 @@
                     </table>
 
                     <div class="bg-light text-dark px-3 py-2 font-weight-bold border-top border-bottom mt-0">
-                        5.3 ผลสัมฤทธิ์และมูลค่าโครงการ (ถ้ามี)
+                        4.3 ผลสัมฤทธิ์และมูลค่าโครงการ (ถ้ามี)
                     </div>
                     <table class="table table-bordered table-sm mb-0">
                         <tbody>
@@ -2245,9 +2005,11 @@
                 </div>
             </div>
             @endif
+
+            <!-- 5. ผู้ลงนาม (เหมือนเดิม) -->
             <div class="card shadow-sm border-0 mb-4 d-print-none">
                 <div class="card-header bg-custom-dark text-white py-2">
-                    <h6 class="mb-0 mt-1"><i class="fas fa-signature mr-2"></i> 6. รายชื่อผู้ลงนามโครงการ (แสดงผลในหน้าปริ้นเอกสาร)</h6>
+                    <h6 class="mb-0 mt-1"><i class="fas fa-signature mr-2"></i> 5. รายชื่อผู้ลงนามโครงการ (แสดงผลในหน้าปริ้นเอกสาร)</h6>
                 </div>
                 <div class="card-body bg-light">
                     @php
@@ -2262,10 +2024,7 @@
                                 <select name="signatures[{{ $index }}][staff_id]" class="form-control select2-staff" required>
                                     <option value="">-- ค้นหาชื่อบุคลากร --</option>
                                     @foreach($staffs as $staff)
-                                    <option value="{{ $staff->STAFF_ID }}"
-                                        data-department="{{ $staff->DEPARTMENT_NAME_TH }}"
-                                        data-position="{{ $staff->FINAL_POSITION }}"
-                                        {{ $savedSig->staff_id == $staff->STAFF_ID ? 'selected' : '' }}>
+                                    <option value="{{ $staff->STAFF_ID }}" data-department="{{ $staff->DEPARTMENT_NAME_TH }}" data-position="{{ $staff->FINAL_POSITION }}" {{ $savedSig->staff_id == $staff->STAFF_ID ? 'selected' : '' }}>
                                         {{ $staff->ACADEMIC_ABBR ?: $staff->TITLE_TH }}{{ $staff->NAME_TH }} {{ $staff->SURNAME_TH }}
                                     </option>
                                     @endforeach
@@ -2302,9 +2061,7 @@
                                 <select name="signatures[0][staff_id]" class="form-control select2-staff" required>
                                     <option value="">-- ค้นหาชื่อบุคลากร --</option>
                                     @foreach($staffs as $staff)
-                                    <option value="{{ $staff->STAFF_ID }}"
-                                        data-department="{{ $staff->DEPARTMENT_NAME_TH }}"
-                                        data-position="{{ $staff->FINAL_POSITION }}">
+                                    <option value="{{ $staff->STAFF_ID }}" data-department="{{ $staff->DEPARTMENT_NAME_TH }}" data-position="{{ $staff->FINAL_POSITION }}">
                                         {{ $staff->ACADEMIC_ABBR ?: $staff->TITLE_TH }}{{ $staff->NAME_TH }} {{ $staff->SURNAME_TH }}
                                     </option>
                                     @endforeach
@@ -2343,12 +2100,14 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ปุ่มกดยืนยัน -->
             <div class="text-center py-4 border-top mt-3 d-print-none">
-                <button type="button" class="btn btn-secondary btn-lg mr-2 shadow-sm" onclick="$('.wizard-nav a[href=\'#tab5\']').tab('show')">
+                <button type="button" class="btn btn-secondary btn-lg mr-2 shadow-sm" onclick="$('.wizard-nav a[href=\'#tab4\']').tab('show')">
                     <i class="fas fa-arrow-left"></i> ย้อนกลับไปแก้ไข
                 </button>
 
-                <button type="button" class="btn btn-success btn-lg shadow-sm" id="btn-submit-tab6">
+                <button type="submit" class="btn btn-success btn-lg shadow-sm" id="btn-submit-tab5">
                     @if($project->overall_status >= 300 || auth()->user()->hasAnyRole(['admin', 'staff']))
                     <i class="fas fa-save mr-1"></i> ยืนยันและบันทึกภาพรวมโครงการ
                     @else
@@ -2358,9 +2117,22 @@
             </div>
         </form>
     </div>
+
+    <!-- ส่วนแท็บอื่นๆ (Locked State) -->
+    @foreach([] as $key => $title)
+    <div class="tab-pane fade {{ $activeTab == $key ? 'show active' : '' }}" id="{{ $key }}" role="tabpanel">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-cog fa-spin fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">กำลังเตรียมส่วน {{ $title }}...</h5>
+            </div>
+        </div>
+    </div>
+    @endforeach
+
 </div>
 
-
+<!-- Modals (เหมือนใน Training) -->
 <div class="modal fade" id="modalNewTargetGroup" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content border-0 shadow-lg">
@@ -2373,56 +2145,25 @@
             <div class="modal-body bg-light">
                 <form id="formNewTargetGroup">
                     <div class="form-group">
-                        <label for="new_target_group_parent_id">ตำแหน่งของกลุ่มนี้ (อยู่ภายใต้กลุ่มใด) <span class="text-muted font-weight-normal">(ปล่อยว่างได้หากเป็นกลุ่มหลัก)</span></label>
+                        <label for="new_target_group_parent_id">ตำแหน่งของกลุ่มนี้ (อยู่ภายใต้กลุ่มใด)</label>
                         <select class="form-control" id="new_target_group_parent_id" name="parent_id" style="width: 100%;">
                             <option value="">-- สร้างเป็นกลุ่มหลัก (Level 1) --</option>
-                            @if(isset($filteredTargetGroups))
                             @foreach($filteredTargetGroups as $group)
-                            <option value="{{ $group->id }}">{{ $group->full_path ?? $group->name_th }}</option>
+                            <option value="{{ $group->id }}">{{ $group->full_path }}</option>
                             @endforeach
-                            @endif
                         </select>
                     </div>
-
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="new_target_group_name_th">ชื่อกลุ่มเป้าหมาย (ภาษาไทย) <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="new_target_group_name_th" name="name_th" placeholder="เช่น ชั้น ม.2, โรงเรียนอนุบาลตรัง" required>
-                            </div>
+                            <div class="form-group"><label>ชื่อ (ไทย) <span class="text-danger">*</span></label><input type="text" class="form-control" id="new_target_group_name_th" name="name_th" required></div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="new_target_group_name_en">ชื่อกลุ่มเป้าหมาย (ภาษาอังกฤษ) <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="new_target_group_name_en" name="name_en" placeholder="เช่น Mathayom 2" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="new_target_group_group_type">ป้ายกำกับประเภท (Group Type) <span class="text-primary font-weight-normal">(เพื่อประโยชน์ตอนออกรายงาน)</span></label>
-                        <input type="text" class="form-control" id="new_target_group_group_type" name="group_type" placeholder="เช่น school, class_m1">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="new_target_group_description">รายละเอียดเพิ่มเติม</label>
-                        <textarea class="form-control" id="new_target_group_description" name="description" rows="2"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="new_target_group_is_active" name="is_active" value="1" checked>
-                            <label class="custom-control-label" for="new_target_group_is_active">เปิดใช้งาน</label>
+                            <div class="form-group"><label>ชื่อ (อังกฤษ) <span class="text-danger">*</span></label><input type="text" class="form-control" id="new_target_group_name_en" name="name_en" required></div>
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer bg-white">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
-                <button type="button" class="btn btn-success" id="btn-save-new-target-group">
-                    <i class="fas fa-save mr-1"></i> บันทึกข้อมูล
-                </button>
-            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button><button type="button" class="btn btn-success" id="btn-save-new-target-group">บันทึก</button></div>
         </div>
     </div>
 </div>
@@ -2439,123 +2180,44 @@
             <div class="modal-body bg-light">
                 <form id="formNewExternal">
                     <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label>คำนำหน้า <span class="text-danger">*</span></label>
-                            <select id="new_ext_prefix_id" class="form-control" required>
-                                <option value="">-- เลือก --</option>
-                                @foreach($prefixes as $prefix)
-                                <option value="{{ $prefix->id }}">{{ $prefix->name_th }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>ชื่อ <span class="text-danger">*</span></label>
-                            <input type="text" id="new_ext_firstname" class="form-control" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>นามสกุล <span class="text-danger">*</span></label>
-                            <input type="text" id="new_ext_lastname" class="form-control" required>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label>สังกัด/หน่วยงาน <span class="text-danger">*</span></label>
-                            <input type="text" id="new_ext_department" class="form-control" placeholder="เช่น มหาวิทยาลัย..." required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label>เบอร์โทรศัพท์</label>
-                            <input type="text" id="new_ext_phone" class="form-control">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label>อีเมล</label>
-                            <input type="email" id="new_ext_email" class="form-control">
-                        </div>
-                        <div class="col-md-12 mb-2">
-                            <label>รายละเอียดเพิ่มเติม</label>
-                            <textarea id="new_ext_description" class="form-control" rows="2"></textarea>
-                        </div>
+                        <div class="col-md-3 form-group"><label>คำนำหน้า <span class="text-danger">*</span></label><select id="new_ext_prefix_id" class="form-control">
+                                <option value="">- เลือก -</option>@foreach(DB::table('prefixes')->get() as $p)<option value="{{ $p->id }}">{{ $p->name_th }}</option>@endforeach
+                            </select></div>
+                        <div class="col-md-4 form-group"><label>ชื่อ <span class="text-danger">*</span></label><input type="text" id="new_ext_firstname" class="form-control" required></div>
+                        <div class="col-md-5 form-group"><label>นามสกุล <span class="text-danger">*</span></label><input type="text" id="new_ext_lastname" class="form-control" required></div>
+                        <div class="col-md-12 form-group"><label>หน่วยงาน/บริษัท <span class="text-danger">*</span></label><input type="text" id="new_ext_department" class="form-control" required></div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer bg-white">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
-                <button type="button" class="btn btn-info" id="btn-save-new-external">
-                    <i class="fas fa-save mr-1"></i> บันทึกข้อมูล
-                </button>
-            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button><button type="button" class="btn btn-info" id="btn-save-new-external">บันทึก</button></div>
         </div>
     </div>
 </div>
 
-<style>
-    .wizard-nav .nav-link {
-        border-radius: 0;
-        border-bottom: 4px solid #dee2e6;
-        color: #6c757d;
-        font-size: 14px;
-        transition: all 0.3s ease;
-    }
-
-    .wizard-nav .nav-link:hover {
-        color: #dc3545;
-        background-color: #f8f9fa;
-    }
-
-    .nav-pills .nav-link.active,
-    .nav-pills .show>.nav-link {
-        border-bottom: 4px solid #dc3545 !important;
-        background-color: transparent !important;
-        color: #dc3545 !important;
-        font-weight: bold;
-    }
-
-    .select2-container .select2-selection--multiple {
-        min-height: 38px;
-        border: 1px solid #ced4da;
-    }
-
-    .select2-container--default .select2-selection--multiple .select2-selection__choice {
-        background-color: #343a40 !important;
-        border: 1px solid #23272b !important;
-        color: #ffffff !important;
-        border-radius: 4px;
-        padding: 2px 8px;
-        margin-top: 6px;
-    }
-
-    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-        color: #ced4da !important;
-        margin-right: 5px;
-        border-right: none !important;
-    }
-
-    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
-        color: #ffffff !important;
-        background-color: transparent !important;
-    }
-</style>
-
 @endsection
 
 @section('script')
-
 <link rel="stylesheet" href="{{ asset('plugins/select2/select2.min.css') }}">
 <link rel="stylesheet" href="{{ asset('plugins/flatpickr/flatpickr.min.css') }}">
 <script src="{{ asset('plugins/select2/select2.min.js') }}"></script>
 <script src="{{ asset('plugins/flatpickr/flatpickr.js') }}"></script>
 <script src="{{ asset('plugins/flatpickr/th.js') }}"></script>
-<script>
-    window.START_SIG_INDEX = parseInt("{{ isset($savedSignatures) && $savedSignatures->count() > 0 ? $savedSignatures->count() : 1 }}");
 
+<script>
+    // ส่งผ่านข้อมูลจาก Blade ไปยังไฟล์ JS แยก
+    window.OBJECTIVE_START_INDEX = {{ count($savedObjectives ?? []) }};
+    
+    window.START_SIG_INDEX = {{ \App\Models\MasterData\AcademicProjectSignature::where('academic_project_id', $project->id)->count() }};
+    
+    window.CUSTOMER_GROUPS = @json($customerGroups);
+    
     window.ROUTES = {
-        storeTargetGroup: "{{ route('trainings.projects.store-target-group-ajax') }}",
-        storeExternal: "{{ route('trainings.projects.store-external-ajax') }}",
-        storeSchedule: "{{ route('trainings.schedules.storeAjax') }}",
-        editSchedule: "{{ url('/trainings/schedules') }}",
-        deleteSchedule: "{{ url('/trainings/schedules') }}",
         csrfToken: "{{ csrf_token() }}",
+        storeTargetGroup: "{{ route('contracts.projects.store-target-group-ajax') }}",
+        storeExternal: "{{ route('contracts.projects.store-external-ajax') }}",
         storageUrl: "{{ asset('storage') }}"
     };
 </script>
 
-<script src="{{ asset('js/trainings/projects/edit.js?v=' . time()) }}"></script>
-
+<script src="{{ asset('js/contracts/projects/edit.js?v=' . time()) }}"></script>
 @endsection

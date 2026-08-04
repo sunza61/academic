@@ -16,6 +16,7 @@ use App\Http\Controllers\ProjectDeliveryController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\MasterData\EmployerController;
 use App\Http\Controllers\MasterData\BudgetCategoryController;
+use App\Http\Controllers\MasterData\BudgetExpenseController;
 use App\Http\Controllers\MasterData\BudgetIncomeController;
 use App\Http\Controllers\MasterData\ExternalController;
 use App\Http\Controllers\MasterData\ProjectPositionController;
@@ -25,6 +26,9 @@ use App\Http\Controllers\MasterData\TargetGroupController;
 use App\Http\Controllers\Projects\ContractProjectController;
 use App\Http\Controllers\Projects\ProjectSelectionController;
 use App\Http\Controllers\Projects\TrainingProjectController;
+use App\Http\Controllers\Projects\LecturerProjectController;
+use App\Http\Controllers\Finance\FinanceDashboardController;
+use App\Http\Controllers\Plan\PlanDashboardController;
 
 
 // ระบบ Authentication
@@ -46,6 +50,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
+    Route::get('/finance/dashboard', [FinanceDashboardController::class, 'index'])->name('finance.dashboard');
+    Route::get('/plan/dashboard', [PlanDashboardController::class, 'index'])->name('plan.dashboard');
+
     // 🌟 โซนข้อมูลพื้นฐาน: ล็อกประตู! เข้าได้เฉพาะ 'admin' หรือ 'staff'
     Route::middleware(['role:admin,staff'])->prefix('master-data')->name('master-data.')->group(function () {
         Route::resource('employers', EmployerController::class);
@@ -57,17 +64,28 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('project-positions', ProjectPositionController::class);
         Route::resource('budget-incomes', BudgetIncomeController::class);
         Route::post('budget-incomes/main/store-ajax', [BudgetIncomeController::class, 'storeMainAjax'])->name('budget-incomes.storeMainAjax');
+        Route::resource('budget-expenses', BudgetExpenseController::class);
+        Route::post('budget-expenses/main/store-ajax', [BudgetExpenseController::class, 'storeMainAjax'])->name('budget-expenses.storeMainAjax');
     });
 
     // เมนูสัญญาจ้าง
     Route::prefix('contracts')->name('contracts.')->group(function () {
         Route::resource('projects', ContractProjectController::class);
+        Route::post('projects/ajax/externals', [ContractProjectController::class, 'storeExternalAjax'])->name('projects.store-external-ajax');
+        Route::post('projects/ajax/target-groups', [ContractProjectController::class, 'storeTargetGroupAjax'])->name('projects.store-target-group-ajax');
     });
+    Route::patch('/contracts/projects/{id}/change-status', [ContractProjectController::class, 'changeStatus'])->name('contracts.projects.change-status');
 
     // เมนูงานอบรม
     Route::prefix('trainings')->name('trainings.')->group(function () {
         Route::resource('projects', TrainingProjectController::class);
     });
+
+    // เมนูวิทยากร (ไม่หักค่าใช้จ่าย)
+    Route::prefix('lecturers')->name('lecturers.')->group(function () {
+        Route::resource('projects', LecturerProjectController::class);
+    });
+
     Route::post('trainings/projects/ajax/customer-groups', [TrainingProjectController::class, 'storeCustomerGroupAjax'])->name('trainings.projects.store-customer-group-ajax');
     Route::post('trainings/projects/ajax/externals', [TrainingProjectController::class, 'storeExternalAjax'])->name('trainings.projects.store-external-ajax');
     Route::post('/trainings/projects/store-schedule-ajax', [TrainingProjectController::class, 'storeScheduleAjax'])->name('trainings.schedules.storeAjax');
@@ -78,6 +96,9 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/trainings/projects/{id}/change-status', [TrainingProjectController::class, 'changeStatus'])->name('trainings.projects.change-status');
     Route::get('/trainings/projects/{id}/report', [TrainingProjectController::class, 'report'])->name('trainings.projects.report');
     Route::post('/trainings/projects/{id}/report', [TrainingProjectController::class, 'saveReport'])->name('trainings.projects.save-report');
+
+    Route::get('/contracts/projects/{id}/report', [ContractProjectController::class, 'report'])->name('contracts.projects.report');
+    Route::post('/contracts/projects/{id}/report', [ContractProjectController::class, 'saveReport'])->name('contracts.projects.save-report');
 
     // เมนูบันทึกรายงาน
     Route::prefix('deliveries')->name('deliveries.')->group(function () {

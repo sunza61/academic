@@ -19,5 +19,6 @@ class AcademicBudgetExpenses extends Model
         'uom',
         'total_amount',
         'can_average',
+        'expense_type'
     ];
 }

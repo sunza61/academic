@@ -12,6 +12,10 @@
             </div>
             <form method="POST" action="{{ route('login') }}">
                 @csrf
+                
+                {{-- เก็บข้อความแจ้งเตือนจาก Session เพื่อให้ไฟล์ JS ดึงไปใช้งาน --}}
+                <input type="hidden" id="flash-warning" value="{{ session('warning') }}">
+                <input type="hidden" id="flash-rights" value="{{ session('rights') }}">
 
                 <div class="card-body">
                     <div class="form-group">
@@ -25,8 +29,8 @@
                     </div>
                     <div class="form-group">
                         <label for="Password">Password</label>
-                        <input id="password" type="password" class="form-control" name="password" placeholder="Enter Password" value="{{ old('password') }}" required autocomplete="password" autofocus>
-                        @error('username')
+                        <input id="password" type="password" class="form-control" name="password" placeholder="Enter Password" value="{{ old('password') }}" required autocomplete="password">
+                        @error('password')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
                         </span>
@@ -48,21 +52,5 @@
 </div>
 @endsection
 @section('script')
-<script>
-    $(document).ready(function() {
-        @if(session()->get('warning'))
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Please check your username password!',
-            });
-        @elseif(session()->get('rights'))
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'คุณไม่ได้รับสิทธิเข้าถึง',
-            });
-        @endif
-    });
-</script>
+    <script src="{{ asset('js/auth/login.js') }}?v={{ time() }}"></script>
 @endsection

@@ -11,6 +11,7 @@ class AcademicObjective extends Model
     protected $table = "academic_objectives";
     protected $fillable = [
         'academic_project_id',
-        'target_group_id ',
+        'target_group_id',
+        'detail',
     ];
 }

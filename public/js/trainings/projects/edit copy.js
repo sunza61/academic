@@ -1,5 +1,5 @@
 // =========================================
-// 🌐 ส่วนที่ 0: ตัวแปร Global และฟังก์ชัน Helper พื้นฐาน
+// 🌐 ส่วนกลาง: ตัวแปร Global
 // =========================================
 let activeCustomerSelectBox = null;
 let activeExternalSelectBox = null;
@@ -107,17 +107,14 @@ window.removeApprovalFile = function() {
     });
 };
 
-
 // =========================================
 // เมื่อเอกสารพร้อม (Document Ready) โหลดทั้งหมด
 // =========================================
 $(document).ready(function() {
-    
-    // 🌐 การตั้งค่าพื้นฐาน (Global Inits)
+    // โหลดพื้นฐาน
     $('.select2-multiple').select2({ width: '100%', placeholder: "คลิกเพื่อเลือกข้อมูล" });
     flatpickr(".datepicker", { dateFormat: "Y-m-d", altInput: true, altFormat: "d/m/Y", locale: "th" });
 
-    // ดักจับการเปลี่ยน Tab เพื่อเก็บประวัติใน URL
     $('a[data-toggle="pill"], .wizard-nav .nav-link').on('shown.bs.tab click', function(e) {
         let targetTab = $(this).attr("href").replace('#', '');
         let currentUrl = new URL(window.location.href);
@@ -125,38 +122,12 @@ $(document).ready(function() {
         window.history.replaceState({}, '', currentUrl);
     });
 
-    // =========================================
-    // 📝 Tab 1: ข้อมูลพื้นฐาน
-    // =========================================
+    // 🌟 ดักจับ Tab 1
     $('#btn-submit-tab1').click(function(e) {
         e.preventDefault();
         let form = $(this).closest('form')[0];
-        
-        // 1. เช็คว่ากรอกข้อมูลครบตาม required หรือไม่
-        if (!form.checkValidity()) { 
-            form.reportValidity(); 
-            return; 
-        }
+        if (!form.checkValidity()) { form.reportValidity(); return; }
 
-        // 2. ดึงค่าวันที่เริ่มต้น และ วันที่สิ้นสุด มาตรวจสอบ
-        let startDate = $('input[name="start_date"]').val();
-        let endDate = $('input[name="end_date"]').val();
-
-        if (startDate && endDate) {
-            // เปรียบเทียบวันที่ (Format Y-m-d สามารถเทียบ < > ได้เลย)
-            if (endDate < startDate) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'วันที่ไม่ถูกต้อง!',
-                    text: 'วันที่สิ้นสุดโครงการ จะต้องไม่น้อยกว่าวันที่เริ่มต้นครับ',
-                    confirmButtonColor: '#d33',
-                    confirmButtonText: 'ตกลง, ฉันจะแก้ไขใหม่'
-                });
-                return; // เบรกการทำงานทันที ไม่ให้เซฟทะลุไปได้
-            }
-        }
-
-        // 3. ถ้าผ่านเงื่อนไขทั้งหมด ให้แจ้งเตือนยืนยันการบันทึก
         Swal.fire({
             title: 'ยืนยันการบันทึก?',
             text: "คุณตรวจสอบข้อมูลพื้นฐานครบถ้วนแล้วใช่หรือไม่?",
@@ -174,14 +145,12 @@ $(document).ready(function() {
         });
     });
 
-    // =========================================
-    // 👥 Tab 2: ข้อมูลเฉพาะ & บุคคล
-    // =========================================
+    // 🌟 ดักจับ Tab 2
     initSelect2Customer($('.select2-customer'));
     initSelect2External($('.select2-external'));
     $('.select2-staff').select2({ width: '100%', placeholder: "-- ค้นหาชื่อบุคลากรในคณะ --" });
 
-    // --- AJAX บันทึก Target Group ---
+    // AJAX Tab 2 - Target Group
     $('#btn-save-new-target-group').click(function() {
         let name_th = $('#new_target_group_name_th').val();
         let name_en = $('#new_target_group_name_en').val();
@@ -189,8 +158,7 @@ $(document).ready(function() {
             Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบถ้วน', text: 'กรุณากรอก "ชื่อกลุ่มเป้าหมาย" ให้ครบ' }); return;
         }
 
-        let btn = $(this); 
-        let originalText = btn.html();
+        let btn = $(this); let originalText = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-1"></i> กำลังบันทึก...').prop('disabled', true);
 
         $.ajax({
@@ -229,7 +197,7 @@ $(document).ready(function() {
         });
     });
 
-    // --- AJAX บันทึก External ---
+    // AJAX Tab 2 - External
     $('#btn-save-new-external').click(function() {
         let prefix_id = $('#new_ext_prefix_id').val();
         let firstname = $('#new_ext_firstname').val();
@@ -271,7 +239,7 @@ $(document).ready(function() {
         });
     });
 
-    // --- Dynamic Rows: เพิ่มแถว Tab 2 ---
+    // ปุ่ม เพิ่ม/ลบ แถว Tab 2
     $('#btn-add-target').click(function() {
         let newRow = $('#table-target-group tbody tr:first').clone();
         newRow.find('.select2-container').remove();
@@ -335,45 +303,12 @@ $(document).ready(function() {
         }
     });
 
-    // --- Submit Tab 2 ---
     $('#btn-submit-tab2').click(function(e) {
-        e.preventDefault(); 
-        let form = $(this).closest('form')[0];
-        
-        // 1. เช็ค Validation พื้นฐาน (required ต่างๆ)
-        if (!form.checkValidity()) { 
-            form.reportValidity(); 
-            return; 
-        }
-
-        // 2. ดึงค่า วันที่เปิดรับสมัคร และ วันที่ปิดรับสมัคร มาตรวจสอบ
-        let startRegisDate = $('input[name="start_regis_date"]').val();
-        let endRegisDate = $('input[name="end_regis_date"]').val();
-
-        if (startRegisDate && endRegisDate) {
-            // เปรียบเทียบวันที่
-            if (endRegisDate < startRegisDate) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'วันที่ไม่ถูกต้อง!',
-                    text: 'วันที่ปิดรับสมัคร จะต้องไม่น้อยกว่าวันที่เปิดรับสมัครครับ',
-                    confirmButtonColor: '#d33',
-                    confirmButtonText: 'ตกลง, ฉันจะแก้ไขใหม่'
-                });
-                return; // หยุดการบันทึกทันที
-            }
-        }
-
-        // 3. แจ้งเตือนยืนยันการบันทึกเมื่อข้อมูลถูกต้อง
+        e.preventDefault(); let form = $(this).closest('form')[0];
+        if (!form.checkValidity()) { form.reportValidity(); return; }
         Swal.fire({
-            title: 'ยืนยันการบันทึก?', 
-            text: "บันทึกข้อมูลการจัดกิจกรรมและคณะทำงาน ใช่หรือไม่?", 
-            icon: 'question',
-            showCancelButton: true, 
-            confirmButtonColor: '#007bff', 
-            cancelButtonColor: '#6c757d', 
-            confirmButtonText: 'บันทึก & ไปต่อ', 
-            cancelButtonText: 'ยกเลิก'
+            title: 'ยืนยันการบันทึก?', text: "บันทึกข้อมูลการจัดกิจกรรมและคณะทำงาน ใช่หรือไม่?", icon: 'question',
+            showCancelButton: true, confirmButtonColor: '#007bff', cancelButtonColor: '#6c757d', confirmButtonText: 'บันทึก & ไปต่อ', cancelButtonText: 'ยกเลิก'
         }).then((result) => {
             if (result.isConfirmed || result.value) {
                 Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
@@ -382,9 +317,7 @@ $(document).ready(function() {
         });
     });
 
-    // =========================================
-    // 📅 Tab 3: กำหนดการ (Schedules)
-    // =========================================
+    // 🌟 ดักจับ Tab 3 (Schedules)
     $('#btn-create-schedule').click(function() {
         $('#current_schedule_id').val(''); let newId = Date.now();
         let templateHtml = $('#template-schedule-block').html().replace(/{ID}/g, newId);
@@ -394,8 +327,7 @@ $(document).ready(function() {
         $('#editor-form-container .select2-staff-temp').removeClass('select2-staff-temp').addClass('select2-staff').select2({ width: '100%', placeholder: "-- ค้นหา --" });
         initSelect2External($('#editor-form-container .select2-external-temp').removeClass('select2-external-temp').addClass('select2-external'));
         $('#editor-form-container .select2-province-temp').removeClass('select2-province-temp').addClass('select2-province').select2({ width: '100%' });
-        $('#schedule-summary-zone').hide();
-        $('#form-schedule').fadeIn(300);
+        $('#schedule-summary-zone').hide(); $('#form-schedule').fadeIn(300);
     });
 
     $('#btn-cancel-editor').click(function() {
@@ -407,8 +339,7 @@ $(document).ready(function() {
     }
 
     function sortScheduleTable() {
-        let tbody = $('#table-schedule-summary tbody');
-        let rows = tbody.find('tr.sum-row').get();
+        let tbody = $('#table-schedule-summary tbody'); let rows = tbody.find('tr.sum-row').get();
         rows.sort(function(a, b) {
             let dateA = $(a).attr('data-date') || ''; let timeA = $(a).attr('data-time') || '';
             let dateB = $(b).attr('data-date') || ''; let timeB = $(b).attr('data-time') || '';
@@ -434,16 +365,16 @@ $(document).ready(function() {
 
         $('#schedule-vault-zone .schedule-block').each(function() {
             let vaultId = $(this).data('id'); let vDate = $(this).find('.date-input').val();
-            let vStart = $(this).find('.time-start').val(); let vEnd = $(this).find('.time-end').val();
-            let vTopic = $(this).find('.topic-input').val();
+            let vStart = $(this).find('.time-start').val(); let vEnd = $(this).find('.time-end').val(); let vTopic = $(this).find('.topic-input').val();
             lastDate = vDate; lastDisplayDate = $(this).find('.date-input').next('.form-control').val() || vDate;
+
             if (vaultId != id && vDate === date) {
                 if (start < vEnd && end > vStart) { isOverlap = true; overlapTopic = vTopic; }
             }
         });
+
         if (!isEditing && lastDate && date < lastDate) {
-            Swal.fire({ icon: 'error', title: 'วันที่ลำดับผิดพลาด!', text: `วันที่กิจกรรม จะต้องไม่ย้อนหลัง (ต้องเป็นวันที่ ${lastDisplayDate} หรือหลังจากนั้น)` });
-            return;
+            Swal.fire({ icon: 'error', title: 'วันที่ลำดับผิดพลาด!', text: `วันที่กิจกรรม จะต้องไม่ย้อนหลัง (ต้องเป็นวันที่ ${lastDisplayDate} หรือหลังจากนั้น)` }); return;
         }
 
         if (isOverlap) {
@@ -457,9 +388,9 @@ $(document).ready(function() {
     });
 
     function executeScheduleAjax(formElement, block, id, date, topic, start, end, isEditing) {
-        let formData = new FormData(formElement);
-        formData.append('_token', window.ROUTES.csrfToken);
+        let formData = new FormData(formElement); formData.append('_token', window.ROUTES.csrfToken);
         Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
         $.ajax({
             url: window.ROUTES.storeSchedule, type: "POST", data: formData, contentType: false, processData: false,
             success: function(response) {
@@ -480,7 +411,7 @@ $(document).ready(function() {
                         if (name) membersHtml += `<div class="mb-1"><i class="fas fa-user-tie text-secondary mr-1"></i> ${posText}${name}</div>`;
                     });
                     if (!membersHtml) membersHtml = '<span class="text-muted">-</span>';
-                    
+
                     let locationsHtml = '';
                     block.find('.location-row').each(function() {
                         let locName = $(this).find('.location-name-input').val();
@@ -504,12 +435,11 @@ $(document).ready(function() {
                                 <button type="button" class="btn btn-sm btn-outline-danger btn-delete-schedule mb-1" data-id="${realDbId}" title="ลบกิจกรรม"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>`;
-                        
+
                     $('#empty-schedule-row').remove();
                     if (isEditing) { $(`#sum-tr-${id}`).replaceWith(trHtml); } else { $('#table-schedule-summary tbody').append(trHtml); }
 
-                    sortScheduleTable();
-                    $('#schedule-vault-zone').append(block); $('#form-schedule').hide(); $('#schedule-summary-zone').fadeIn(300);
+                    sortScheduleTable(); $('#schedule-vault-zone').append(block); $('#form-schedule').hide(); $('#schedule-summary-zone').fadeIn(300);
                     Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ!', text: 'ข้อมูลกิจกรรมถูกบันทึกแล้ว', timer: 1500, showConfirmButton: false });
                 } else {
                     Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: response.message });
@@ -531,44 +461,39 @@ $(document).ready(function() {
                     let templateHtml = $('#template-schedule-block').html().replace(/{ID}/g, id);
                     let container = $('#editor-form-container'); container.html(templateHtml);
                     $('#current_schedule_id').val(id); let sch = res.schedule;
- 
                     container.find('.topic-input').val(sch.topic);
                     container.find('.date-input').flatpickr({ dateFormat: "Y-m-d", altInput: true, altFormat: "d/m/Y", locale: "th", defaultDate: sch.schedule_date });
 
                     let startTime = (sch.start_time || '').match(/\d{2}:\d{2}/) ? (sch.start_time).match(/\d{2}:\d{2}/)[0] : '';
                     let endTime = (sch.end_time || '').match(/\d{2}:\d{2}/) ? (sch.end_time).match(/\d{2}:\d{2}/)[0] : '';
-                    let dateOnly = sch.schedule_date.split(' ')[0];
-                    let dParts = dateOnly.split('-');
+                    let dateOnly = sch.schedule_date.split(' ')[0]; let dParts = dateOnly.split('-');
                     let niceDate = dParts.length === 3 ? `${dParts[2]}/${dParts[1]}/${dParts[0]}` : sch.schedule_date;
-                    
+
                     $('#editor-title').text(`แก้ไขกิจกรรมวันที่ ${niceDate} เวลา ${startTime} - ${endTime} น.`);
 
                     container.find('.time-start').flatpickr({ enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, defaultDate: startTime });
                     container.find('.time-end').flatpickr({ enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, defaultDate: endTime });
 
-                    let memberTbody = container.find('.member-table tbody');
-                    let memberRowTemp = memberTbody.find('tr:first').clone(); memberTbody.empty();
+                    let memberTbody = container.find('.member-table tbody'); let memberRowTemp = memberTbody.find('tr:first').clone(); memberTbody.empty();
                     if (res.members && res.members.length > 0) {
                         res.members.forEach(mem => {
                             let row = memberRowTemp.clone();
-                            row.find('.select2-container').remove(); row.find('select').removeClass('select2-hidden-accessible').removeAttr('data-select2-id aria-hidden tabindex').show(); 
-                            row.find('option').removeAttr('data-select2-id');
+                            row.find('.select2-container').remove(); row.find('select').removeClass('select2-hidden-accessible').removeAttr('data-select2-id aria-hidden tabindex').show(); row.find('option').removeAttr('data-select2-id');
                             row.find('.schedule-member-type').val(mem.member_type); row.find('select[name="members[training_position_id][]"]').val(mem.training_position_id);
                             memberTbody.append(row);
 
                             let staffSelect = row.find('.select2-staff-temp').removeClass('select2-staff-temp').addClass('select2-staff').select2({ width: '100%', placeholder: "-- ค้นหา --" });
                             let extSelect = row.find('.select2-external-temp').removeClass('select2-external-temp').addClass('select2-external'); initSelect2External(extSelect);
+
                             if (mem.member_type == '1') {
-                                row.find('.internal-zone').show();
-                                row.find('.external-zone').hide();
+                                row.find('.internal-zone').show(); row.find('.external-zone').hide();
                                 let dbPersonnelId = parseInt(mem.personnel_id, 10); let optionToSelect = '';
                                 staffSelect.find('option').each(function() {
                                     if ($(this).val() && parseInt($(this).val(), 10) === dbPersonnelId) { optionToSelect = $(this).val(); return false; }
                                 });
                                 staffSelect.val(optionToSelect).trigger('change');
                             } else {
-                                row.find('.internal-zone').hide();
-                                row.find('.external-zone').show(); extSelect.val(mem.external_id).trigger('change');
+                                row.find('.internal-zone').hide(); row.find('.external-zone').show(); extSelect.val(mem.external_id).trigger('change');
                             }
                         });
                     } else {
@@ -577,24 +502,20 @@ $(document).ready(function() {
                         initSelect2External(memberTbody.find('.select2-external-temp').removeClass('select2-external-temp').addClass('select2-external'));
                     }
 
-                    let locTbody = container.find('.location-table tbody');
-                    let locRowTemp = locTbody.find('tr:first').clone(); locTbody.empty();
+                    let locTbody = container.find('.location-table tbody'); let locRowTemp = locTbody.find('tr:first').clone(); locTbody.empty();
                     if (res.locations && res.locations.length > 0) {
                         res.locations.forEach(loc => {
                             let row = locRowTemp.clone();
-                            row.find('.select2-container').remove(); row.find('select').removeClass('select2-hidden-accessible').removeAttr('data-select2-id aria-hidden tabindex').show(); 
-                            row.find('option').removeAttr('data-select2-id');
+                            row.find('.select2-container').remove(); row.find('select').removeClass('select2-hidden-accessible').removeAttr('data-select2-id aria-hidden tabindex').show(); row.find('option').removeAttr('data-select2-id');
                             row.find('.location-name-input').val(loc.location_name); row.find('input[name="locations[latitude][]"]').val(loc.latitude); row.find('input[name="locations[longitude][]"]').val(loc.longitude); row.find('.select2-province-temp').val(loc.province_id);
                             locTbody.append(row);
                             row.find('.select2-province-temp').removeClass('select2-province-temp').addClass('select2-province').select2({ width: '100%' });
                         });
                     } else {
-                        locTbody.append(locRowTemp);
-                        locTbody.find('.select2-province-temp').removeClass('select2-province-temp').addClass('select2-province').select2({ width: '100%' });
+                        locTbody.append(locRowTemp); locTbody.find('.select2-province-temp').removeClass('select2-province-temp').addClass('select2-province').select2({ width: '100%' });
                     }
 
-                    let docTbody = container.find('.document-table tbody');
-                    let docRowTemp = docTbody.find('tr:first').clone(); docTbody.empty();
+                    let docTbody = container.find('.document-table tbody'); let docRowTemp = docTbody.find('tr:first').clone(); docTbody.empty();
                     if (res.docs && res.docs.length > 0) {
                         res.docs.forEach(doc => {
                             let row = docRowTemp.clone();
@@ -607,8 +528,7 @@ $(document).ready(function() {
                         docTbody.append(docRowTemp);
                     }
 
-                    $('#schedule-summary-zone').hide();
-                    $('#form-schedule').fadeIn(300);
+                    $('#schedule-summary-zone').hide(); $('#form-schedule').fadeIn(300);
                 } else { Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: res.message }); }
             },
             error: function() { Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: 'ไม่สามารถดึงข้อมูลได้ (เช็ค F12)' }); }
@@ -678,7 +598,6 @@ $(document).ready(function() {
         else { $(this).closest('tr').find('input, select').val(''); $(this).closest('tr').find('.existing-file-notice').remove(); }
     });
 
-    // --- Submit Tab 3 ---
     $('#btn-submit-tab3').click(function(e) {
         e.preventDefault();
         Swal.fire({
@@ -687,11 +606,10 @@ $(document).ready(function() {
         }).then((result) => { if (result.isConfirmed || result.value) { $('.wizard-nav a[href="#tab4"]').tab('show'); } });
     });
 
-    // =========================================
-    // 💰 Tab 4: งบประมาณ
-    // =========================================
-    
-    // --- Number Format Helpers ---
+   // 🌟 ดักจับ Tab 4 (งบประมาณ - แบบใหม่เหมือน Contracts)
+    // ----------------------------------------------------
+    // Number Format Helpers
+    // ----------------------------------------------------
     window.formatNumber = function (num) {
         if (!num) return "";
         let parts = num.toString().split(".");
@@ -711,7 +629,9 @@ $(document).ready(function() {
         }
     });
 
-    // --- Calculators ---
+    // ----------------------------------------------------
+    // คำนวณรายรับ (Income)
+    // ----------------------------------------------------
     window.calculateIncome = function () {
         let grandTotal = 0;
         $("#table-budget-incomes tbody tr:not(.template-row)").each(function () {
@@ -731,6 +651,9 @@ $(document).ready(function() {
         window.calculateSummary();
     };
 
+    // ----------------------------------------------------
+    // คำนวณค่าดำเนินการ (Expense)
+    // ----------------------------------------------------
     window.calculateExpense = function () {
         let grandTotal = 0;
         $("#table-budget-expenses tbody tr:not(.template-row)").each(function () {
@@ -751,6 +674,9 @@ $(document).ready(function() {
         window.calculateSummary();
     };
 
+    // ----------------------------------------------------
+    // คำนวณค่าตอบแทน (Remuneration)
+    // ----------------------------------------------------
     window.calculateRemuneration = function () {
         let grandTotal = 0;
         $("#table-budget-remuneration tbody tr:not(.template-row)").each(function () {
@@ -771,6 +697,9 @@ $(document).ready(function() {
         window.calculateSummary();
     };
 
+    // ----------------------------------------------------
+    // คำนวณค่าธรรมเนียมโครงการ 15% (Summary)
+    // ----------------------------------------------------
     window.calculateSummary = function () {
         let totalProjectBudget = window.unformatNumber($('input[name="total_budget_summary"]').val());
         let totalRemuneration = window.unformatNumber($('input[name="remuneration_fee"]').val());
@@ -788,6 +717,7 @@ $(document).ready(function() {
 
         let allocDeptPercent = serviceFeePercent - 4.0;
         if (allocDeptPercent < 0) allocDeptPercent = 0;
+
         $('input[name="service_fee_percent"]').val(serviceFeePercent.toFixed(2));
         
         let serviceFeeAmount = totalProjectBudget - totalRemuneration - totalOperation;
@@ -795,7 +725,7 @@ $(document).ready(function() {
 
         $('input[name="service_fee_amount"]').val(window.formatNumber(serviceFeeAmount.toFixed(2)));
         $('input[name="alloc_dept_percent"]').val(allocDeptPercent.toFixed(2));
-        
+
         let allocUniAmount = maxExpense * (1.5 / 100);
         let allocCampusAmount = maxExpense * (2.5 / 100);
         let allocDeptAmount = maxExpense * (allocDeptPercent / 100);
@@ -830,16 +760,20 @@ $(document).ready(function() {
         window.calculateSubDeptAllocations();
     });
 
-    // --- ตรวจจับ Event ในตาราง ---
+    // ----------------------------------------------------
+    // จัดการการพิมพ์ในตาราง
+    // ----------------------------------------------------
     $("#table-budget-incomes").on("keyup change input", ".income-unit-cost, .income-quantity", window.calculateIncome);
     $("#table-budget-expenses").on("keyup change input", ".expense-cost, .expense-factor1, .expense-factor2", window.calculateExpense);
     $("#table-budget-remuneration").on("keyup change input", ".remuneration-cost, .remuneration-factor1, .remuneration-factor2", window.calculateRemuneration);
 
+    // ----------------------------------------------------
+    // ปุ่มกดเพิ่มแถว
+    // ----------------------------------------------------
     function updateRowIndex(tableId) {
         $(tableId + ' tbody tr:not(.template-row)').each(function(index) { $(this).find('.row-index').text(index + 1); });
     }
 
-    // --- ปุ่มเพิ่ม/ลบแถว งบประมาณ ---
     $('#btn-add-income').click(function() {
         let template = $('#table-budget-incomes .template-row').clone(); template.removeClass('template-row d-none');
         template.find('input[type="text"], input[type="number"]').val(''); template.find('select').val('').removeClass('select2-hidden-accessible').removeAttr('data-select2-id').prop("required", true); template.find('.select2-container').remove();
@@ -875,14 +809,16 @@ $(document).ready(function() {
     });
 
     $(document).on('change', '.can-average-switch', function() { $(this).siblings('.can-average-hidden').val(this.checked ? '1' : '0'); });
-
-    // โหลดค่าเริ่มต้น
+    
+    // ตั้งค่าเริ่มต้นตอนเปิดหน้า
     $('.select2-basic').select2({ width: '100%', placeholder: "-- เลือก --" });
     window.calculateIncome();
     window.calculateExpense();
     window.calculateRemuneration();
 
-    // --- Submit Tab 4 ---
+    // ----------------------------------------------------
+    // ปุ่มยืนยันบันทึกข้อมูลงบประมาณ
+    // ----------------------------------------------------
     $('#btn-submit-tab4').click(function(e) {
         e.preventDefault(); 
         let isValid = true; let firstInvalidElement = null;
@@ -924,19 +860,91 @@ $(document).ready(function() {
         });
     });
 
+    function calculateExpense() {
+        let grandTotal = 0;
+        $('#table-budget-expenses tbody tr:not(.template-row)').each(function() {
+            let costPerUnit = parseFloat($(this).find('.expense-cost').val()) || 0;
+            let f1_val = $(this).find('.expense-factor1').val(); let factor1 = (f1_val === '' || isNaN(f1_val)) ? 1 : parseFloat(f1_val);
+            let f2_val = $(this).find('.expense-factor2').val(); let factor2 = (f2_val === '' || isNaN(f2_val)) ? 1 : parseFloat(f2_val);
+            let total = costPerUnit * factor1 * factor2;
+            if (total > 0) { $(this).find('.expense-total-amount').val(total.toFixed(2)); grandTotal += total; } else { $(this).find('.expense-total-amount').val(''); }
+        });
+        $('#expense-grand-total').val(grandTotal > 0 ? grandTotal.toFixed(2) : '');
+    }
 
-    // =========================================
-    // 📊 Tab 5: ผลลัพธ์ & ประเมิน
-    // =========================================
+    function updateRowIndex(tableId) {
+        $(tableId + ' tbody tr:not(.template-row)').each(function(index) { $(this).find('.row-index').text(index + 1); });
+    }
+
+    $('#table-budget-incomes').on('keyup change input', '.income-unit-cost, .income-quantity', calculateIncome);
+    $('#table-budget-expenses').on('keyup change input', '.expense-cost, .expense-factor1, .expense-factor2', calculateExpense);
+
+    $('#btn-add-income').click(function() {
+        let template = $('#table-budget-incomes .template-row').clone(); template.removeClass('template-row d-none');
+        template.find('input[type="text"], input[type="number"]').val(''); template.find('select').val('').removeClass('select2-hidden-accessible').removeAttr('data-select2-id'); template.find('.select2-container').remove();
+        $('#table-budget-incomes tbody').append(template); template.find('.select2-basic').select2({ width: '100%', placeholder: "-- เลือก --" }); updateRowIndex('#table-budget-incomes');
+    });
+
+    $('#btn-add-expense').click(function() {
+        let template = $('#table-budget-expenses .template-row').clone(); template.removeClass('template-row d-none');
+        template.find('input[type="text"], input[type="number"]').val(''); template.find('select').val('').removeClass('select2-hidden-accessible').removeAttr('data-select2-id'); template.find('.select2-container').remove();
+        let uniqueId = 'avg_' + Date.now() + Math.floor(Math.random() * 1000);
+        template.find('.can-average-switch').attr('id', uniqueId).prop('checked', true); template.find('label.custom-control-label').attr('for', uniqueId); template.find('.can-average-hidden').val('1');
+        $('#table-budget-expenses tbody').append(template); template.find('.select2-basic').select2({ width: '100%', placeholder: "-- เลือก --" }); updateRowIndex('#table-budget-expenses');
+    });
+
+    $('#table-budget-incomes, #table-budget-expenses').on('click', '.btn-remove-row', function() {
+        let tr = $(this).closest('tr'); if (tr.hasClass('template-row')) return;
+        let tableId = '#' + tr.closest('table').attr('id');
+        tr.fadeOut(200, function() { $(this).remove(); updateRowIndex(tableId); if (tableId === '#table-budget-incomes') calculateIncome(); if (tableId === '#table-budget-expenses') calculateExpense(); });
+    });
+
+    $(document).on('change', '.can-average-switch', function() { $(this).siblings('.can-average-hidden').val(this.checked ? '1' : '0'); });
+    $('.select2-basic').select2({ width: '100%', placeholder: "-- เลือก --" });
+    calculateIncome(); calculateExpense();
+
+    $('#btn-submit-tab4').click(function(e) {
+        e.preventDefault(); let isValid = true; let firstInvalidElement = null;
+
+        $('#table-budget-incomes tbody tr:not(.template-row), #table-budget-expenses tbody tr:not(.template-row)').each(function() {
+            $(this).find('input[required], select[required]').each(function() {
+                if ($(this).val() === '' || $(this).val() === null) {
+                    isValid = false; $(this).addClass('is-invalid');
+                    if ($(this).hasClass('select2-hidden-accessible')) { $(this).next('.select2-container').find('.select2-selection').css('border', '1px solid #dc3545'); }
+                    if (!firstInvalidElement) firstInvalidElement = $(this);
+                } else {
+                    $(this).removeClass('is-invalid');
+                    if ($(this).hasClass('select2-hidden-accessible')) { $(this).next('.select2-container').find('.select2-selection').css('border', ''); }
+                }
+            });
+        });
+
+        if (!isValid) {
+            Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบถ้วน!', text: 'กรุณาตรวจสอบและระบุข้อมูลในช่องที่มีกรอบสีแดงให้ครบถ้วนครับ' });
+            $('html, body').animate({ scrollTop: firstInvalidElement.offset().top - 150 }, 500); return;
+        }
+
+        Swal.fire({
+            title: 'ยืนยันการบันทึก?', text: "คุณตรวจสอบและต้องการบันทึกแผนงบประมาณใช่หรือไม่?", icon: 'question',
+            showCancelButton: true, confirmButtonColor: '#007bff', cancelButtonColor: '#6c757d', confirmButtonText: '<i class="fas fa-save"></i> บันทึกข้อมูล', cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed || result.value) {
+                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+                $('.template-row').find('input, select').prop('disabled', true);
+                HTMLFormElement.prototype.submit.call(document.getElementById('form-tab4-budget'));
+            }
+        });
+    });
+
+    // 🌟 ดักจับ Tab 5
     function calculatePercent(scoreInputId, percentInputId) {
         let score = parseFloat($('#' + scoreInputId).val()) || 0;
         if (score > 5) { score = 5; $('#' + scoreInputId).val(5); }
         let percent = score * 20; $('#' + percentInputId).val(percent.toFixed(2));
     }
-    
     $('#satisfaction_score').on('input change', function() { calculatePercent('satisfaction_score', 'satisfaction_percent'); });
     $('#dissatisfaction_score').on('input change', function() { calculatePercent('dissatisfaction_score', 'dissatisfaction_percent'); });
-    
+
     $('#btn-submit-tab5').click(function(e) {
         e.preventDefault(); let form = document.getElementById('form-tab5-evaluation');
         if (!form.checkValidity()) { form.reportValidity(); return; }
@@ -952,12 +960,10 @@ $(document).ready(function() {
         });
     });
 
-
-    // =========================================
-    // ✍️ Tab 6: ภาพรวม & รายชื่อผู้ลงนาม
-    // =========================================
+    // 🌟 ดักจับ Tab 6 (ภาพรวม & รายชื่อผู้ลงนาม)
     let sigIndex = window.START_SIG_INDEX;
     const maxSignatures = 10;
+
     $('#signature-container .select2-staff').select2({ width: '100%', placeholder: '-- ค้นหาชื่อบุคลากร --' });
     $('#signature-container .select2-role').select2({ width: '100%', placeholder: '-- เลือกบทบาท --' });
 
@@ -966,9 +972,7 @@ $(document).ready(function() {
         if (currentRowCount >= maxSignatures) { Swal.fire('ข้อควรระวัง', 'สามารถเพิ่มผู้ลงนามได้สูงสุด 10 คนเท่านั้นครับ', 'warning'); return; }
 
         let newRow = $('.signature-row:first').clone();
-        newRow.find('.select2-container').remove(); 
-        newRow.find('select').removeClass('select2-hidden-accessible').removeAttr('data-select2-id aria-hidden tabindex').show(); 
-        newRow.find('option').removeAttr('data-select2-id');
+        newRow.find('.select2-container').remove(); newRow.find('select').removeClass('select2-hidden-accessible').removeAttr('data-select2-id aria-hidden tabindex').show(); newRow.find('option').removeAttr('data-select2-id');
         newRow.find('input').val(''); newRow.find('select').val('').trigger('change');
 
         newRow.attr('data-index', sigIndex);

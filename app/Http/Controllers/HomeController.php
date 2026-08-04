@@ -40,6 +40,13 @@ class HomeController extends Controller
         } elseif (auth()->user()->hasRole("staff")) {
             // return view('home');
             return redirect('/');
+        } elseif (auth()->user()->hasRole("finance")) {
+            // return view('home');
+            return redirect()->route('finance.dashboard');
+            return redirect('/');
+        } elseif (auth()->user()->hasRole("plan")) {
+            // return view('home');
+            return redirect()->route('plan.dashboard');
         } else {
             return abort('404');
         }

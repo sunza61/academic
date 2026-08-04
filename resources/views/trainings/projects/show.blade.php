@@ -336,119 +336,231 @@
     </div>
 
     @php
-    $totalIncome = isset($savedIncomes) ? $savedIncomes->sum('total_amount') : 0;
-    $totalExpense = isset($savedExpenses) ? $savedExpenses->sum('total_amount') : 0;
-    $balance = $totalIncome - $totalExpense;
-    @endphp
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-custom-dark text-white py-2">
-            <h6 class="mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> 4. รายละเอียดแผนงบประมาณ</h6>
-        </div>
-        <div class="card-body p-0">
-            <div class="bg-light text-dark px-3 py-2 font-weight-bold border-bottom"><i class="fas fa-arrow-down mr-1 text-muted"></i> 4.1 แผนรายรับ</div>
-            <div class="table-responsive">
-                <table class="table table-bordered table-sm mb-0">
-                    <thead class="bg-white text-center text-muted" style="font-size: 0.9em;">
-                        <tr>
-                            <th width="5%">ที่</th>
-                            <th width="25%">หมวดหมู่รายรับ</th>
-                            <th width="35%">รายละเอียดกิจกรรม</th>
-                            <th width="12%">อัตราจัดเก็บ</th>
-                            <th width="8%">จำนวน</th>
-                            <th width="15%">จำนวนเงินรวม</th>
-                        </tr>
-                    </thead>
-                    <tbody style="font-size: 0.95em;">
-                        @forelse($savedIncomes ?? [] as $index => $inc)
-                        @php
-                        $catName = '-';
-                        if(isset($incomeCategoriesGrouped)) {
-                        foreach($incomeCategoriesGrouped as $main) {
-                        $found = $main->subCategories->where('id', $inc->category_id)->first();
-                        if($found) { $catName = $found->name_th; break; }
-                        }
-                        }
-                        @endphp
-                        <tr>
-                            <td class="text-center align-middle">{{ $index + 1 }}</td>
-                            <td class="align-middle">{{ $catName }}</td>
-                            <td class="align-middle">{{ $inc->description }}</td>
-                            <td class="text-right align-middle">{{ number_format($inc->unit_cost, 2) }}</td>
-                            <td class="text-center align-middle">{{ number_format($inc->quantity) }}</td>
-                            <td class="text-right align-middle font-weight-bold text-dark">{{ number_format($inc->total_amount, 2) }}</td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-2">ไม่มีข้อมูลแผนรายรับ</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                    <tfoot class="bg-light" style="font-size: 0.95em;">
-                        <tr>
-                            <td colspan="5" class="text-right font-weight-bold align-middle">รวมรายรับทั้งสิ้น</td>
-                            <td class="text-right font-weight-bold text-dark align-middle" style="text-decoration: underline double;">{{ number_format($totalIncome, 2) }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+            $totalIncome = isset($savedIncomes) ? $savedIncomes->sum('total_amount') : 0;
+            $totalExpense = isset($savedExpenses) ? $savedExpenses->sum('total_amount') : 0;
+            $totalRemuneration = isset($savedRemunerations) ? $savedRemunerations->sum('total_amount') : 0;
+            $serviceFee = $savedBudget->service_fee_amount ?? 0;
+            $balance = $totalIncome - ($totalExpense + $totalRemuneration + $serviceFee);
+            @endphp
 
-            <div class="bg-light text-dark px-3 py-2 font-weight-bold border-bottom mt-2"><i class="fas fa-arrow-up mr-1 text-muted"></i> 4.2 แผนรายจ่าย</div>
-            <div class="table-responsive">
-                <table class="table table-bordered table-sm mb-0">
-                    <thead class="bg-white text-center text-muted" style="font-size: 0.9em;">
-                        <tr>
-                            <th width="4%">ที่</th>
-                            <th width="20%">หมวดหมู่รายจ่าย</th>
-                            <th width="25%">รายละเอียดกิจกรรม</th>
-                            <th width="12%">ราคาต่อหน่วย</th>
-                            <th width="8%">คูณ1</th>
-                            <th width="8%">คูณ2</th>
-                            <th width="8%">หน่วย</th>
-                            <th width="15%">จำนวนเงินรวม</th>
-                        </tr>
-                    </thead>
-                    <tbody style="font-size: 0.95em;">
-                        @forelse($savedExpenses ?? [] as $index => $exp)
-                        @php
-                        $catName = '-';
-                        if(isset($expenseCategoriesGrouped)) {
-                        foreach($expenseCategoriesGrouped as $main) {
-                        $found = $main->subCategories->where('id', $exp->category_id)->first();
-                        if($found) { $catName = $found->name_th; break; }
-                        }
-                        }
-                        @endphp
-                        <tr>
-                            <td class="text-center align-middle">{{ $index + 1 }}</td>
-                            <td class="align-middle">{{ $catName }}</td>
-                            <td class="align-middle">{{ $exp->description }}</td>
-                            <td class="text-right align-middle">{{ number_format($exp->cost_per_unit, 2) }}</td>
-                            <td class="text-center align-middle">{{ $exp->factor_1 ?? '-' }}</td>
-                            <td class="text-center align-middle">{{ $exp->factor_2 ?? '-' }}</td>
-                            <td class="text-center align-middle">{{ $exp->uom ?? '-' }}</td>
-                            <td class="text-right align-middle font-weight-bold text-dark">{{ number_format($exp->total_amount, 2) }}</td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8" class="text-center text-muted py-2">ไม่มีข้อมูลแผนรายจ่าย</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                    <tfoot class="bg-light" style="font-size: 0.95em;">
-                        <tr>
-                            <td colspan="7" class="text-right font-weight-bold align-middle">รวมรายจ่ายทั้งสิ้น</td>
-                            <td class="text-right font-weight-bold text-dark align-middle" style="text-decoration: underline double;">{{ number_format($totalExpense, 2) }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-custom-dark text-white py-2">
+                    <h6 class="mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> 4. รายละเอียดแผนงบประมาณ</h6>
+                </div>
+                <div class="card-body p-0">
 
-            <div class="bg-white p-3 border-top text-right" style="font-size: 1em;">
-                <span class="text-dark font-weight-bold mr-2">ยอดคงเหลือสุทธิ (รายรับ - รายจ่าย) : </span>
-                <strong class="text-dark" style="text-decoration: underline double;">{{ number_format($balance, 2) }} บาท</strong>
+                    <!-- 3.1 แผนรายรับ (โค้ดเดิม) -->
+                    <div class="bg-light text-dark px-3 py-2 font-weight-bold border-bottom">
+                        <i class="fas fa-arrow-down mr-1 text-muted"></i> 4.1 แผนรายรับ
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm mb-0">
+                            <thead class="bg-white text-center text-muted" style="font-size: 0.9em;">
+                                <tr>
+                                    <th width="5%" class="align-middle">ที่</th>
+                                    <th width="25%" class="align-middle">หมวดหมู่รายรับ</th>
+                                    <th width="35%" class="align-middle">รายละเอียดกิจกรรม</th>
+                                    <th width="12%" class="align-middle">อัตราจัดเก็บ (บาท)</th>
+                                    <th width="8%" class="align-middle">จำนวน</th>
+                                    <th width="15%" class="align-middle">จำนวนเงินรวม (บาท)</th>
+                                </tr>
+                            </thead>
+                            <tbody style="font-size: 0.95em;">
+                                @forelse($savedIncomes ?? [] as $index => $inc)
+                                @php
+                                $catName = '-';
+                                if(isset($incomeCategoriesGrouped)) {
+                                foreach($incomeCategoriesGrouped as $main) {
+                                $found = $main->subCategories->where('id', $inc->category_id)->first();
+                                if($found) { $catName = $found->name_th; break; }
+                                }
+                                }
+                                @endphp
+                                <tr>
+                                    <td class="text-center align-middle">{{ $index + 1 }}</td>
+                                    <td class="align-middle">{{ $catName }}</td>
+                                    <td class="align-middle">{{ $inc->description }}</td>
+                                    <td class="text-right align-middle">{{ number_format($inc->unit_cost, 2) }}</td>
+                                    <td class="text-center align-middle">{{ number_format($inc->quantity) }}</td>
+                                    <td class="text-right align-middle font-weight-bold text-dark">{{ number_format($inc->total_amount, 2) }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-2">ไม่มีข้อมูลแผนรายรับ</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                            <tfoot class="bg-light" style="font-size: 0.95em;">
+                                <tr>
+                                    <td colspan="5" class="text-right font-weight-bold align-middle">รวมรายรับทั้งสิ้น</td>
+                                    <td class="text-right font-weight-bold text-dark align-middle" style="text-decoration: underline double;">
+                                        {{ number_format($totalIncome, 2) }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- 3.2 แผนรายจ่าย (ค่าดำเนินการ) (โค้ดเดิม) -->
+                    <div class="bg-light text-dark px-3 py-2 font-weight-bold border-top border-bottom mt-0">
+                        <i class="fas fa-arrow-up mr-1 text-muted"></i> 4.2 แผนรายจ่าย (ค่าดำเนินการ)
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm mb-0">
+                            <thead class="bg-white text-center text-muted" style="font-size: 0.9em;">
+                                <tr>
+                                    <th width="4%" class="align-middle">ที่</th>
+                                    <th width="20%" class="align-middle">หมวดหมู่รายจ่าย</th>
+                                    <th width="25%" class="align-middle">รายละเอียดกิจกรรม</th>
+                                    <th width="12%" class="align-middle">ราคาต่อหน่วย (บาท)</th>
+                                    <th width="8%" class="align-middle">ตัวคูณ 1</th>
+                                    <th width="8%" class="align-middle">ตัวคูณ 2</th>
+                                    <th width="8%" class="align-middle">หน่วยนับ</th>
+                                    <th width="15%" class="align-middle">จำนวนเงินรวม (บาท)</th>
+                                </tr>
+                            </thead>
+                            <tbody style="font-size: 0.95em;">
+                                @forelse($savedExpenses ?? [] as $index => $exp)
+                                @php
+                                $catName = '-';
+                                if(isset($expenseCategoriesGrouped)) {
+                                foreach($expenseCategoriesGrouped as $main) {
+                                $found = $main->subCategories->where('id', $exp->category_id)->first();
+                                if($found) { $catName = $found->name_th; break; }
+                                }
+                                }
+                                @endphp
+                                <tr>
+                                    <td class="text-center align-middle">{{ $index + 1 }}</td>
+                                    <td class="align-middle">{{ $catName }}</td>
+                                    <td class="align-middle">{{ $exp->description }}</td>
+                                    <td class="text-right align-middle">{{ number_format($exp->cost_per_unit, 2) }}</td>
+                                    <td class="text-center align-middle">{{ $exp->factor_1 ?? '-' }}</td>
+                                    <td class="text-center align-middle">{{ $exp->factor_2 ?? '-' }}</td>
+                                    <td class="text-center align-middle">{{ $exp->uom ?? '-' }}</td>
+                                    <td class="text-right align-middle font-weight-bold text-dark">{{ number_format($exp->total_amount, 2) }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-2">ไม่มีข้อมูลค่าดำเนินการ</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                            <tfoot class="bg-light" style="font-size: 0.95em;">
+                                <tr>
+                                    <td colspan="7" class="text-right font-weight-bold align-middle">รวมค่าดำเนินการทั้งสิ้น</td>
+                                    <td class="text-right font-weight-bold text-dark align-middle">
+                                        {{ number_format($totalExpense, 2) }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- 3.3 แผนรายจ่าย (ค่าตอบแทน)-->
+                    <div class="bg-light text-dark px-3 py-2 font-weight-bold border-top border-bottom mt-0">
+                        <i class="fas fa-hand-holding-usd mr-1 text-muted"></i> 4.3 แผนรายจ่าย (ค่าตอบแทน)
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm mb-0">
+                            <thead class="bg-white text-center text-muted" style="font-size: 0.9em;">
+                                <tr>
+                                    <th width="4%" class="align-middle">ที่</th>
+                                    <th width="20%" class="align-middle">หมวดหมู่รายจ่าย</th>
+                                    <th width="25%" class="align-middle">รายละเอียดกิจกรรม</th>
+                                    <th width="12%" class="align-middle">ราคาต่อหน่วย (บาท)</th>
+                                    <th width="8%" class="align-middle">ตัวคูณ 1</th>
+                                    <th width="8%" class="align-middle">ตัวคูณ 2</th>
+                                    <th width="8%" class="align-middle">หน่วยนับ</th>
+                                    <th width="15%" class="align-middle">จำนวนเงินรวม (บาท)</th>
+                                </tr>
+                            </thead>
+                            <tbody style="font-size: 0.95em;">
+                                @forelse($savedRemunerations ?? [] as $index => $remun)
+                                @php
+                                $catName = '-';
+                                if(isset($expenseCategoriesGrouped)) {
+                                foreach($expenseCategoriesGrouped as $main) {
+                                $found = $main->subCategories->where('id', $remun->category_id)->first();
+                                if($found) { $catName = $found->name_th; break; }
+                                }
+                                }
+                                @endphp
+                                <tr>
+                                    <td class="text-center align-middle">{{ $index + 1 }}</td>
+                                    <td class="align-middle">{{ $catName }}</td>
+                                    <td class="align-middle">{{ $remun->description }}</td>
+                                    <td class="text-right align-middle">{{ number_format($remun->cost_per_unit, 2) }}</td>
+                                    <td class="text-center align-middle">{{ $remun->factor_1 ?? '-' }}</td>
+                                    <td class="text-center align-middle">{{ $remun->factor_2 ?? '-' }}</td>
+                                    <td class="text-center align-middle">{{ $remun->uom ?? '-' }}</td>
+                                    <td class="text-right align-middle font-weight-bold text-dark">{{ number_format($remun->total_amount, 2) }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-2">ไม่มีข้อมูลค่าตอบแทน</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                            <tfoot class="bg-light" style="font-size: 0.95em;">
+                                <tr>
+                                    <td colspan="7" class="text-right font-weight-bold align-middle">รวมค่าตอบแทนทั้งสิ้น</td>
+                                    <td class="text-right font-weight-bold text-dark align-middle">
+                                        {{ number_format($totalRemuneration, 2) }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- 🛑 3.4 สรุปค่าธรรมเนียม (แก้ไขเป็น $savedBudget ทั้งหมด) -->
+                    <div class="bg-light text-dark px-3 py-2 font-weight-bold border-top border-bottom mt-0" style="background-color: #fffdf5 !important;">
+                        <i class="fas fa-calculator mr-1 text-muted"></i> 4.4 สรุปจัดสรรค่าธรรมเนียม
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm mb-0">
+                            <tbody style="font-size: 0.95em;">
+                                <tr>
+                                    <th width="30%" class="bg-white text-right">งบประมาณทั้งโครงการ :</th>
+                                    <td width="20%" class="text-right font-weight-bold text-success">{{ number_format($savedBudget->total_budget_summary ?? 0, 2) }}</td>
+                                    <th width="30%" class="bg-white text-right">ค่าธรรมเนียมบริการวิชาการ ({{ $savedBudget->service_fee_percent ?? '0' }}%) :</th>
+                                    <td width="20%" class="text-right font-weight-bold text-danger">{{ number_format($savedBudget->service_fee_amount ?? 0, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light text-right">ค่าธรรมเนียมมหาวิทยาลัย ({{ $savedBudget->alloc_uni_percent ?? '0' }}%) :</th>
+                                    <td class="text-right">{{ number_format($savedBudget->alloc_uni_amount ?? 0, 2) }}</td>
+                                    <th class="bg-light text-right text-info">กองทุนวิจัย ({{ $savedBudget->fund_research_percent ?? '0' }}%) :</th>
+                                    <td class="text-right text-info">{{ number_format($savedBudget->fund_research_amount ?? 0, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light text-right">ค่าธรรมเนียมวิทยาเขต ({{ $savedBudget->alloc_campus_percent ?? '0' }}%) :</th>
+                                    <td class="text-right">{{ number_format($savedBudget->alloc_campus_amount ?? 0, 2) }}</td>
+                                    <th class="bg-light text-right text-info">ส่วนของคณะ ({{ $savedBudget->faculty_percent ?? '0' }}%) :</th>
+                                    <td class="text-right text-info">{{ number_format($savedBudget->faculty_amount ?? 0, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light text-right">ค่าธรรมเนียมคณะ/หน่วยงาน ({{ $savedBudget->alloc_dept_percent ?? '0' }}%) :</th>
+                                    <td class="text-right">{{ number_format($savedBudget->alloc_dept_amount ?? 0, 2) }}</td>
+                                    <th class="bg-light text-right text-info">ส่วนของศูนย์ ({{ $savedBudget->center_percent ?? '0' }}%) :</th>
+                                    <td class="text-right text-info">{{ number_format($savedBudget->center_amount ?? 0, 2) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+
+
+                    <div class="bg-white p-3 border-top text-right" style="font-size: 1em;">
+                        <span class="text-dark font-weight-bold mr-2">
+                            ยอดคงเหลือสุทธิ (รายรับ - (รายจ่าย + ค่าธรรมเนียม)) :
+                        </span>
+                        <strong class="{{ $balance < 0 ? 'text-danger' : 'text-primary' }}" style="text-decoration: underline double;">
+                            {{ number_format($balance, 2) }} บาท
+                        </strong>
+                    </div>
+
+                </div>
             </div>
-        </div>
-    </div>
 
     @if(isset($project->overall_status) && $project->overall_status >= 700)
     <div class="card shadow-sm border-0 mb-4">

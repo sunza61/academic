@@ -43,6 +43,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Academic\AcademicBudget;
 
 //http://172.28.80.250/suny/web/academic/public/trainings/projects/1/edit?tab=tab3
 class TrainingProjectController extends Controller
@@ -255,7 +256,7 @@ class TrainingProjectController extends Controller
             ])->with('success', 'บันทึกข้อมูลพื้นฐาน (ฉบับร่าง) สำเร็จ! กรุณากรอกข้อมูลส่วนต่อไป');
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('เกิดข้อผิดพลาดในการสร้างฉบับร่างโครงการ: ' . $e->getMessage());
+            Log::error('เกิดข้อผิดพลาดในการสร้างฉบับร่างโครงการ: ' . $e->getMessage());
 
             return redirect()->back()
                 ->withInput()
@@ -302,8 +303,46 @@ class TrainingProjectController extends Controller
         $trainingPositions = TrainingPosition::all();
         $incomeCategories = BudgetIncomeCategorie::where('is_active', 1)->get();
         $expenseCategories = BudgetExpenseCategorie::where('is_active', 1)->get();
+
+        // 1. แผนรายรับ
         $savedIncomes = AcademicBudgetIncomes::where('academic_project_id', $id)->get();
-        $savedExpenses = AcademicBudgetExpenses::where('academic_project_id', $id)->get();
+
+        // 2. แผนรายจ่าย (ค่าดำเนินการ) -> กรองเฉพาะ operation
+        $savedExpenses = AcademicBudgetExpenses::where('academic_project_id', $id)
+            ->where(function ($q) {
+                $q->where('expense_type', 'operation')
+                    ->orWhereNull('expense_type');
+            })->get();
+
+        // 3. แผนรายจ่าย (ค่าตอบแทน) -> กรองเฉพาะ remuneration
+        $savedRemunerations = AcademicBudgetExpenses::where('academic_project_id', $id)
+            ->where('expense_type', 'remuneration')
+            ->get();
+
+        // 4. ข้อมูลสรุปงบประมาณ/ค่าธรรมเนียม
+        $savedBudget = AcademicBudget::where('academic_project_id', $id)->first();
+
+        // คำนวณยอดรวม (ป้องกัน Error ถ้า $savedBudget ไม่มีค่า)
+        $totalIncome = $savedIncomes ? $savedIncomes->sum('total_amount') : 0;
+        $totalExpense = $savedExpenses ? $savedExpenses->sum('total_amount') : 0;
+        $totalRemuneration = $savedRemunerations ? $savedRemunerations->sum('total_amount') : 0;
+        $serviceFee = $savedBudget->service_fee_amount ?? 0;
+        $balance = $totalIncome - ($totalExpense + $totalRemuneration + $serviceFee);
+
+        // จัดการชื่อหมวดหมู่
+        if ($savedIncomes && isset($incomeCategoriesGrouped)) {
+            $savedIncomes->map(function ($inc) use ($incomeCategoriesGrouped) {
+                $inc->category_name = '-';
+                foreach ($incomeCategoriesGrouped as $main) {
+                    $found = $main->subCategories->where('id', $inc->category_id)->first();
+                    if ($found) {
+                        $inc->category_name = $found->name_th;
+                        break;
+                    }
+                }
+                return $inc;
+            });
+        }
         $projectEvaluation = AcademicProjectEvaluation::where('academic_project_id', $id)->first();
 
         $incomeCategoriesGrouped = BudgetIncomeMainCategory::with(['subCategories' => function ($query) {
@@ -427,6 +466,12 @@ class TrainingProjectController extends Controller
             'expenseCategories',
             'savedIncomes',
             'savedExpenses',
+            'savedRemunerations',
+            'savedBudget',
+            'totalIncome',
+            'totalExpense',
+            'totalRemuneration',
+            'balance',
             'incomeCategoriesGrouped',
             'filteredTargetGroups',
             'projectEvaluation',
@@ -486,8 +531,45 @@ class TrainingProjectController extends Controller
         $trainingPositions = TrainingPosition::all();
         $incomeCategories = BudgetIncomeCategorie::where('is_active', 1)->get();
         $expenseCategories = BudgetExpenseCategorie::where('is_active', 1)->get();
+        // 1. แผนรายรับ
         $savedIncomes = AcademicBudgetIncomes::where('academic_project_id', $id)->get();
-        $savedExpenses = AcademicBudgetExpenses::where('academic_project_id', $id)->get();
+
+        // 2. แผนรายจ่าย (ค่าดำเนินการ) -> กรองเฉพาะ operation
+        $savedExpenses = AcademicBudgetExpenses::where('academic_project_id', $id)
+            ->where(function ($q) {
+                $q->where('expense_type', 'operation')
+                    ->orWhereNull('expense_type');
+            })->get();
+
+        // 3. แผนรายจ่าย (ค่าตอบแทน) -> กรองเฉพาะ remuneration
+        $savedRemunerations = AcademicBudgetExpenses::where('academic_project_id', $id)
+            ->where('expense_type', 'remuneration')
+            ->get();
+
+        // 4. ข้อมูลสรุปงบประมาณ/ค่าธรรมเนียม
+        $savedBudget = AcademicBudget::where('academic_project_id', $id)->first();
+
+        // คำนวณยอดรวม (ป้องกัน Error ถ้า $savedBudget ไม่มีค่า)
+        $totalIncome = $savedIncomes ? $savedIncomes->sum('total_amount') : 0;
+        $totalExpense = $savedExpenses ? $savedExpenses->sum('total_amount') : 0;
+        $totalRemuneration = $savedRemunerations ? $savedRemunerations->sum('total_amount') : 0;
+        $serviceFee = $savedBudget->service_fee_amount ?? 0;
+        $balance = $totalIncome - ($totalExpense + $totalRemuneration + $serviceFee);
+
+        // จัดการชื่อหมวดหมู่
+        if ($savedIncomes && isset($incomeCategoriesGrouped)) {
+            $savedIncomes->map(function ($inc) use ($incomeCategoriesGrouped) {
+                $inc->category_name = '-';
+                foreach ($incomeCategoriesGrouped as $main) {
+                    $found = $main->subCategories->where('id', $inc->category_id)->first();
+                    if ($found) {
+                        $inc->category_name = $found->name_th;
+                        break;
+                    }
+                }
+                return $inc;
+            });
+        }
         $projectEvaluation = AcademicProjectEvaluation::where('academic_project_id', $id)->first();
         $signatureRoles = MasterSignatureRole::where('is_active', 1)->get();
 
@@ -613,6 +695,12 @@ class TrainingProjectController extends Controller
             'expenseCategories',
             'savedIncomes',
             'savedExpenses',
+            'savedRemunerations',
+            'savedBudget',
+            'totalIncome',
+            'totalExpense',
+            'totalRemuneration',
+            'balance',
             'incomeCategoriesGrouped',
             'expenseCategoriesGrouped',
             'filteredTargetGroups',
@@ -902,21 +990,21 @@ class TrainingProjectController extends Controller
                 // 1. กวาดล้างของเก่า
                 AcademicBudgetIncomes::where('academic_project_id', $id)->delete();
                 AcademicBudgetExpenses::where('academic_project_id', $id)->delete();
+                AcademicBudget::where('academic_project_id', $id)->delete();
 
                 // 2. บันทึกแผนรายรับ
                 if ($request->has('incomes') && isset($request->incomes['category_id'])) {
                     $incomesData = [];
                     foreach ($request->incomes['category_id'] as $i => $categoryId) {
-                        // ข้ามแถว Template ที่ว่างเปล่า
                         if (empty($categoryId)) continue;
 
                         $incomesData[] = [
                             'academic_project_id' => $id,
                             'category_id'         => $categoryId,
                             'description'         => $request->incomes['description'][$i] ?? null,
-                            'unit_cost'           => $request->incomes['unit_cost'][$i] ?? 0,
-                            'quantity'            => $request->incomes['quantity'][$i] ?? 0,
-                            'total_amount'        => $request->incomes['total_amount'][$i] ?? 0,
+                            'unit_cost'           => (float) str_replace(',', '', $request->incomes['unit_cost'][$i] ?? 0),
+                            'quantity'            => (float) str_replace(',', '', $request->incomes['quantity'][$i] ?? 0),
+                            'total_amount'        => (float) str_replace(',', '', $request->incomes['total_amount'][$i] ?? 0),
                             'created_at'          => now(),
                             'updated_at'          => now(),
                         ];
@@ -926,7 +1014,7 @@ class TrainingProjectController extends Controller
                     }
                 }
 
-                // 3. บันทึกแผนรายจ่าย
+                // 3. บันทึกแผนรายจ่าย (ค่าดำเนินการ)
                 if ($request->has('expenses') && isset($request->expenses['category_id'])) {
                     $expensesData = [];
                     foreach ($request->expenses['category_id'] as $i => $categoryId) {
@@ -934,13 +1022,14 @@ class TrainingProjectController extends Controller
 
                         $expensesData[] = [
                             'academic_project_id' => $id,
+                            'expense_type'        => 'operation',
                             'category_id'         => $categoryId,
                             'description'         => $request->expenses['description'][$i] ?? null,
-                            'cost_per_unit'       => $request->expenses['cost_per_unit'][$i] ?? 0,
-                            'factor_1'            => $request->expenses['factor_1'][$i] ?? null,
-                            'factor_2'            => $request->expenses['factor_2'][$i] ?? null,
+                            'cost_per_unit'       => (float) str_replace(',', '', $request->expenses['cost_per_unit'][$i] ?? 0),
+                            'factor_1'            => (float) str_replace(',', '', $request->expenses['factor_1'][$i] ?? 0),
+                            'factor_2'            => (float) str_replace(',', '', $request->expenses['factor_2'][$i] ?? 0),
                             'uom'                 => $request->expenses['uom'][$i] ?? null,
-                            'total_amount'        => $request->expenses['total_amount'][$i] ?? 0,
+                            'total_amount'        => (float) str_replace(',', '', $request->expenses['total_amount'][$i] ?? 0),
                             'can_average'         => $request->expenses['can_average'][$i] ?? 0,
                             'created_at'          => now(),
                             'updated_at'          => now(),
@@ -951,9 +1040,59 @@ class TrainingProjectController extends Controller
                     }
                 }
 
+                // 4. บันทึกแผนรายจ่าย (ค่าตอบแทน)
+                if ($request->has('remunerations') && isset($request->remunerations['category_id'])) {
+                    $remunData = [];
+                    foreach ($request->remunerations['category_id'] as $i => $categoryId) {
+                        if (empty($categoryId)) continue;
+
+                        $remunData[] = [
+                            'academic_project_id' => $id,
+                            'expense_type'        => 'remuneration',
+                            'category_id'         => $categoryId,
+                            'description'         => $request->remunerations['description'][$i] ?? null,
+                            'cost_per_unit'       => (float) str_replace(',', '', $request->remunerations['cost_per_unit'][$i] ?? 0),
+                            'factor_1'            => (float) str_replace(',', '', $request->remunerations['factor_1'][$i] ?? 0),
+                            'factor_2'            => (float) str_replace(',', '', $request->remunerations['factor_2'][$i] ?? 0),
+                            'uom'                 => $request->remunerations['uom'][$i] ?? null,
+                            'total_amount'        => (float) str_replace(',', '', $request->remunerations['total_amount'][$i] ?? 0),
+                            'can_average'         => $request->remunerations['can_average'][$i] ?? 0,
+                            'created_at'          => now(),
+                            'updated_at'          => now(),
+                        ];
+                    }
+                    if (!empty($remunData)) {
+                        AcademicBudgetExpenses::insert($remunData);
+                    }
+                }
+
+                // 5. ข้อมูลลงงบประมาณโครงการ (สรุปค่าธรรมเนียม)
+                $unformat = function($val) { return (float) str_replace(',', '', $val ?? 0); };
+                AcademicBudget::create([
+                    'academic_project_id'   => $id,
+                    'total_budget_summary'  => $unformat($request->input('total_budget_summary')),
+                    'total_advance_amount'  => $unformat($request->input('total_advance_amount')),
+                    'total_fine_amount'     => $unformat($request->input('total_fine_amount')),
+                    'remuneration_fee'      => $unformat($request->input('remuneration_fee')),
+                    'operation_fee'         => $unformat($request->input('operation_fee')),
+                    'service_fee_percent'   => $unformat($request->input('service_fee_percent')),
+                    'service_fee_amount'    => $unformat($request->input('service_fee_amount')),
+                    'alloc_uni_percent'     => $unformat($request->input('alloc_uni_percent')),
+                    'alloc_uni_amount'      => $unformat($request->input('alloc_uni_amount')),
+                    'alloc_campus_percent'  => $unformat($request->input('alloc_campus_percent')),
+                    'alloc_campus_amount'   => $unformat($request->input('alloc_campus_amount')),
+                    'alloc_dept_percent'    => $unformat($request->input('alloc_dept_percent')),
+                    'alloc_dept_amount'     => $unformat($request->input('alloc_dept_amount')),
+                    'fund_research_percent' => $unformat($request->input('fund_research_percent')),
+                    'fund_research_amount'  => $unformat($request->input('fund_research_amount')),
+                    'faculty_percent'       => $unformat($request->input('faculty_percent')),
+                    'faculty_amount'        => $unformat($request->input('faculty_amount')),
+                    'center_percent'        => $unformat($request->input('center_percent')),
+                    'center_amount'         => $unformat($request->input('center_amount')),
+                ]);
+
                 DB::commit();
 
-                // บันทึกเสร็จให้เด้งไป Tab 5 พร้อมโชว์สีเขียว
                 return redirect()->route('trainings.projects.edit', ['project' => $id, 'tab' => 'tab5'])
                     ->with('success', 'บันทึกข้อมูลงบประมาณสำเร็จ!');
             } catch (\Exception $e) {
@@ -1679,7 +1818,7 @@ class TrainingProjectController extends Controller
 
             DB::commit();
             return redirect()->route('trainings.projects.index', ['type_id' => $project->project_type_id])
-            ->with('success', 'บันทึกรายงานผลและปิดโครงการเรียบร้อยแล้ว!');
+                ->with('success', 'บันทึกรายงานผลและปิดโครงการเรียบร้อยแล้ว!');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Save Report Error: ' . $e->getMessage());

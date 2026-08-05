@@ -48,7 +48,7 @@
             </a>
           </li>
 
-          @if(auth()->user()->hasAnyRole(['admin', 'staff', 'user', 'finance', 'plan']))
+          @if(auth()->user()->hasAnyRole(['admin', 'staff', 'user', 'finance', 'plan', 'manager']))
           <li class="nav-item dropdown">
             <a id="projectDropdown" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle {{ request()->is(['projects/*','trainings/*','trainings2/*']) || request()->routeIs('admin.approvals.*') ? 'active' : '' }}">
               จัดการโครงการ
@@ -60,7 +60,7 @@
               
               <li><a href="{{ route('projects.select-type') }}" class="dropdown-item {{ request()->is(['projects/*','trainings/*']) ? 'active' : '' }}">จัดโครงการ/รับงานบริการวิชาการ</a></li>
               
-              @if(auth()->user()->hasAnyRole(['admin', 'staff', 'user']))
+              @if(auth()->user()->hasAnyRole(['admin', 'staff', 'user', 'manager']))
               <li><a href="{{ route('trainings.projects.index') }}" class="dropdown-item {{ request()->is('trainings2/*') ? 'active' : '' }}">เปิดให้บริการวิชาการ</a></li>
               <li><a href="{{ route('deliveries.index') }}" class="dropdown-item">บันทึกรายงาน</a></li>
               @endif

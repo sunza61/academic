@@ -1,6 +1,31 @@
 @extends('layouts.main_all')
 
 @section('content')
+<style>
+    /* 1. เปลี่ยนสีพื้นหลังและกรอบของกล่องที่ถูกเลือก (Tag) */
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #343a40 !important; /* ใช้สีเทาดำเข้มๆ ให้เข้ากับธีม bg-custom-dark ของระบบ */
+        border: 1px solid #23272b !important;
+        color: #ffffff !important; /* สีตัวอักษรเป็นสีขาว */
+        border-radius: 4px;
+        padding: 3px 8px;
+        font-size: 14px;
+    }
+
+    /* 2. เปลี่ยนสีของปุ่มกากบาท (x) สำหรับกดลบ */
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: #ffffff !important; /* เปลี่ยนสีกากบาทเป็นสีขาว */
+        margin-right: 8px;
+        border-right: 1px solid rgba(255, 255, 255, 0.3) !important; /* เส้นคั่นกากบาทบางๆ */
+        padding-right: 6px;
+    }
+
+    /* 3. เอฟเฟกต์ตอนเอาเมาส์ไปชี้ที่ปุ่มกากบาท (Hover) */
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        background-color: transparent !important;
+        color: #ff6b6b !important; /* เปลี่ยนกากบาทเป็นสีแดงอ่อนๆ ตอนชี้เมาส์ */
+    }
+</style>
 <div class="row mb-3 mt-2">
     <div class="col-sm-6">
         <h3 class="m-0 font-weight-bold">สร้างโครงการใหม่: <span class="text-primary">{{ $projectType->name_th ?? 'บริการวิชาการ/สัญญาจ้าง' }}</span></h3>

@@ -1520,6 +1520,7 @@
                     เนื่องจากโครงการอยู่ในสถานะ
                     <strong class="text-primary border px-2 py-1 bg-light rounded">
                         @if($project->overall_status == 100) เตรียมการ / ฉบับร่าง
+                        @elseif($project->overall_status == 110) ตีกลับ
                         @elseif($project->overall_status == 200) เสนอขออนุมัติ
                         @elseif($project->overall_status == 300) อนุมัติแล้ว / รอเปิดรับสมัคร
                         @elseif($project->overall_status == 400) เปิดรับสมัคร

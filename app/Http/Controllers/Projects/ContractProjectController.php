@@ -1136,9 +1136,58 @@ class ContractProjectController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         //
+       
+        try {
+            // 1. ดึงข้อมูลโครงการมาตรวจสอบ
+            $project = AcademicProject::findOrFail($id);
+            $user = auth()->user();
+
+            // 2. 🛡️ เช็คสิทธิ์ด้วย Policy (ครอบคลุมทั้ง Role, Owner และ Status == 100 แล้ว!)
+            // ใช้ cannot() แทน authorize() เพื่อให้เรา Custom ข้อความ Error กลับไปหา AJAX (SweetAlert) ได้
+            if ($user->cannot('delete', $project)) {
+                $errorMessage = 'ไม่สามารถลบได้! คุณไม่มีสิทธิ์ หรือ โครงการไม่อยู่ในสถานะฉบับร่าง (100) แล้ว';
+
+                // ดักจับเผื่อกรณี Custom CRUD JS ของคุณวัชกรยิงมาเป็น AJAX
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMessage], 403);
+                }
+                return redirect()->back()->with('error', $errorMessage);
+            }
+
+            DB::beginTransaction();
+
+            // 3. 💾 ทำการ Soft Delete (อัปเดต del_status แทนการลบทิ้งจริงๆ)
+            // พร้อมเก็บ Log ว่าใครเป็นคนกดลบ
+            $project->update([
+                'del_status' => 1,
+                'update_by'  => auth()->id() ?? null
+            ]);
+
+            DB::commit();
+
+            $successMessage = 'ลบโครงการออกจากระบบเรียบร้อยแล้ว';
+
+            // ตอบกลับตามประเภทของ Request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => $successMessage]);
+            }
+
+            return redirect()->route('contracts.projects.index', ['type_id' => $project->project_type_id])
+                ->with('success', $successMessage);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Delete Project Error: ' . $e->getMessage());
+
+            $errorSysMessage = 'เกิดข้อผิดพลาดในระบบ ไม่สามารถลบข้อมูลได้';
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $errorSysMessage], 500);
+            }
+            return redirect()->back()->with('error', $errorSysMessage);
+        }
     }
 
     // ==========================================
@@ -1269,6 +1318,64 @@ class ContractProjectController extends Controller
             DB::rollBack();
             Log::error('Save Report Error: ' . $e->getMessage());
             return back()->withInput()->with('error', 'เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' . $e->getMessage());
+        }
+    }
+
+    // =========================================================================
+    // 📌 ยกเลิกโครงการ (เปลี่ยนสถานะเป็น 900 พร้อมระบุเหตุผล)
+    // =========================================================================
+    public function cancelProject(Request $request, $id)
+    {
+        try {
+            $project = AcademicProject::findOrFail($id);
+            $user = auth()->user();
+
+            // 1. 🛡️ เช็คสิทธิ์ด้วย Policy (แนะนำให้ใช้ 'cancel' ที่เราเขียนดักไว้ใน Policy ครับ)
+            if ($user->cannot('cancel', $project)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'คุณไม่มีสิทธิ์ยกเลิกโครงการนี้ หรือสถานะปัจจุบันไม่สามารถยกเลิกได้'
+                ], 403);
+            }
+
+            // 2. Validate เหตุผล
+            $request->validate([
+                'cancel_reason' => 'required|string|max:1000'
+            ], [
+                'cancel_reason.required' => 'กรุณาระบุเหตุผลที่ยกเลิกโครงการด้วยครับ'
+            ]);
+
+            DB::beginTransaction();
+
+            // 3. 💾 อัปเดตสถานะโครงการในตารางแม่ (ไม่เก็บเหตุผลที่นี่แล้ว)
+            $project->update([
+                'overall_status' => 900,
+                'update_by'      => $user->id
+            ]);
+
+            // 4. 📝 บันทึกลงตาราง academic_project_logs เพื่อเก็บประวัติ
+            AcademicProjectLog::create([
+                'academic_project_id' => $project->id,
+                'user_id'             => $user->id,
+                'action'              => 'ยกเลิกโครงการ',
+                'status_code'         => 900,
+                'comment'             => trim($request->cancel_reason),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'ยกเลิกโครงการและบันทึกประวัติประวัติเรียบร้อยแล้ว'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Cancel Project Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในระบบ: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

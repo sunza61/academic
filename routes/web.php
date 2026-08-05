@@ -75,17 +75,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('projects/ajax/target-groups', [ContractProjectController::class, 'storeTargetGroupAjax'])->name('projects.store-target-group-ajax');
     });
     Route::patch('/contracts/projects/{id}/change-status', [ContractProjectController::class, 'changeStatus'])->name('contracts.projects.change-status');
-
+    Route::get('/contracts/projects/{id}/report', [ContractProjectController::class, 'report'])->name('contracts.projects.report');
+    Route::post('/contracts/projects/{id}/report', [ContractProjectController::class, 'saveReport'])->name('contracts.projects.save-report');
+    Route::put('contracts/projects/{id}/cancel', [ContractProjectController::class, 'cancelProject'])->name('contracts.projects.cancel');
+    
+    
     // เมนูงานอบรม
     Route::prefix('trainings')->name('trainings.')->group(function () {
         Route::resource('projects', TrainingProjectController::class);
     });
-
-    // เมนูวิทยากร (ไม่หักค่าใช้จ่าย)
-    Route::prefix('lecturers')->name('lecturers.')->group(function () {
-        Route::resource('projects', LecturerProjectController::class);
-    });
-
     Route::post('trainings/projects/ajax/customer-groups', [TrainingProjectController::class, 'storeCustomerGroupAjax'])->name('trainings.projects.store-customer-group-ajax');
     Route::post('trainings/projects/ajax/externals', [TrainingProjectController::class, 'storeExternalAjax'])->name('trainings.projects.store-external-ajax');
     Route::post('/trainings/projects/store-schedule-ajax', [TrainingProjectController::class, 'storeScheduleAjax'])->name('trainings.schedules.storeAjax');
@@ -97,9 +95,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/trainings/projects/{id}/report', [TrainingProjectController::class, 'report'])->name('trainings.projects.report');
     Route::post('/trainings/projects/{id}/report', [TrainingProjectController::class, 'saveReport'])->name('trainings.projects.save-report');
 
-    Route::get('/contracts/projects/{id}/report', [ContractProjectController::class, 'report'])->name('contracts.projects.report');
-    Route::post('/contracts/projects/{id}/report', [ContractProjectController::class, 'saveReport'])->name('contracts.projects.save-report');
+    // เมนูวิทยากร (ไม่หักค่าใช้จ่าย)
+    Route::prefix('lecturers')->name('lecturers.')->group(function () {
+        Route::resource('projects', LecturerProjectController::class);
+    });
 
+    
+
+    
+    
+    
+    
     // เมนูบันทึกรายงาน
     Route::prefix('deliveries')->name('deliveries.')->group(function () {
         Route::get('/', [ProjectDeliveryController::class, 'index'])->name('index');

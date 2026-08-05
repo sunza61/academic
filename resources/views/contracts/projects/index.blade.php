@@ -36,7 +36,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($projects as $key => $item)
+                @forelse($projects as $key => $item)
                 <tr>
                     <td class="text-center align-middle">{{ $key + 1 }}</td>
 
@@ -90,6 +90,7 @@
                         <span class="badge badge-light px-2 py-1">ไม่ทราบสถานะ</span>
                         @endif
                         @if($item->overall_status == 110 || $item->overall_status == 900)
+
                         <div class="mt-1">
                             <button type="button" class="btn btn-xs btn-outline-danger btn-view-reason"
                                 data-reason="{{ $item->log_reason }}"
@@ -103,32 +104,33 @@
                     </td>
 
                     <td class="text-left align-middle text-nowrap">
-                        
                         <a href="{{ route('contracts.projects.show', $item->id) }}" class="btn btn-sm btn-info mr-1 mb-1" data-toggle="tooltip" title="ดูรายละเอียดโครงการ">
                             <i class="fas fa-search"></i>
                         </a>
-                     
 
-                        @if($item->can_edit)
+
+                        @can('update', $item)
                         <a href="{{ route('contracts.projects.edit', $item->id) }}" class="btn btn-sm btn-warning mr-1 mb-1" data-toggle="tooltip" title="แก้ไขโครงการ">
                             <i class="fas fa-edit"></i>
                         </a>
-                        @endif
+                        @endcan
 
-                        @if($item->can_report)
+                        @if($item->overall_status == 700)
+                        @can('report', $item)
                         <a href="{{ route('contracts.projects.report', $item->id) }}" class="btn btn-sm btn-success mr-1 mb-1" data-toggle="tooltip" title="รายงานผลโครงการ/ปิดโครงการ">
                             <i class="fas fa-flag-checkered"></i>
                         </a>
+                        @endcan
                         @endif
 
-                        @if($item->can_cancel)
+                        @can('cancel', $item)
                         <button type="button" class="btn btn-sm btn-secondary btn-cancel-project mr-1 mb-1"
                             data-id="{{ $item->id }}"
                             data-name="{{ $item->name_th }}"
                             data-toggle="tooltip" title="ยกเลิกโครงการ">
                             <i class="fas fa-ban"></i>
                         </button>
-                        @endif
+                        @endcan
 
                         @if($item->show_delete_btn)
                         <form action="{{ route('contracts.projects.destroy', $item->id) }}" method="POST" class="d-inline form-delete">
@@ -145,10 +147,18 @@
                             </button>
                         </form>
                         @endif
-
                     </td>
                 </tr>
-                @endforeach
+
+                @empty
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-5">
+                        <i class="fas fa-folder-open fa-3x mb-3 text-light"></i><br>
+                        คุณยังไม่มีประวัติการสร้างโครงการประเภทนี้<br>
+                        คลิกที่ปุ่ม <strong>"เพิ่มโครงการ"</strong> เพื่อเริ่มต้นใช้งาน
+                    </td>
+                </tr>
+                @endforelse
             </tbody>
         </table>
     </div>

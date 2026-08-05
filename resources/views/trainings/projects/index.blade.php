@@ -123,14 +123,14 @@
                         @endcan
                         @endif
 
-                        @if($item->can_cancel)
+                        @can('cancel', $item)
                         <button type="button" class="btn btn-sm btn-secondary btn-cancel-project mr-1 mb-1"
                             data-id="{{ $item->id }}"
                             data-name="{{ $item->name_th }}"
                             data-toggle="tooltip" title="ยกเลิกโครงการ">
                             <i class="fas fa-ban"></i>
                         </button>
-                        @endif
+                        @endcan
 
                         @if($item->show_delete_btn)
                         <form action="{{ route('trainings.projects.destroy', $item->id) }}" method="POST" class="d-inline form-delete">

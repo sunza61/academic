@@ -216,7 +216,8 @@
                                 $typeBadge = '<span class="badge badge-primary px-2" style="font-size:0.8em; font-weight:normal;">บุคลากรในคณะ</span>';
                                 } else {
                                 $ext = $externals->where('id', $comm->external_id)->first();
-                                $name = $ext ? $ext->firstname . ' ' . $ext->lastname : '-';
+                                $prefixName = isset($ext->prefix) ? $ext->prefix->name_th : '';
+                                $name = $ext ? $prefixName . $ext->firstname . ' ' . $ext->lastname : '-';
                                 $typeBadge = '<span class="badge badge-secondary px-2" style="font-size:0.8em; font-weight:normal;">บุคคลภายนอก</span>';
                                 }
                                 @endphp

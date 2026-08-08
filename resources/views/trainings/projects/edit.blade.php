@@ -439,7 +439,7 @@
                                             @if(isset($externals))
                                             @foreach($externals as $ext)
                                             <option value="{{ $ext->id }}" {{ $comm->external_id == $ext->id ? 'selected' : '' }}>
-                                                {{ $ext->firstname }} {{ $ext->lastname }}
+                                                {{ $ext->prefix->name_th ?? '' }}{{ $ext->firstname }} {{ $ext->lastname }}
                                             </option>
                                             @endforeach
                                             @endif
@@ -484,7 +484,7 @@
                                             <option value="">-- ค้นหาชื่อบุคคลภายนอก --</option>
                                             @if(isset($externals))
                                             @foreach($externals as $ext)
-                                            <option value="{{ $ext->id }}">{{ $ext->firstname }} {{ $ext->lastname }}</option>
+                                            <option value="{{ $ext->id }}">{{ $ext->prefix->name_th ?? '' }}{{ $ext->firstname }} {{ $ext->lastname }}</option>
                                             @endforeach
                                             @endif
                                         </select>
@@ -584,7 +584,7 @@
                                         $name = $staff ? $staff->TITLE_TH . $staff->NAME_TH . ' ' . $staff->SURNAME_TH : '';
                                         } else {
                                         $ext = $externals->where('id', $mem->external_id)->first();
-                                        $name = $ext ? $ext->firstname . ' ' . $ext->lastname : '';
+                                        $name = $ext ? $ext->prefix->name_th . $ext->firstname . ' ' . $ext->lastname : '';
                                         }
                                         @endphp
                                         <div class="mb-1"><i class="fas fa-user-tie text-secondary mr-1"></i> <b>{{ $posName }}</b>: {{ $name }}</div>
@@ -680,7 +680,7 @@
                                                 <div class="external-zone" style="display: none;">
                                                     <select name="members[external_id][]" class="form-control select2-external-temp">
                                                         <option value="">-- ค้นหา --</option>
-                                                        @if(isset($externals)) @foreach($externals as $ext) <option value="{{ $ext->id }}">{{ $ext->firstname }} {{ $ext->lastname }}</option> @endforeach @endif
+                                                        @if(isset($externals)) @foreach($externals as $ext) <option value="{{ $ext->id }}">{{ $ext->prefix->name_th ?? '' }}{{ $ext->firstname }} {{ $ext->lastname }}</option> @endforeach @endif
                                                     </select>
                                                 </div>
                                             </td>
@@ -771,589 +771,620 @@
     </div>
 
     <div class="tab-pane fade {{ ($activeTab ?? '') == 'tab4' ? 'show active' : '' }}" id="tab4" role="tabpanel">
-        <form action="{{ route('trainings.projects.update', $project->id) }}" method="POST" id="form-tab4-budget" novalidate>
-            @csrf
-            @method('PUT')
-            <input type="hidden" name="step" value="4">
+        @php
+        $currentStatus = $project->overall_status ?? 0;
+        $isBudgetLocked = ($currentStatus >= 600 && $currentStatus <= 700) && !auth()->user()->hasRole('admin');
+            @endphp
 
-            <!-- 4.1: แผนรายรับ -->
-            <div class="card shadow-sm border-0 mb-4 project-section">
-                <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-money-bill-wave mr-2"></i> ส่วนที่ 4.1: แผนรายรับ</h5>
-                    <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-income">
-                        <i class="fas fa-plus-circle"></i> เพิ่มแถวรายรับ
-                    </button>
-                </div>
-                <div class="card-body bg-light p-0">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover mb-0" id="table-budget-incomes" style="min-width: 900px;">
-                            <thead class="bg-white text-center">
-                                <tr>
-                                    <th width="5%">ที่</th>
-                                    <th width="20%">หมวดหมู่รายรับ <span class="text-danger">*</span></th>
-                                    <th width="30%">รายละเอียดกิจกรรม</th>
-                                    <th width="15%">อัตราจัดเก็บ (บาท)</th>
-                                    <th width="10%">จำนวน</th>
-                                    <th width="15%">จำนวนเงินรวม (บาท)</th>
-                                    <th width="5%">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="income-row template-row d-none">
-                                    <td class="text-center align-middle font-weight-bold row-index">#</td>
-                                    <td>
-                                        <select name="incomes[category_id][]" class="form-control income-category-select select2-basic" style="width: 100%;">
-                                            <option value="">-- เลือก --</option>
-                                            @foreach($incomeCategoriesGrouped as $mainCat)
-                                            <optgroup label="📌 {{ $mainCat->name_th }}">
-                                                @foreach($mainCat->subCategories as $subCat)
-                                                <option value="{{ $subCat->id }}">
-                                                    {{ $subCat->name_th }}
-                                                </option>
-                                                @endforeach
-                                            </optgroup>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="incomes[description][]" class="form-control" placeholder="เช่น (คนละ ... บาท x ... คน)">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="incomes[unit_cost][]" class="form-control form-control-sm text-right income-unit-cost format-number-budget" placeholder="0.00" step="0.01" min="0">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="incomes[quantity][]" class="form-control form-control-sm text-center income-quantity format-number-budget" placeholder="0" min="0">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="incomes[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold income-total-amount format-number-budget" placeholder="0.00" readonly style="background-color: #f1f3f5;">
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                @if(isset($savedIncomes) && $savedIncomes->count() > 0)
-                                @foreach($savedIncomes as $index => $income)
-                                <tr class="income-row">
-                                    <td class="text-center align-middle font-weight-bold row-index">{{ $index + 1 }}</td>
-                                    <td>
-                                        <select name="incomes[category_id][]" class="form-control income-category-select select2-basic" style="width: 100%;" required>
-                                            <option value="">-- เลือก --</option>
-                                            @foreach($incomeCategoriesGrouped as $mainCat)
-                                            <optgroup label="📌 {{ $mainCat->name_th }}">
-                                                @foreach($mainCat->subCategories as $subCat)
-                                                <option value="{{ $subCat->id }}" {{ $income->category_id == $subCat->id ? 'selected' : '' }}>
-                                                    {{ $subCat->name_th }}
-                                                </option>
-                                                @endforeach
-                                            </optgroup>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="incomes[description][]" class="form-control" value="{{ $income->description }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="incomes[unit_cost][]" class="form-control form-control-sm text-right income-unit-cost format-number-budget" value="{{ number_format($income->unit_cost, 2) }}" step="0.01" min="0" required>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="incomes[quantity][]" class="form-control form-control-sm text-center income-quantity format-number-budget" value="{{ $income->quantity }}" min="1" required>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="incomes[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold income-total-amount format-number-budget" value="{{ number_format($income->total_amount, 2) }}" readonly style="background-color: #f1f3f5;">
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                @endforeach
-                                @endif
-                            </tbody>
-                            <tfoot class="bg-white">
-                                <tr>
-                                    <td colspan="5" class="text-right font-weight-bold p-3">รวมเป็นเงินทั้งสิ้น (บาท)</td>
-                                    <td>
-                                        <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-summary" id="income-grand-total" placeholder="0.00" value="{{ isset($savedIncomes) ? number_format($savedIncomes->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
-                                    </td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
+            @if($isBudgetLocked)
+            <div class="alert alert-warning shadow-sm mt-3">
+                <i class="fas fa-lock"></i> <strong>งบประมาณถูกล็อก:</strong> โครงการอยู่ในสถานะดำเนินการ (600-700) ไม่อนุญาตให้แก้ไขข้อมูลในส่วนนี้ (สิทธิ์การแก้ไขเฉพาะผู้ดูแลระบบ)
             </div>
+            @endif
 
-            <!-- 4.2: แผนรายจ่าย (ค่าดำเนินการ) -->
-            <div class="card shadow-sm border-0 mb-4 project-section">
-                <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> ส่วนที่ 4.2: แผนรายจ่าย (ค่าดำเนินการ)</h5>
-                    <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-expense">
-                        <i class="fas fa-plus-circle"></i> เพิ่มแถวรายจ่าย
-                    </button>
-                </div>
-                <div class="card-body bg-light p-0">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover mb-0" id="table-budget-expenses" style="min-width: 1300px;">
-                            <thead class="bg-white text-center">
-                                <tr>
-                                    <th width="4%">ที่</th>
-                                    <th width="15%">หมวดหมู่รายจ่าย <span class="text-danger">*</span></th>
-                                    <th width="20%">รายละเอียดกิจกรรม</th>
-                                    <th width="10%">ราคาต่อหน่วย (บาท)</th>
-                                    <th width="8%">ตัวคูณ 1</th>
-                                    <th width="8%">ตัวคูณ 2</th>
-                                    <th width="10%">หน่วยนับ</th>
-                                    <th width="12%">จำนวนเงินรวม (บาท)</th>
-                                    <th width="8%">ถัวเฉลี่ยได้?</th>
-                                    <th width="5%">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="expense-row template-row d-none">
-                                    <td class="text-center align-middle font-weight-bold row-index">#</td>
-                                    <td>
-                                        <select name="expenses[category_id][]" class="form-control expense-category-select select2-basic" style="width: 100%;">
-                                            <option value="">-- เลือก --</option>
-                                            @foreach($expenseCategoriesGrouped as $mainCat)
-                                            <optgroup label="📌 {{ $mainCat->name_th }}">
-                                                @foreach($mainCat->subCategories as $subCat)
-                                                <option value="{{ $subCat->id }}">{{ $subCat->name_th }}</option>
-                                                @endforeach
-                                            </optgroup>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[description][]" class="form-control" placeholder="เช่น ค่าอาหารว่าง">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[cost_per_unit][]" class="form-control form-control-sm text-right expense-cost format-number-budget" placeholder="0.00">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[factor_1][]" class="form-control form-control-sm text-center expense-factor1 format-number-budget" placeholder="จำนวน" min="1">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[factor_2][]" class="form-control form-control-sm text-center expense-factor2 format-number-budget" placeholder="มื้อ/วัน" min="1">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[uom][]" class="form-control form-control-sm text-center" placeholder="หน่วย">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold expense-total-amount format-number-budget" placeholder="0.00" readonly style="background-color: #f1f3f5;">
-                                    </td>
-                                    <td class="text-center align-middle p-0">
-                                        <div class="custom-control custom-switch pt-2">
-                                            <input type="checkbox" class="custom-control-input can-average-switch" id="can_average_template">
-                                            <label class="custom-control-label" for="can_average_template"></label>
-                                            <input type="hidden" name="expenses[can_average][]" class="can-average-hidden" value="1">
-                                        </div>
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                @if(isset($savedExpenses) && $savedExpenses->count() > 0)
-                                @foreach($savedExpenses as $index => $expense)
-                                <tr class="expense-row">
-                                    <td class="text-center align-middle font-weight-bold row-index">{{ $index + 1 }}</td>
-                                    <td>
-                                        <select name="expenses[category_id][]" class="form-control expense-category-select select2-basic" style="width: 100%;" required>
-                                            <option value="">-- เลือก --</option>
-                                            @foreach($expenseCategoriesGrouped as $mainCat)
-                                            <optgroup label="📌 {{ $mainCat->name_th }}">
-                                                @foreach($mainCat->subCategories as $subCat)
-                                                <option value="{{ $subCat->id }}" {{ $expense->category_id == $subCat->id ? 'selected' : '' }}>
-                                                    {{ $subCat->name_th }}
-                                                </option>
-                                                @endforeach
-                                            </optgroup>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[description][]" class="form-control" value="{{ $expense->description }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[cost_per_unit][]" class="form-control form-control-sm text-right expense-cost format-number-budget" value="{{ number_format($expense->cost_per_unit, 2) }}" required>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[factor_1][]" class="form-control form-control-sm text-center expense-factor1 format-number-budget" value="{{ $expense->factor_1 }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[factor_2][]" class="form-control form-control-sm text-center expense-factor2 format-number-budget" value="{{ $expense->factor_2 }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[uom][]" class="form-control form-control-sm text-center" value="{{ $expense->uom }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="expenses[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold expense-total-amount format-number-budget" value="{{ number_format($expense->total_amount, 2) }}" readonly style="background-color: #f1f3f5;">
-                                    </td>
-                                    <td class="text-center align-middle p-0">
-                                        <div class="custom-control custom-switch pt-2">
-                                            <input type="checkbox" class="custom-control-input can-average-switch" id="avg_{{ $expense->id }}" {{ $expense->can_average ? 'checked' : '' }}>
-                                            <label class="custom-control-label" for="avg_{{ $expense->id }}"></label>
-                                            <input type="hidden" name="expenses[can_average][]" class="can-average-hidden" value="{{ $expense->can_average ? 1 : 0 }}">
-                                        </div>
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                @endforeach
-                                @endif
-                            </tbody>
-                            <tfoot class="bg-white">
-                                <tr>
-                                    <td colspan="7" class="text-right font-weight-bold p-3">รวมเป็นเงินทั้งสิ้น (บาท)</td>
-                                    <td>
-                                        <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-summary" id="expense-grand-total" placeholder="0.00" value="{{ isset($savedExpenses) ? number_format($savedExpenses->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
-                                    </td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
+            <form action="{{ route('trainings.projects.update', $project->id) }}" method="POST" id="form-tab4-budget" novalidate>
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="step" value="4">
+
+                <div class="card shadow-sm border-0 mb-4 project-section">
+                    <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
+                        <h5 class="card-title mb-0 mt-1"><i class="fas fa-money-bill-wave mr-2"></i> ส่วนที่ 4.1: แผนรายรับ</h5>
+                        @if(!$isBudgetLocked)
+                        <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-income">
+                            <i class="fas fa-plus-circle"></i> เพิ่มแถวรายรับ
+                        </button>
+                        @endif
                     </div>
-                </div>
-            </div>
-
-            <!-- 4.3: แผนรายจ่าย (ค่าตอบแทน) -->
-            <div class="card shadow-sm border-0 mb-4 project-section">
-                <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> ส่วนที่ 4.3: แผนรายจ่าย (ค่าตอบแทน)</h5>
-                    <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-remuneration">
-                        <i class="fas fa-plus-circle"></i> เพิ่มแถวรายจ่าย
-                    </button>
-                </div>
-                <div class="card-body bg-light p-0">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover mb-0" id="table-budget-remuneration" style="min-width: 1300px;">
-                            <thead class="bg-white text-center">
-                                <tr>
-                                    <th width="4%">ที่</th>
-                                    <th width="15%">หมวดหมู่รายจ่าย <span class="text-danger">*</span></th>
-                                    <th width="20%">รายละเอียดกิจกรรม</th>
-                                    <th width="10%">ราคาต่อหน่วย (บาท)</th>
-                                    <th width="8%">ตัวคูณ 1</th>
-                                    <th width="8%">ตัวคูณ 2</th>
-                                    <th width="10%">หน่วยนับ</th>
-                                    <th width="12%">จำนวนเงินรวม (บาท)</th>
-                                    <th width="8%">ถัวเฉลี่ยได้?</th>
-                                    <th width="5%">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="remuneration-row template-row d-none">
-                                    <td class="text-center align-middle font-weight-bold row-index"></td>
-                                    <td>
-                                        <select name="remunerations[category_id][]" class="form-control remuneration-category-select select2-basic" style="width: 100%;">
-                                            <option value="">-- เลือก --</option>
-                                            @foreach($expenseCategoriesGrouped as $mainCat)
-                                            <optgroup label="📌 {{ $mainCat->name_th }}">
-                                                @foreach($mainCat->subCategories as $subCat)
-                                                <option value="{{ $subCat->id }}">{{ $subCat->name_th }}</option>
+                    <div class="card-body bg-light p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0" id="table-budget-incomes" style="min-width: 900px;">
+                                <thead class="bg-white text-center">
+                                    <tr>
+                                        <th width="5%">ที่</th>
+                                        <th width="20%">หมวดหมู่รายรับ <span class="text-danger">*</span></th>
+                                        <th width="30%">รายละเอียดกิจกรรม</th>
+                                        <th width="15%">อัตราจัดเก็บ (บาท)</th>
+                                        <th width="10%">จำนวน</th>
+                                        <th width="15%">จำนวนเงินรวม (บาท)</th>
+                                        @if(!$isBudgetLocked) <th width="5%">จัดการ</th> @endif
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="income-row template-row d-none">
+                                        <td class="text-center align-middle font-weight-bold row-index">#</td>
+                                        <td>
+                                            <select name="incomes[category_id][]" class="form-control income-category-select select2-basic" style="width: 100%;">
+                                                <option value="">-- เลือก --</option>
+                                                @foreach($incomeCategoriesGrouped as $mainCat)
+                                                <optgroup label="📌 {{ $mainCat->name_th }}">
+                                                    @foreach($mainCat->subCategories as $subCat)
+                                                    <option value="{{ $subCat->id }}">
+                                                        {{ $subCat->name_th }}
+                                                    </option>
+                                                    @endforeach
+                                                </optgroup>
                                                 @endforeach
-                                            </optgroup>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[description][]" class="form-control" placeholder="ระบุรายละเอียด">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[cost_per_unit][]" class="form-control form-control-sm text-right remuneration-cost format-number-budget" placeholder="0.00" required>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[factor_1][]" class="form-control form-control-sm text-center remuneration-factor1 format-number-budget" value="1">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[factor_2][]" class="form-control form-control-sm text-center remuneration-factor2 format-number-budget" value="1">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[uom][]" class="form-control form-control-sm text-center" placeholder="หน่วย">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold remuneration-total-amount format-number-budget" placeholder="0.00" readonly style="background-color: #f1f3f5;">
-                                    </td>
-                                    <td class="text-center align-middle p-0">
-                                        <div class="custom-control custom-switch pt-2">
-                                            <input type="checkbox" class="custom-control-input can-average-switch" id="avg_remun_template">
-                                            <label class="custom-control-label" for="avg_remun_template"></label>
-                                            <input type="hidden" name="remunerations[can_average][]" class="can-average-hidden" value="1">
-                                        </div>
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-
-                                @if(isset($savedRemunerations) && $savedRemunerations->count() > 0)
-                                @foreach($savedRemunerations as $index => $remun)
-                                <tr class="remuneration-row">
-                                    <td class="text-center align-middle font-weight-bold row-index">{{ $index + 1 }}</td>
-                                    <td>
-                                        <select name="remunerations[category_id][]" class="form-control remuneration-category-select select2-basic" style="width: 100%;" required>
-                                            <option value="">-- เลือก --</option>
-                                            @foreach($expenseCategoriesGrouped as $mainCat)
-                                            <optgroup label="📌 {{ $mainCat->name_th }}">
-                                                @foreach($mainCat->subCategories as $subCat)
-                                                <option value="{{ $subCat->id }}" {{ $remun->category_id == $subCat->id ? 'selected' : '' }}>
-                                                    {{ $subCat->name_th }}
-                                                </option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="incomes[description][]" class="form-control" placeholder="เช่น (คนละ ... บาท x ... คน)">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="incomes[unit_cost][]" class="form-control form-control-sm text-right income-unit-cost format-number-budget" placeholder="0.00" step="0.01" min="0">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="incomes[quantity][]" class="form-control form-control-sm text-center income-quantity format-number-budget" placeholder="0" min="0">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="incomes[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold income-total-amount format-number-budget" placeholder="0.00" readonly style="background-color: #f1f3f5;">
+                                        </td>
+                                        @if(!$isBudgetLocked)
+                                        <td class="text-center align-middle">
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                        @endif
+                                    </tr>
+                                    @if(isset($savedIncomes) && $savedIncomes->count() > 0)
+                                    @foreach($savedIncomes as $index => $income)
+                                    <tr class="income-row">
+                                        <td class="text-center align-middle font-weight-bold row-index">{{ $index + 1 }}</td>
+                                        <td>
+                                            <select name="incomes[category_id][]" class="form-control income-category-select select2-basic" style="width: 100%; {{ $isBudgetLocked ? 'pointer-events: none; background-color: #e9ecef;' : '' }}" required tabindex="{{ $isBudgetLocked ? '-1' : '0' }}">
+                                                <option value="">-- เลือก --</option>
+                                                @foreach($incomeCategoriesGrouped as $mainCat)
+                                                <optgroup label="📌 {{ $mainCat->name_th }}">
+                                                    @foreach($mainCat->subCategories as $subCat)
+                                                    <option value="{{ $subCat->id }}" {{ $income->category_id == $subCat->id ? 'selected' : '' }}>
+                                                        {{ $subCat->name_th }}
+                                                    </option>
+                                                    @endforeach
+                                                </optgroup>
                                                 @endforeach
-                                            </optgroup>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[description][]" class="form-control" value="{{ $remun->description }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[cost_per_unit][]" class="form-control form-control-sm text-right remuneration-cost format-number-budget" value="{{ number_format($remun->cost_per_unit, 2) }}" required>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[factor_1][]" class="form-control form-control-sm text-center remuneration-factor1 format-number-budget" value="{{ $remun->factor_1 }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[factor_2][]" class="form-control form-control-sm text-center remuneration-factor2 format-number-budget" value="{{ $remun->factor_2 }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[uom][]" class="form-control form-control-sm text-center" value="{{ $remun->uom }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remunerations[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold remuneration-total-amount format-number-budget" value="{{ number_format($remun->total_amount, 2) }}" readonly style="background-color: #f1f3f5;">
-                                    </td>
-                                    <td class="text-center align-middle p-0">
-                                        <div class="custom-control custom-switch pt-2">
-                                            <input type="checkbox" class="custom-control-input can-average-switch" id="avg_remun_{{ $remun->id }}" {{ $remun->can_average ? 'checked' : '' }}>
-                                            <label class="custom-control-label" for="avg_remun_{{ $remun->id }}"></label>
-                                            <input type="hidden" name="remunerations[can_average][]" class="can-average-hidden" value="{{ $remun->can_average ? 1 : 0 }}">
-                                        </div>
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                @endforeach
-                                @endif
-                            </tbody>
-                            <tfoot class="bg-white">
-                                <tr>
-                                    <td colspan="7" class="text-right font-weight-bold p-3">รวมเป็นเงินทั้งสิ้น (บาท)</td>
-                                    <td>
-                                        <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-summary" id="remuneration-grand-total" placeholder="0.00" value="{{ isset($savedRemunerations) ? number_format($savedRemunerations->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
-                                    </td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4.4: สรุปจัดสรรค่าธรรมเนียม -->
-            <div class="card shadow-sm border-0 mb-4 project-section">
-                <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-calculator mr-2"></i> ส่วนที่ 4.4: ข้อมูลลงงบประมาณโครงการ (สรุปค่าธรรมเนียม)</h5>
-                </div>
-                <div class="card-body bg-light">
-                    <div class="row">
-                        <div class="col-md-4 border-right pt-3">
-                            <div class="form-group row align-items-center">
-                                <label class="col-sm-5 col-form-label text-right">งบประมาณทั้งโครงการ <span class="text-danger">*</span></label>
-                                <div class="col-sm-5">
-                                    <input type="text" class="form-control text-right font-weight-bold text-dark format-summary" name="total_budget_summary" value="{{ isset($savedBudget->total_budget_summary) ? number_format($savedBudget->total_budget_summary, 2) : '0.00' }}" readonly style="background-color: #f8f9fa;">
-                                </div>
-                                <label class="col-sm-2 col-form-label px-0">บาท</label>
-                            </div>
-                            <div class="form-group row align-items-center">
-                                <label class="col-sm-5 col-form-label text-right">เงินค่าล่วงหน้าทั้งหมด</label>
-                                <div class="col-sm-5">
-                                    <input type="text" class="form-control text-right format-summary" name="total_advance_amount" value="{{ isset($savedBudget->total_advance_amount) ? number_format($savedBudget->total_advance_amount, 2) : '0.00' }}">
-                                </div>
-                                <label class="col-sm-2 col-form-label px-0">บาท</label>
-                            </div>
-                            <div class="form-group row align-items-center">
-                                <label class="col-sm-5 col-form-label text-right text-danger">ค่าปรับรวมทั้งหมด</label>
-                                <div class="col-sm-5">
-                                    <input type="text" class="form-control text-right text-danger bg-light format-summary" name="total_fine_amount" value="{{ isset($savedBudget->total_fine_amount) ? number_format($savedBudget->total_fine_amount, 2) : '0.00' }}">
-                                </div>
-                                <label class="col-sm-2 col-form-label px-0">บาท</label>
-                            </div>
-                        </div>
-
-                        <div class="col-md-8 pt-2">
-                            <div class="card mb-3" style="border: 1px solid #ffc107; border-radius: 8px;">
-                                <div class="card-body" style="background-color: #fffdf5; border-radius: 8px;">
-                                    <h6 class="text-danger font-weight-bold mb-3"><i class="fas fa-calculator"></i> คำนวณตามเกณฑ์ค่าธรรมเนียม 15% (แนะนำ)</h6>
-
-                                    <div class="row text-center mb-4">
-                                        <div class="col-md-6">
-                                            ค่าใช้จ่ายที่สามารถใช้ได้สูงสุด : <span class="text-primary font-weight-bold" id="max_expense_label" style="font-size: 1.1em;">0.00 บาท</span>
-                                        </div>
-                                        <div class="col-md-6">
-                                            ค่าธรรมเนียมบริการวิชาการ : <span class="text-primary font-weight-bold" id="service_fee_label" style="font-size: 1.1em;">0.00 บาท</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group row mb-2">
-                                                <label class="col-sm-5 col-form-label text-right">ค่าตอบแทน</label>
-                                                <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right format-summary" name="remuneration_fee" value="{{ isset($savedRemunerations) ? number_format($savedRemunerations->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f8f9fa;"></div>
-                                                <label class="col-sm-2 col-form-label px-0">บาท</label>
-                                            </div>
-                                            <div class="form-group row mb-0">
-                                                <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมบริการวิชาการ</label>
-                                                <div class="col-sm-5"><input type="number" class="form-control form-control-sm text-right" name="service_fee_percent" value="{{ isset($savedBudget->service_fee_percent) ? $savedBudget->service_fee_percent : '0.00' }}" step="0.01"></div>
-                                                <label class="col-sm-2 col-form-label px-0">%</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group row mb-2">
-                                                <label class="col-sm-5 col-form-label text-right">ค่าดำเนินการ</label>
-                                                <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right format-summary" name="operation_fee" value="{{ isset($savedExpenses) ? number_format($savedExpenses->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f8f9fa;"></div>
-                                                <label class="col-sm-2 col-form-label px-0">บาท</label>
-                                            </div>
-                                            <div class="form-group row mb-0">
-                                                <label class="col-sm-5 col-form-label text-right">คิดเป็น</label>
-                                                <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="service_fee_amount" value="{{ isset($savedBudget->service_fee_amount) ? number_format($savedBudget->service_fee_amount, 2) : '0.00' }}" readonly></div>
-                                                <label class="col-sm-2 col-form-label px-0">บาท</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card" style="border: 1px solid #fd7e14; border-radius: 8px;">
-                                <div class="card-body" style="background-color: #fff6ee; border-radius: 8px;">
-                                    <h6 class="font-weight-bold mb-3" style="color: #d35400;"><i class="fas fa-chart-pie"></i> จัดสรรค่าธรรมเนียมบริการวิชาการ</h6>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group row mb-2">
-                                                <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมมหาวิทยาลัย</label>
-                                                <div class="col-sm-5">
-                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_uni_percent" value="{{ isset($savedBudget->alloc_uni_percent) ? $savedBudget->alloc_uni_percent : '1.50' }}" step="0.01">
-                                                </div>
-                                                <label class="col-sm-2 col-form-label px-0">%</label>
-                                            </div>
-                                            <div class="form-group row mb-2">
-                                                <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมวิทยาเขต</label>
-                                                <div class="col-sm-5">
-                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_campus_percent" value="{{ isset($savedBudget->alloc_campus_percent) ? $savedBudget->alloc_campus_percent : '2.50' }}" step="0.01">
-                                                </div>
-                                                <label class="col-sm-2 col-form-label px-0">%</label>
-                                            </div>
-                                            <div class="form-group row mb-0">
-                                                <label class="col-sm-5 col-form-label text-right font-weight-bold">ค่าธรรมเนียมคณะ/หน่วยงาน</label>
-                                                <div class="col-sm-5">
-                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_dept_percent" value="{{ isset($savedBudget->alloc_dept_percent) ? $savedBudget->alloc_dept_percent : '11.00' }}" step="0.01">
-                                                </div>
-                                                <label class="col-sm-2 col-form-label px-0">%</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="form-group row mb-2">
-                                                <label class="col-sm-5 col-form-label text-right">คิดเป็น</label>
-                                                <div class="col-sm-5">
-                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_uni_amount" value="{{ isset($savedBudget->alloc_uni_amount) ? number_format($savedBudget->alloc_uni_amount, 2) : '0.00' }}" readonly>
-                                                </div>
-                                                <label class="col-sm-2 col-form-label px-0">บาท</label>
-                                            </div>
-                                            <div class="form-group row mb-2">
-                                                <label class="col-sm-5 col-form-label text-right">คิดเป็น</label>
-                                                <div class="col-sm-5">
-                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_campus_amount" value="{{ isset($savedBudget->alloc_campus_amount) ? number_format($savedBudget->alloc_campus_amount, 2) : '0.00' }}" readonly>
-                                                </div>
-                                                <label class="col-sm-2 col-form-label px-0">บาท</label>
-                                            </div>
-                                            <div class="form-group row mb-0">
-                                                <label class="col-sm-5 col-form-label text-right font-weight-bold">คิดเป็น</label>
-                                                <div class="col-sm-5">
-                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_dept_amount" value="{{ isset($savedBudget->alloc_dept_amount) ? number_format($savedBudget->alloc_dept_amount, 2) : '0.00' }}" readonly>
-                                                </div>
-                                                <label class="col-sm-2 col-form-label px-0">บาท</label>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row mt-3">
-                                        <div class="col-12">
-                                            <div class="border border-info rounded p-3" style="background-color: #f8fbff;">
-                                                <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-info">
-                                                    <span class="badge badge-info mr-2" style="font-size: 0.85rem;">จัดสรรย่อย</span>
-                                                    <strong class="text-info" style="font-size: 0.95rem;">สัดส่วนย่อยภายในคณะ/หน่วยงาน (คำนวณอัตโนมัติ)</strong>
-                                                </div>
-
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="form-group row mb-2">
-                                                            <label class="col-sm-5 col-form-label text-right text-info font-weight-bold">กองทุนวิจัย</label>
-                                                            <div class="col-sm-5">
-                                                                <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="fund_research_percent" value="{{ isset($savedBudget->fund_research_percent) ? $savedBudget->fund_research_percent : '0.550' }}" step="0.001" readonly>
-                                                            </div>
-                                                            <label class="col-sm-2 col-form-label px-0 text-info">%</label>
-                                                        </div>
-                                                        <div class="form-group row mb-2">
-                                                            <label class="col-sm-5 col-form-label text-right text-info font-weight-bold">คณะ</label>
-                                                            <div class="col-sm-5">
-                                                                <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="faculty_percent" value="{{ isset($savedBudget->faculty_percent) ? $savedBudget->faculty_percent : '5.225' }}" step="0.001" readonly>
-                                                            </div>
-                                                            <label class="col-sm-2 col-form-label px-0 text-info">%</label>
-                                                        </div>
-                                                        <div class="form-group row mb-0">
-                                                            <label class="col-sm-5 col-form-label text-right text-info font-weight-bold">ศูนย์</label>
-                                                            <div class="col-sm-5">
-                                                                <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="center_percent" value="{{ isset($savedBudget->center_percent) ? $savedBudget->center_percent : '5.225' }}" step="0.001" readonly>
-                                                            </div>
-                                                            <label class="col-sm-2 col-form-label px-0 text-info">%</label>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col-md-6">
-                                                        <div class="form-group row mb-2">
-                                                            <label class="col-sm-5 col-form-label text-right text-info">คิดเป็น</label>
-                                                            <div class="col-sm-5">
-                                                                <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="fund_research_amount" value="{{ isset($savedBudget->fund_research_amount) ? number_format($savedBudget->fund_research_amount, 2) : '0.00' }}" readonly>
-                                                            </div>
-                                                            <label class="col-sm-2 col-form-label px-0 text-info">บาท</label>
-                                                        </div>
-                                                        <div class="form-group row mb-2">
-                                                            <label class="col-sm-5 col-form-label text-right text-info">คิดเป็น</label>
-                                                            <div class="col-sm-5">
-                                                                <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="faculty_amount" value="{{ isset($savedBudget->faculty_amount) ? number_format($savedBudget->faculty_amount, 2) : '0.00' }}" readonly>
-                                                            </div>
-                                                            <label class="col-sm-2 col-form-label px-0 text-info">บาท</label>
-                                                        </div>
-                                                        <div class="form-group row mb-0">
-                                                            <label class="col-sm-5 col-form-label text-right text-info">คิดเป็น</label>
-                                                            <div class="col-sm-5">
-                                                                <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="center_amount" value="{{ isset($savedBudget->center_amount) ? number_format($savedBudget->center_amount, 2) : '0.00' }}" readonly>
-                                                            </div>
-                                                            <label class="col-sm-2 col-form-label px-0 text-info">บาท</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="incomes[description][]" class="form-control" value="{{ $income->description }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="incomes[unit_cost][]" class="form-control form-control-sm text-right income-unit-cost format-number-budget" value="{{ number_format($income->unit_cost, 2) }}" step="0.01" min="0" required {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="incomes[quantity][]" class="form-control form-control-sm text-center income-quantity format-number-budget" value="{{ $income->quantity }}" min="1" required {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="incomes[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold income-total-amount format-number-budget" value="{{ number_format($income->total_amount, 2) }}" readonly style="background-color: #f1f3f5;">
+                                        </td>
+                                        @if(!$isBudgetLocked)
+                                        <td class="text-center align-middle">
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                        @endif
+                                    </tr>
+                                    @endforeach
+                                    @endif
+                                </tbody>
+                                <tfoot class="bg-white">
+                                    <tr>
+                                        <td colspan="{{ $isBudgetLocked ? '4' : '5' }}" class="text-right font-weight-bold p-3">รวมเป็นเงินทั้งสิ้น (บาท)</td>
+                                        <td>
+                                            <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-summary" id="income-grand-total" placeholder="0.00" value="{{ isset($savedIncomes) ? number_format($savedIncomes->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
+                                        </td>
+                                        @if(!$isBudgetLocked) <td></td> @endif
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card-footer bg-white text-right py-3 border-top">
-                <button type="button" class="btn btn-secondary mr-2" onclick="$('.wizard-nav a[href=\'#tab3\']').tab('show')">
-                    <i class="fas fa-arrow-left"></i> ย้อนกลับ
-                </button>
-                <button type="button" class="btn btn-primary shadow-sm" id="btn-submit-tab4">
-                    <i class="fas fa-save mr-1"></i> บันทึกข้อมูลงบประมาณ & ถัดไป <i class="fas fa-arrow-right ml-1"></i>
-                </button>
-            </div>
-        </form>
+                <div class="card shadow-sm border-0 mb-4 project-section">
+                    <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
+                        <h5 class="card-title mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> ส่วนที่ 4.2: แผนรายจ่าย (ค่าดำเนินการ)</h5>
+                        @if(!$isBudgetLocked)
+                        <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-expense">
+                            <i class="fas fa-plus-circle"></i> เพิ่มแถวรายจ่าย
+                        </button>
+                        @endif
+                    </div>
+                    <div class="card-body bg-light p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0" id="table-budget-expenses" style="min-width: 1300px;">
+                                <thead class="bg-white text-center">
+                                    <tr>
+                                        <th width="4%">ที่</th>
+                                        <th width="15%">หมวดหมู่รายจ่าย <span class="text-danger">*</span></th>
+                                        <th width="20%">รายละเอียดกิจกรรม</th>
+                                        <th width="10%">ราคาต่อหน่วย (บาท)</th>
+                                        <th width="8%">ตัวคูณ 1</th>
+                                        <th width="8%">ตัวคูณ 2</th>
+                                        <th width="10%">หน่วยนับ</th>
+                                        <th width="12%">จำนวนเงินรวม (บาท)</th>
+                                        <th width="8%">ถัวเฉลี่ยได้?</th>
+                                        @if(!$isBudgetLocked) <th width="5%">จัดการ</th> @endif
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="expense-row template-row d-none">
+                                        <td class="text-center align-middle font-weight-bold row-index">#</td>
+                                        <td>
+                                            <select name="expenses[category_id][]" class="form-control expense-category-select select2-basic" style="width: 100%;">
+                                                <option value="">-- เลือก --</option>
+                                                @foreach($expenseCategoriesGrouped as $mainCat)
+                                                <optgroup label="📌 {{ $mainCat->name_th }}">
+                                                    @foreach($mainCat->subCategories as $subCat)
+                                                    <option value="{{ $subCat->id }}">{{ $subCat->name_th }}</option>
+                                                    @endforeach
+                                                </optgroup>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[description][]" class="form-control" placeholder="เช่น ค่าอาหารว่าง">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[cost_per_unit][]" class="form-control form-control-sm text-right expense-cost format-number-budget" placeholder="0.00">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[factor_1][]" class="form-control form-control-sm text-center expense-factor1 format-number-budget" placeholder="จำนวน" min="1">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[factor_2][]" class="form-control form-control-sm text-center expense-factor2 format-number-budget" placeholder="มื้อ/วัน" min="1">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[uom][]" class="form-control form-control-sm text-center" placeholder="หน่วย">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold expense-total-amount format-number-budget" placeholder="0.00" readonly style="background-color: #f1f3f5;">
+                                        </td>
+                                        <td class="text-center align-middle p-0">
+                                            <div class="custom-control custom-switch pt-2">
+                                                <input type="checkbox" class="custom-control-input can-average-switch" id="can_average_template">
+                                                <label class="custom-control-label" for="can_average_template"></label>
+                                                <input type="hidden" name="expenses[can_average][]" class="can-average-hidden" value="1">
+                                            </div>
+                                        </td>
+                                        @if(!$isBudgetLocked)
+                                        <td class="text-center align-middle">
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                        @endif
+                                    </tr>
+                                    @if(isset($savedExpenses) && $savedExpenses->count() > 0)
+                                    @foreach($savedExpenses as $index => $expense)
+                                    <tr class="expense-row">
+                                        <td class="text-center align-middle font-weight-bold row-index">{{ $index + 1 }}</td>
+                                        <td>
+                                            <select name="expenses[category_id][]" class="form-control expense-category-select select2-basic" style="width: 100%; {{ $isBudgetLocked ? 'pointer-events: none; background-color: #e9ecef;' : '' }}" required tabindex="{{ $isBudgetLocked ? '-1' : '0' }}">
+                                                <option value="">-- เลือก --</option>
+                                                @foreach($expenseCategoriesGrouped as $mainCat)
+                                                <optgroup label="📌 {{ $mainCat->name_th }}">
+                                                    @foreach($mainCat->subCategories as $subCat)
+                                                    <option value="{{ $subCat->id }}" {{ $expense->category_id == $subCat->id ? 'selected' : '' }}>
+                                                        {{ $subCat->name_th }}
+                                                    </option>
+                                                    @endforeach
+                                                </optgroup>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[description][]" class="form-control" value="{{ $expense->description }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[cost_per_unit][]" class="form-control form-control-sm text-right expense-cost format-number-budget" value="{{ number_format($expense->cost_per_unit, 2) }}" required {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[factor_1][]" class="form-control form-control-sm text-center expense-factor1 format-number-budget" value="{{ $expense->factor_1 }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[factor_2][]" class="form-control form-control-sm text-center expense-factor2 format-number-budget" value="{{ $expense->factor_2 }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[uom][]" class="form-control form-control-sm text-center" value="{{ $expense->uom }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="expenses[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold expense-total-amount format-number-budget" value="{{ number_format($expense->total_amount, 2) }}" readonly style="background-color: #f1f3f5;">
+                                        </td>
+                                        <td class="text-center align-middle p-0">
+                                            <div class="custom-control custom-switch pt-2">
+                                                <input type="checkbox" class="custom-control-input can-average-switch" id="avg_{{ $expense->id }}" {{ $expense->can_average ? 'checked' : '' }} {{ $isBudgetLocked ? 'disabled' : '' }}>
+                                                <label class="custom-control-label" for="avg_{{ $expense->id }}"></label>
+                                                <input type="hidden" name="expenses[can_average][]" class="can-average-hidden" value="{{ $expense->can_average ? 1 : 0 }}">
+                                            </div>
+                                        </td>
+                                        @if(!$isBudgetLocked)
+                                        <td class="text-center align-middle">
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                        @endif
+                                    </tr>
+                                    @endforeach
+                                    @endif
+                                </tbody>
+                                <tfoot class="bg-white">
+                                    <tr>
+                                        <td colspan="7" class="text-right font-weight-bold p-3">รวมเป็นเงินทั้งสิ้น (บาท)</td>
+                                        <td>
+                                            <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-summary" id="expense-grand-total" placeholder="0.00" value="{{ isset($savedExpenses) ? number_format($savedExpenses->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
+                                        </td>
+                                        <td></td>
+                                        @if(!$isBudgetLocked) <td></td> @endif
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4 project-section">
+                    <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
+                        <h5 class="card-title mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> ส่วนที่ 4.3: แผนรายจ่าย (ค่าตอบแทน)</h5>
+                        @if(!$isBudgetLocked)
+                        <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-remuneration">
+                            <i class="fas fa-plus-circle"></i> เพิ่มแถวรายจ่าย
+                        </button>
+                        @endif
+                    </div>
+                    <div class="card-body bg-light p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0" id="table-budget-remuneration" style="min-width: 1300px;">
+                                <thead class="bg-white text-center">
+                                    <tr>
+                                        <th width="4%">ที่</th>
+                                        <th width="15%">หมวดหมู่รายจ่าย <span class="text-danger">*</span></th>
+                                        <th width="20%">รายละเอียดกิจกรรม</th>
+                                        <th width="10%">ราคาต่อหน่วย (บาท)</th>
+                                        <th width="8%">ตัวคูณ 1</th>
+                                        <th width="8%">ตัวคูณ 2</th>
+                                        <th width="10%">หน่วยนับ</th>
+                                        <th width="12%">จำนวนเงินรวม (บาท)</th>
+                                        <th width="8%">ถัวเฉลี่ยได้?</th>
+                                        @if(!$isBudgetLocked) <th width="5%">จัดการ</th> @endif
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="remuneration-row template-row d-none">
+                                        <td class="text-center align-middle font-weight-bold row-index"></td>
+                                        <td>
+                                            <select name="remunerations[category_id][]" class="form-control remuneration-category-select select2-basic" style="width: 100%;">
+                                                <option value="">-- เลือก --</option>
+                                                @foreach($expenseCategoriesGrouped as $mainCat)
+                                                <optgroup label="📌 {{ $mainCat->name_th }}">
+                                                    @foreach($mainCat->subCategories as $subCat)
+                                                    <option value="{{ $subCat->id }}">{{ $subCat->name_th }}</option>
+                                                    @endforeach
+                                                </optgroup>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[description][]" class="form-control" placeholder="ระบุรายละเอียด">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[cost_per_unit][]" class="form-control form-control-sm text-right remuneration-cost format-number-budget" placeholder="0.00" required>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[factor_1][]" class="form-control form-control-sm text-center remuneration-factor1 format-number-budget" value="1">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[factor_2][]" class="form-control form-control-sm text-center remuneration-factor2 format-number-budget" value="1">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[uom][]" class="form-control form-control-sm text-center" placeholder="หน่วย">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold remuneration-total-amount format-number-budget" placeholder="0.00" readonly style="background-color: #f1f3f5;">
+                                        </td>
+                                        <td class="text-center align-middle p-0">
+                                            <div class="custom-control custom-switch pt-2">
+                                                <input type="checkbox" class="custom-control-input can-average-switch" id="avg_remun_template">
+                                                <label class="custom-control-label" for="avg_remun_template"></label>
+                                                <input type="hidden" name="remunerations[can_average][]" class="can-average-hidden" value="1">
+                                            </div>
+                                        </td>
+                                        @if(!$isBudgetLocked)
+                                        <td class="text-center align-middle">
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                        @endif
+                                    </tr>
+
+                                    @if(isset($savedRemunerations) && $savedRemunerations->count() > 0)
+                                    @foreach($savedRemunerations as $index => $remun)
+                                    <tr class="remuneration-row">
+                                        <td class="text-center align-middle font-weight-bold row-index">{{ $index + 1 }}</td>
+                                        <td>
+                                            <select name="remunerations[category_id][]" class="form-control remuneration-category-select select2-basic" style="width: 100%; {{ $isBudgetLocked ? 'pointer-events: none; background-color: #e9ecef;' : '' }}" required tabindex="{{ $isBudgetLocked ? '-1' : '0' }}">
+                                                <option value="">-- เลือก --</option>
+                                                @foreach($expenseCategoriesGrouped as $mainCat)
+                                                <optgroup label="📌 {{ $mainCat->name_th }}">
+                                                    @foreach($mainCat->subCategories as $subCat)
+                                                    <option value="{{ $subCat->id }}" {{ $remun->category_id == $subCat->id ? 'selected' : '' }}>
+                                                        {{ $subCat->name_th }}
+                                                    </option>
+                                                    @endforeach
+                                                </optgroup>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[description][]" class="form-control" value="{{ $remun->description }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[cost_per_unit][]" class="form-control form-control-sm text-right remuneration-cost format-number-budget" value="{{ number_format($remun->cost_per_unit, 2) }}" required {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[factor_1][]" class="form-control form-control-sm text-center remuneration-factor1 format-number-budget" value="{{ $remun->factor_1 }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[factor_2][]" class="form-control form-control-sm text-center remuneration-factor2 format-number-budget" value="{{ $remun->factor_2 }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[uom][]" class="form-control form-control-sm text-center" value="{{ $remun->uom }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="remunerations[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold remuneration-total-amount format-number-budget" value="{{ number_format($remun->total_amount, 2) }}" readonly style="background-color: #f1f3f5;">
+                                        </td>
+                                        <td class="text-center align-middle p-0">
+                                            <div class="custom-control custom-switch pt-2">
+                                                <input type="checkbox" class="custom-control-input can-average-switch" id="avg_remun_{{ $remun->id }}" {{ $remun->can_average ? 'checked' : '' }} {{ $isBudgetLocked ? 'disabled' : '' }}>
+                                                <label class="custom-control-label" for="avg_remun_{{ $remun->id }}"></label>
+                                                <input type="hidden" name="remunerations[can_average][]" class="can-average-hidden" value="{{ $remun->can_average ? 1 : 0 }}">
+                                            </div>
+                                        </td>
+                                        @if(!$isBudgetLocked)
+                                        <td class="text-center align-middle">
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                        @endif
+                                    </tr>
+                                    @endforeach
+                                    @endif
+                                </tbody>
+                                <tfoot class="bg-white">
+                                    <tr>
+                                        <td colspan="7" class="text-right font-weight-bold p-3">รวมเป็นเงินทั้งสิ้น (บาท)</td>
+                                        <td>
+                                            <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-summary" id="remuneration-grand-total" placeholder="0.00" value="{{ isset($savedRemunerations) ? number_format($savedRemunerations->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
+                                        </td>
+                                        <td></td>
+                                        @if(!$isBudgetLocked) <td></td> @endif
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4 project-section">
+                    <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
+                        <h5 class="card-title mb-0 mt-1"><i class="fas fa-calculator mr-2"></i> ส่วนที่ 4.4: ข้อมูลลงงบประมาณโครงการ (สรุปค่าธรรมเนียม)</h5>
+                    </div>
+                    <div class="card-body bg-light">
+                        <div class="row">
+                            <div class="col-md-4 border-right pt-3">
+                                <div class="form-group row align-items-center">
+                                    <label class="col-sm-5 col-form-label text-right">งบประมาณทั้งโครงการ <span class="text-danger">*</span></label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control text-right font-weight-bold text-dark format-summary" name="total_budget_summary" value="{{ isset($savedBudget->total_budget_summary) ? number_format($savedBudget->total_budget_summary, 2) : '0.00' }}" readonly style="background-color: #f8f9fa;">
+                                    </div>
+                                    <label class="col-sm-2 col-form-label px-0">บาท</label>
+                                </div>
+                                <div class="form-group row align-items-center">
+                                    <label class="col-sm-5 col-form-label text-right">เงินค่าล่วงหน้าทั้งหมด</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control text-right format-summary" name="total_advance_amount" value="{{ isset($savedBudget->total_advance_amount) ? number_format($savedBudget->total_advance_amount, 2) : '0.00' }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                    </div>
+                                    <label class="col-sm-2 col-form-label px-0">บาท</label>
+                                </div>
+                                <div class="form-group row align-items-center">
+                                    <label class="col-sm-5 col-form-label text-right text-danger">ค่าปรับรวมทั้งหมด</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control text-right text-danger bg-light format-summary" name="total_fine_amount" value="{{ isset($savedBudget->total_fine_amount) ? number_format($savedBudget->total_fine_amount, 2) : '0.00' }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                    </div>
+                                    <label class="col-sm-2 col-form-label px-0">บาท</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-8 pt-2">
+                                <div class="card mb-3" style="border: 1px solid #ffc107; border-radius: 8px;">
+                                    <div class="card-body" style="background-color: #fffdf5; border-radius: 8px;">
+                                        <h6 class="text-danger font-weight-bold mb-3"><i class="fas fa-calculator"></i> คำนวณตามเกณฑ์ค่าธรรมเนียม 15% (แนะนำ)</h6>
+
+                                        <div class="row text-center mb-4">
+                                            <div class="col-md-6">
+                                                ค่าใช้จ่ายที่สามารถใช้ได้สูงสุด : <span class="text-primary font-weight-bold" id="max_expense_label" style="font-size: 1.1em;">0.00 บาท</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                ค่าธรรมเนียมบริการวิชาการ : <span class="text-primary font-weight-bold" id="service_fee_label" style="font-size: 1.1em;">0.00 บาท</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group row mb-2">
+                                                    <label class="col-sm-5 col-form-label text-right">ค่าตอบแทน</label>
+                                                    <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right format-summary" name="remuneration_fee" value="{{ isset($savedRemunerations) ? number_format($savedRemunerations->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f8f9fa;"></div>
+                                                    <label class="col-sm-2 col-form-label px-0">บาท</label>
+                                                </div>
+                                                <div class="form-group row mb-0">
+                                                    <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมบริการวิชาการ</label>
+                                                    <div class="col-sm-5"><input type="number" class="form-control form-control-sm text-right" name="service_fee_percent" value="{{ isset($savedBudget->service_fee_percent) ? $savedBudget->service_fee_percent : '0.00' }}" step="0.01" {{ $isBudgetLocked ? 'readonly' : '' }}></div>
+                                                    <label class="col-sm-2 col-form-label px-0">%</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group row mb-2">
+                                                    <label class="col-sm-5 col-form-label text-right">ค่าดำเนินการ</label>
+                                                    <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right format-summary" name="operation_fee" value="{{ isset($savedExpenses) ? number_format($savedExpenses->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f8f9fa;"></div>
+                                                    <label class="col-sm-2 col-form-label px-0">บาท</label>
+                                                </div>
+                                                <div class="form-group row mb-0">
+                                                    <label class="col-sm-5 col-form-label text-right">คิดเป็น</label>
+                                                    <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="service_fee_amount" value="{{ isset($savedBudget->service_fee_amount) ? number_format($savedBudget->service_fee_amount, 2) : '0.00' }}" readonly></div>
+                                                    <label class="col-sm-2 col-form-label px-0">บาท</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card" style="border: 1px solid #fd7e14; border-radius: 8px;">
+                                    <div class="card-body" style="background-color: #fff6ee; border-radius: 8px;">
+                                        <h6 class="font-weight-bold mb-3" style="color: #d35400;"><i class="fas fa-chart-pie"></i> จัดสรรค่าธรรมเนียมบริการวิชาการ</h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group row mb-2">
+                                                    <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมมหาวิทยาลัย</label>
+                                                    <div class="col-sm-5">
+                                                        <input type="number" class="form-control form-control-sm text-right" name="alloc_uni_percent" value="{{ isset($savedBudget->alloc_uni_percent) ? $savedBudget->alloc_uni_percent : '1.50' }}" step="0.01" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                                    </div>
+                                                    <label class="col-sm-2 col-form-label px-0">%</label>
+                                                </div>
+                                                <div class="form-group row mb-2">
+                                                    <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมวิทยาเขต</label>
+                                                    <div class="col-sm-5">
+                                                        <input type="number" class="form-control form-control-sm text-right" name="alloc_campus_percent" value="{{ isset($savedBudget->alloc_campus_percent) ? $savedBudget->alloc_campus_percent : '2.50' }}" step="0.01" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                                    </div>
+                                                    <label class="col-sm-2 col-form-label px-0">%</label>
+                                                </div>
+                                                <div class="form-group row mb-0">
+                                                    <label class="col-sm-5 col-form-label text-right font-weight-bold">ค่าธรรมเนียมคณะ/หน่วยงาน</label>
+                                                    <div class="col-sm-5">
+                                                        <input type="number" class="form-control form-control-sm text-right" name="alloc_dept_percent" value="{{ isset($savedBudget->alloc_dept_percent) ? $savedBudget->alloc_dept_percent : '11.00' }}" step="0.01" {{ $isBudgetLocked ? 'readonly' : '' }}>
+                                                    </div>
+                                                    <label class="col-sm-2 col-form-label px-0">%</label>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-group row mb-2">
+                                                    <label class="col-sm-5 col-form-label text-right">คิดเป็น</label>
+                                                    <div class="col-sm-5">
+                                                        <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_uni_amount" value="{{ isset($savedBudget->alloc_uni_amount) ? number_format($savedBudget->alloc_uni_amount, 2) : '0.00' }}" readonly>
+                                                    </div>
+                                                    <label class="col-sm-2 col-form-label px-0">บาท</label>
+                                                </div>
+                                                <div class="form-group row mb-2">
+                                                    <label class="col-sm-5 col-form-label text-right">คิดเป็น</label>
+                                                    <div class="col-sm-5">
+                                                        <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_campus_amount" value="{{ isset($savedBudget->alloc_campus_amount) ? number_format($savedBudget->alloc_campus_amount, 2) : '0.00' }}" readonly>
+                                                    </div>
+                                                    <label class="col-sm-2 col-form-label px-0">บาท</label>
+                                                </div>
+                                                <div class="form-group row mb-0">
+                                                    <label class="col-sm-5 col-form-label text-right font-weight-bold">คิดเป็น</label>
+                                                    <div class="col-sm-5">
+                                                        <input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="alloc_dept_amount" value="{{ isset($savedBudget->alloc_dept_amount) ? number_format($savedBudget->alloc_dept_amount, 2) : '0.00' }}" readonly>
+                                                    </div>
+                                                    <label class="col-sm-2 col-form-label px-0">บาท</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <div class="border border-info rounded p-3" style="background-color: #f8fbff;">
+                                                    <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-info">
+                                                        <span class="badge badge-info mr-2" style="font-size: 0.85rem;">จัดสรรย่อย</span>
+                                                        <strong class="text-info" style="font-size: 0.95rem;">สัดส่วนย่อยภายในคณะ/หน่วยงาน (คำนวณอัตโนมัติ)</strong>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group row mb-2">
+                                                                <label class="col-sm-5 col-form-label text-right text-info font-weight-bold">กองทุนวิจัย</label>
+                                                                <div class="col-sm-5">
+                                                                    <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="fund_research_percent" value="{{ isset($savedBudget->fund_research_percent) ? $savedBudget->fund_research_percent : '0.550' }}" step="0.001" readonly>
+                                                                </div>
+                                                                <label class="col-sm-2 col-form-label px-0 text-info">%</label>
+                                                            </div>
+                                                            <div class="form-group row mb-2">
+                                                                <label class="col-sm-5 col-form-label text-right text-info font-weight-bold">คณะ</label>
+                                                                <div class="col-sm-5">
+                                                                    <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="faculty_percent" value="{{ isset($savedBudget->faculty_percent) ? $savedBudget->faculty_percent : '5.225' }}" step="0.001" readonly>
+                                                                </div>
+                                                                <label class="col-sm-2 col-form-label px-0 text-info">%</label>
+                                                            </div>
+                                                            <div class="form-group row mb-0">
+                                                                <label class="col-sm-5 col-form-label text-right text-info font-weight-bold">ศูนย์</label>
+                                                                <div class="col-sm-5">
+                                                                    <input type="number" class="form-control form-control-sm text-right bg-light sub-dept-percent" name="center_percent" value="{{ isset($savedBudget->center_percent) ? $savedBudget->center_percent : '5.225' }}" step="0.001" readonly>
+                                                                </div>
+                                                                <label class="col-sm-2 col-form-label px-0 text-info">%</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="form-group row mb-2">
+                                                                <label class="col-sm-5 col-form-label text-right text-info">คิดเป็น</label>
+                                                                <div class="col-sm-5">
+                                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="fund_research_amount" value="{{ isset($savedBudget->fund_research_amount) ? number_format($savedBudget->fund_research_amount, 2) : '0.00' }}" readonly>
+                                                                </div>
+                                                                <label class="col-sm-2 col-form-label px-0 text-info">บาท</label>
+                                                            </div>
+                                                            <div class="form-group row mb-2">
+                                                                <label class="col-sm-5 col-form-label text-right text-info">คิดเป็น</label>
+                                                                <div class="col-sm-5">
+                                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="faculty_amount" value="{{ isset($savedBudget->faculty_amount) ? number_format($savedBudget->faculty_amount, 2) : '0.00' }}" readonly>
+                                                                </div>
+                                                                <label class="col-sm-2 col-form-label px-0 text-info">บาท</label>
+                                                            </div>
+                                                            <div class="form-group row mb-0">
+                                                                <label class="col-sm-5 col-form-label text-right text-info">คิดเป็น</label>
+                                                                <div class="col-sm-5">
+                                                                    <input type="text" class="form-control form-control-sm text-right bg-light format-summary sub-dept-amount" name="center_amount" value="{{ isset($savedBudget->center_amount) ? number_format($savedBudget->center_amount, 2) : '0.00' }}" readonly>
+                                                                </div>
+                                                                <label class="col-sm-2 col-form-label px-0 text-info">บาท</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-white text-right py-3 border-top">
+                    <button type="button" class="btn btn-secondary mr-2" onclick="$('.wizard-nav a[href=\'#tab3\']').tab('show')">
+                        <i class="fas fa-arrow-left"></i> ย้อนกลับ
+                    </button>
+                    @if(!$isBudgetLocked)
+                    <button type="submit" class="btn btn-primary shadow-sm" id="btn-submit-tab4">
+                        <i class="fas fa-save mr-1"></i> บันทึกข้อมูลงบประมาณ & ถัดไป <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                    @else
+                    <button type="button" class="btn btn-secondary shadow-sm" disabled>
+                        <i class="fas fa-lock mr-1"></i> งบประมาณถูกล็อก (ไม่สามารถบันทึกได้)
+                    </button>
+                    @endif
+                </div>
+            </form>
     </div>
 
     <div class="tab-pane fade {{ ($activeTab ?? '') == 'tab5' ? 'show active' : '' }}" id="tab5" role="tabpanel">
@@ -1776,7 +1807,13 @@
                                         $typeBadge = '<span class="badge badge-primary px-2" style="font-size:0.8em; font-weight:normal;">บุคลากรในคณะ</span>';
                                         } else {
                                         $ext = $externals->where('id', $comm->external_id)->first();
-                                        $name = $ext ? $ext->firstname . ' ' . $ext->lastname : '-';
+                                        if ($ext) {
+                                        $prefixName = isset($ext->prefix) ? $ext->prefix->name_th : '';
+                                        $name = $prefixName . $ext->firstname . ' ' . $ext->lastname;
+                                        } else {
+                                        $name = '-';
+                                        }
+
                                         $typeBadge = '<span class="badge badge-secondary px-2" style="font-size:0.8em; font-weight:normal;">บุคคลภายนอก</span>';
                                         }
                                         @endphp
@@ -1859,7 +1896,7 @@
                                             $badge = '<span class="badge badge-primary px-1 ml-1" style="font-size:0.7em; font-weight:normal;">คนใน</span>';
                                             } else {
                                             $ext = $externals->where('id', $mem->external_id)->first();
-                                            $name = $ext ? $ext->firstname . ' ' . $ext->lastname : '-';
+                                            $name = $ext ? $ext->prefix->name_th . $ext->firstname . ' ' . $ext->lastname : '-';
                                             $badge = '<span class="badge badge-secondary px-1 ml-1" style="font-size:0.7em; font-weight:normal;">คนนอก</span>';
                                             }
                                             @endphp

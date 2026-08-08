@@ -30,26 +30,31 @@ use App\Http\Controllers\Projects\LecturerProjectController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
 use App\Http\Controllers\Plan\PlanDashboardController;
 
-
-// ระบบ Authentication
+/*
+|--------------------------------------------------------------------------
+| โซน Public & ระบบ Authentication (ไม่ต้องผ่าน auth)
+|--------------------------------------------------------------------------
+*/
+// ระบบ Authentication (ล็อกอิน, สมัครสมาชิก)
 Auth::routes();
 
-Route::get('/', function () {
-    return view('index');
-});
+// Route สำหรับหน้าแรก (Public Dashboard)
+Route::get('/', [HomeController::class, 'publicDashboard'])->name('public.dashboard');
 
+// หน้า home ตัวนี้ Laravel มักใช้ตอนล็อกอินเสร็จใหม่ๆ
 Route::get('/home', [HomeController::class, 'index'])->name('home');
+
 
 /*
 |--------------------------------------------------------------------------
 | ระบบบริการวิชาการ (ACADEMIC SERVICE)
-| ต้อง Login ก่อนถึงจะเข้าได้
+| 🔒 โซน Private: ต้อง Login ก่อนถึงจะเข้าได้
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
 
+    // 🌟 หน้า Dashboard รวมตามสิทธิ์
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
-
     Route::get('/finance/dashboard', [FinanceDashboardController::class, 'index'])->name('finance.dashboard');
     Route::get('/plan/dashboard', [PlanDashboardController::class, 'index'])->name('plan.dashboard');
 
@@ -62,68 +67,63 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('target-groups', TargetGroupController::class);
         Route::resource('externals', ExternalController::class);
         Route::resource('project-positions', ProjectPositionController::class);
+        
         Route::resource('budget-incomes', BudgetIncomeController::class);
         Route::post('budget-incomes/main/store-ajax', [BudgetIncomeController::class, 'storeMainAjax'])->name('budget-incomes.storeMainAjax');
+        
         Route::resource('budget-expenses', BudgetExpenseController::class);
         Route::post('budget-expenses/main/store-ajax', [BudgetExpenseController::class, 'storeMainAjax'])->name('budget-expenses.storeMainAjax');
     });
 
-    // เมนูสัญญาจ้าง
-    Route::prefix('contracts')->name('contracts.')->group(function () {
-        Route::resource('projects', ContractProjectController::class);
-        Route::post('projects/ajax/externals', [ContractProjectController::class, 'storeExternalAjax'])->name('projects.store-external-ajax');
-        Route::post('projects/ajax/target-groups', [ContractProjectController::class, 'storeTargetGroupAjax'])->name('projects.store-target-group-ajax');
-    });
-    Route::patch('/contracts/projects/{id}/change-status', [ContractProjectController::class, 'changeStatus'])->name('contracts.projects.change-status');
-    Route::get('/contracts/projects/{id}/report', [ContractProjectController::class, 'report'])->name('contracts.projects.report');
-    Route::post('/contracts/projects/{id}/report', [ContractProjectController::class, 'saveReport'])->name('contracts.projects.save-report');
-    Route::put('contracts/projects/{id}/cancel', [ContractProjectController::class, 'cancelProject'])->name('contracts.projects.cancel');
-    
-    
-    // เมนูงานอบรม
-    Route::prefix('trainings')->name('trainings.')->group(function () {
-        Route::resource('projects', TrainingProjectController::class);
-    });
-    Route::post('trainings/projects/ajax/customer-groups', [TrainingProjectController::class, 'storeCustomerGroupAjax'])->name('trainings.projects.store-customer-group-ajax');
-    Route::post('trainings/projects/ajax/externals', [TrainingProjectController::class, 'storeExternalAjax'])->name('trainings.projects.store-external-ajax');
-    Route::post('/trainings/projects/store-schedule-ajax', [TrainingProjectController::class, 'storeScheduleAjax'])->name('trainings.schedules.storeAjax');
-    Route::get('/trainings/schedules/{id}/edit-ajax', [TrainingProjectController::class, 'editScheduleAjax'])->name('trainings.schedules.editAjax');
-    Route::delete('/trainings/schedules/{id}/delete-ajax', [TrainingProjectController::class, 'deleteScheduleAjax'])->name('trainings.schedules.deleteAjax');
-    Route::post('trainings/projects/ajax/target-groups', [TrainingProjectController::class, 'storeTargetGroupAjax'])->name('trainings.projects.store-target-group-ajax');
-    Route::put('trainings/projects/{id}/cancel', [TrainingProjectController::class, 'cancelProject'])->name('trainings.projects.cancel');
-    Route::patch('/trainings/projects/{id}/change-status', [TrainingProjectController::class, 'changeStatus'])->name('trainings.projects.change-status');
-    Route::get('/trainings/projects/{id}/report', [TrainingProjectController::class, 'report'])->name('trainings.projects.report');
-    Route::post('/trainings/projects/{id}/report', [TrainingProjectController::class, 'saveReport'])->name('trainings.projects.save-report');
-
-    // เมนูวิทยากร (ไม่หักค่าใช้จ่าย)
-    Route::prefix('lecturers')->name('lecturers.')->group(function () {
-        Route::resource('projects', LecturerProjectController::class);
-    });
-
-    
-
-    
-    
-    
-    
-    // เมนูบันทึกรายงาน
-    Route::prefix('deliveries')->name('deliveries.')->group(function () {
-        Route::get('/', [ProjectDeliveryController::class, 'index'])->name('index');
-    });
-
-    // เมนูรายงาน
-    Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', [ReportController::class, 'index'])->name('index');
-    });
-
-    // เลือกประเภทโครงการ
+    // 🌟 เลือกประเภทโครงการ
     Route::prefix('projects')->name('projects.')->group(function () {
         Route::get('/select-type', [ProjectSelectionController::class, 'index'])->name('select-type');
         Route::get('/gateway/{id}', [ProjectSelectionController::class, 'gateway'])->name('gateway');
     });
 
+    // 🌟 เมนูสัญญาจ้าง
+    Route::prefix('contracts')->name('contracts.')->group(function () {
+        Route::resource('projects', ContractProjectController::class);
+        Route::post('projects/ajax/externals', [ContractProjectController::class, 'storeExternalAjax'])->name('projects.store-external-ajax');
+        Route::post('projects/ajax/target-groups', [ContractProjectController::class, 'storeTargetGroupAjax'])->name('projects.store-target-group-ajax');
+        Route::patch('projects/{id}/change-status', [ContractProjectController::class, 'changeStatus'])->name('projects.change-status');
+        Route::get('projects/{id}/report', [ContractProjectController::class, 'report'])->name('projects.report');
+        Route::post('projects/{id}/report', [ContractProjectController::class, 'saveReport'])->name('projects.save-report');
+        Route::put('projects/{id}/cancel', [ContractProjectController::class, 'cancelProject'])->name('projects.cancel');
+    });
+    
+    // 🌟 เมนูงานอบรม
+    Route::prefix('trainings')->name('trainings.')->group(function () {
+        Route::resource('projects', TrainingProjectController::class);
+        Route::post('projects/ajax/customer-groups', [TrainingProjectController::class, 'storeCustomerGroupAjax'])->name('projects.store-customer-group-ajax');
+        Route::post('projects/ajax/externals', [TrainingProjectController::class, 'storeExternalAjax'])->name('projects.store-external-ajax');
+        Route::post('projects/store-schedule-ajax', [TrainingProjectController::class, 'storeScheduleAjax'])->name('schedules.storeAjax');
+        Route::get('schedules/{id}/edit-ajax', [TrainingProjectController::class, 'editScheduleAjax'])->name('schedules.editAjax');
+        Route::delete('schedules/{id}/delete-ajax', [TrainingProjectController::class, 'deleteScheduleAjax'])->name('schedules.deleteAjax');
+        Route::post('projects/ajax/target-groups', [TrainingProjectController::class, 'storeTargetGroupAjax'])->name('projects.store-target-group-ajax');
+        Route::put('projects/{id}/cancel', [TrainingProjectController::class, 'cancelProject'])->name('projects.cancel');
+        Route::patch('projects/{id}/change-status', [TrainingProjectController::class, 'changeStatus'])->name('projects.change-status');
+        Route::get('projects/{id}/report', [TrainingProjectController::class, 'report'])->name('projects.report');
+        Route::post('projects/{id}/report', [TrainingProjectController::class, 'saveReport'])->name('projects.save-report');
+    });
+
+    // 🌟 เมนูวิทยากร (ไม่หักค่าใช้จ่าย)
+    Route::prefix('lecturers')->name('lecturers.')->group(function () {
+        Route::resource('projects', LecturerProjectController::class);
+    });
+
+    // 🌟 เมนูบันทึกรายงาน
+    Route::prefix('deliveries')->name('deliveries.')->group(function () {
+        Route::get('/', [ProjectDeliveryController::class, 'index'])->name('index');
+    });
+
+    // 🌟 เมนูรายงาน
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+    });
+
     // ==========================================================
-    // 👑 โซนผู้ดูแลระบบ: ย้ายเข้ามาในกรุ๊ป auth และล็อกเฉพาะ 'admin'
+    // 👑 โซนผู้ดูแลระบบ: ล็อกเฉพาะ 'admin'
     // ==========================================================
     Route::middleware(['role:admin'])->prefix('admin/approvals')->name('admin.approvals.')->group(function () {
         Route::get('/', [ApprovalController::class, 'index'])->name('index');

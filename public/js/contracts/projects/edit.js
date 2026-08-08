@@ -1693,7 +1693,26 @@ $(document).ready(function () {
                 placeholder: "-- เลือกบทบาท --",
             });
         });
+        // -------------------------
+        // ฟังก์ชันดึงตำแหน่งมาใส่แบบออโต้เมื่อเลือกชื่อบุคลากร (เพิ่มใหม่)
+        // -------------------------
+        $("#signature-container").on("change", ".select2-staff", function () {
+            let selectedOption = $(this).find(":selected");
+            let newPosition = selectedOption.data("position");
+            let positionInput = $(this)
+                .closest(".signature-row")
+                .find(".executive-position");
 
+            if (
+                $(this).val() &&
+                newPosition !== undefined &&
+                newPosition !== ""
+            ) {
+                positionInput.val(newPosition);
+            } else if (!$(this).val()) {
+                positionInput.val("");
+            }
+        });
         // -------------------------
         // ลบผู้ลงนาม (Remove Signature)
         // -------------------------
@@ -1836,6 +1855,9 @@ $(document).ready(function () {
                     firstname: firstname,
                     lastname: lastname,
                     department: department,
+                    phone: $("#new_ext_phone").val(),
+                    email: $("#new_ext_email").val(),
+                    description: $("#new_ext_description").val(),
                 },
                 success: function (response) {
                     if (response.success) {

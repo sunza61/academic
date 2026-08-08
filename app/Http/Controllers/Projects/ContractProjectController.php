@@ -269,7 +269,7 @@ class ContractProjectController extends Controller
         $prefixes = Prefix::all();
         $customerGroups = CustomerGroup::all();
         $customerTypes = CustomerType::all();
-        $externals = External::all();
+        $externals = External::with('prefix')->get();
         $sdgs = Sdg::where('is_active', 1)->get();
 
         $incomeCategoriesGrouped = BudgetIncomeMainCategory::with(['subCategories' => function ($query) {
@@ -482,8 +482,8 @@ class ContractProjectController extends Controller
             )
             ->orderBy('NAME_TH')
             ->get();
-        $externals = DB::table('externals')->where('is_active', 1)->get();
-
+        //$externals = DB::table('externals')->where('is_active', 1)->get();
+        $externals = External::with('prefix')->get();
         $filteredTargetGroups = TargetGroup::whereNotNull('parent_id')
             ->where('is_active', 1)
             ->get()
@@ -775,6 +775,8 @@ class ContractProjectController extends Controller
         // 🔥 บันทึก Tab 3: งบประมาณและงวดงาน (เอาโค้ดมาใส่ตรงนี้!)
         // ==========================================
         elseif ($step == '3') {
+            $project = AcademicProject::findOrFail($id); 
+            $this->authorize('updateBudget', $project);
 
             // ==========================================
             // 🛑 ตรวจสอบความถูกต้องของยอดเงิน (Validation)
@@ -1105,8 +1107,9 @@ class ContractProjectController extends Controller
 
     public function storeExternalAjax(Request $request)
     {
+        
         try {
-            $external = \App\Models\MasterData\External::create([
+            $external = External::create([
                 'prefix_id' => $request->prefix_id,
                 'firstname' => $request->firstname,
                 'lastname' => $request->lastname,
@@ -1117,12 +1120,14 @@ class ContractProjectController extends Controller
                 'is_active' => 1,
             ]);
 
-            $fullname = ($external->prefix->name_th ?? '') . $external->firstname . ' ' . $external->lastname;
+            //$fullname = ($external->prefix->name_th ?? '') . $external->firstname . ' ' . $external->lastname;
+            $prefixName = DB::table('prefixes')->where('id', $request->prefix_id)->value('name_th') ?? '';
+            $fullName = $prefixName . $external->firstname . ' ' . $external->lastname . ' (' . $external->department . ')';
 
             return response()->json([
                 'success' => true,
                 'id' => $external->id,
-                'fullname' => $fullname
+                'fullname' => $fullName
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1228,26 +1233,86 @@ class ContractProjectController extends Controller
         }
     }
 
+    // public function changeStatus(Request $request, $id)
+    // {
+    //     // ตรวจสอบสิทธิ์ว่าต้องเป็น Admin เท่านั้น (ถ้ามีการใช้ Spatie Permission)
+    //     if (!auth()->user()->hasRole('admin')) {
+    //         abort(403, 'คุณไม่มีสิทธิ์ใช้งานส่วนนี้');
+    //     }
+
+    //     $request->validate([
+    //         'new_status' => 'required|integer'
+    //     ]);
+
+    //     // ค้นหาโครงการและอัปเดตสถานะ
+    //     $project = AcademicProject::findOrFail($id);
+
+    //     // ถ้าต้องการเก็บ Log การเปลี่ยนสถานะ สามารถเพิ่มโค้ดบันทึก Log ตรงนี้ได้ครับ
+
+    //     $project->overall_status = $request->new_status;
+    //     $project->save();
+
+    //     return redirect()->back()->with('success', 'Admin ทำการปรับเปลี่ยนสถานะโครงการเรียบร้อยแล้ว');
+    // }
     public function changeStatus(Request $request, $id)
     {
-        // ตรวจสอบสิทธิ์ว่าต้องเป็น Admin เท่านั้น (ถ้ามีการใช้ Spatie Permission)
+        // 1. 🛡️ เช็คสิทธิ์ขั้นเด็ดขาด (เฉพาะ Admin เท่านั้น)
         if (!auth()->user()->hasRole('admin')) {
-            abort(403, 'คุณไม่มีสิทธิ์ใช้งานส่วนนี้');
+            return response()->json(['success' => false, 'message' => 'คุณไม่มีสิทธิ์เข้าถึงการจัดการส่วนนี้'], 403);
         }
 
+        // 2. 📝 ตรวจสอบข้อมูล (ไว้นอก try-catch เพื่อให้โยน ValidationException แบบปกติ)
         $request->validate([
             'new_status' => 'required|integer'
+        ], [
+            'new_status.required' => 'กรุณาเลือกสถานะใหม่',
+            'new_status.integer'  => 'รูปแบบสถานะไม่ถูกต้อง'
         ]);
 
-        // ค้นหาโครงการและอัปเดตสถานะ
-        $project = AcademicProject::findOrFail($id);
+        try {
+            $project = AcademicProject::findOrFail($id);
+            $user    = auth()->user();
 
-        // ถ้าต้องการเก็บ Log การเปลี่ยนสถานะ สามารถเพิ่มโค้ดบันทึก Log ตรงนี้ได้ครับ
+            $oldStatus = $project->overall_status;
+            $newStatus = $request->new_status;
 
-        $project->overall_status = $request->new_status;
-        $project->save();
+            // ถ้าสถานะเดิมตรงกับที่เลือกมา ไม่ต้องทำอะไร
+            if ($oldStatus == $newStatus) {
+                return response()->json(['success' => false, 'message' => 'โครงการมีสถานะนี้อยู่แล้วครับ'], 400);
+            }
 
-        return redirect()->back()->with('success', 'Admin ทำการปรับเปลี่ยนสถานะโครงการเรียบร้อยแล้ว');
+            DB::beginTransaction();
+
+            // 3. 💾 อัปเดตสถานะในตารางแม่
+            $project->update([
+                'overall_status' => $newStatus,
+                'update_by'      => $user->id
+            ]);
+
+            // 4. 📝 บันทึกประวัติลง Log
+            AcademicProjectLog::create([
+                'academic_project_id' => $project->id,
+                'user_id'             => $user->id,
+                'action'              => 'Admin บังคับเปลี่ยนสถานะ',
+                'status_code'         => $newStatus,
+                'comment'             => "ผู้ดูแลระบบ (Admin) ใช้สิทธิ์พิเศษปรับเปลี่ยนสถานะข้ามขั้นตอน จาก $oldStatus เป็น $newStatus",
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'อัปเดตสถานะโครงการเรียบร้อยแล้ว'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Admin Change Status Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในระบบ: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function report($id)

@@ -436,7 +436,7 @@
                                             <option value="">-- ค้นหาชื่อบุคคลภายนอก --</option>
                                             @foreach($externals as $ext)
                                             <option value="{{ $ext->id }}" {{ $comm->external_id == $ext->id ? 'selected' : '' }}>
-                                                {{ $ext->firstname }} {{ $ext->lastname }}
+                                            {{ $ext->prefix->name_th ?? '' }}{{ $ext->firstname }} {{ $ext->lastname }}
                                             </option>
                                             @endforeach
                                         </select>
@@ -478,7 +478,7 @@
                                         <select name="committees[external_id][]" class="form-control select2-external">
                                             <option value="">-- ค้นหาชื่อบุคคลภายนอก --</option>
                                             @foreach($externals as $ext)
-                                            <option value="{{ $ext->id }}">{{ $ext->firstname }} {{ $ext->lastname }}</option>
+                                            <option value="{{ $ext->id }}">{{ $ext->prefix->name_th ?? '' }}{{ $ext->firstname }} {{ $ext->lastname }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -517,6 +517,18 @@
 
     <!-- แท็บที่ 3: งบประมาณ -->
     <div class="tab-pane fade {{ ($activeTab ?? '') == 'tab3' ? 'show active' : '' }}" id="tab3" role="tabpanel">
+        @php
+            $currentStatus = $project->overall_status ?? 0;
+            // ล็อกเมื่อสถานะอยู่ระหว่าง 600-700 และ ผู้ใช้ "ไม่ใช่" admin
+            $isBudgetLocked = ($currentStatus >= 600 && $currentStatus <= 700) && !auth()->user()->hasRole('admin');
+        @endphp
+
+        @if($isBudgetLocked)
+            <div class="alert alert-warning shadow-sm mt-3">
+                <i class="fas fa-lock"></i> <strong>งบประมาณถูกล็อก:</strong> โครงการอยู่ในสถานะดำเนินการ (600-700) ไม่อนุญาตให้แก้ไขข้อมูลในส่วนนี้ (สิทธิ์การแก้ไขเฉพาะผู้ดูแลระบบ)
+            </div>
+        @endif
+
         <form action="{{ route('contracts.projects.update', $project->id) }}" method="POST" id="form-tab3-budget" novalidate>
             @csrf
             @method('PUT')
@@ -525,9 +537,11 @@
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
                     <h5 class="card-title mb-0 mt-1"><i class="fas fa-money-bill-wave mr-2"></i> ส่วนที่ 3.1: แผนรายรับ</h5>
+                    @if(!$isBudgetLocked)
                     <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-income">
                         <i class="fas fa-plus-circle"></i> เพิ่มแถวรายรับ
                     </button>
+                    @endif
                 </div>
                 <div class="card-body bg-light p-0">
                     <div class="table-responsive">
@@ -540,7 +554,7 @@
                                     <th width="15%">อัตราจัดเก็บ (บาท)</th>
                                     <th width="10%">จำนวน</th>
                                     <th width="15%">จำนวนเงินรวม (บาท)</th>
-                                    <th width="5%">จัดการ</th>
+                                    @if(!$isBudgetLocked) <th width="5%">จัดการ</th> @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -572,16 +586,18 @@
                                     <td>
                                         <input type="text" name="incomes[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold income-total-amount format-number-budget" placeholder="0.00" readonly style="background-color: #f1f3f5;">
                                     </td>
+                                    @if(!$isBudgetLocked)
                                     <td class="text-center align-middle">
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
                                     </td>
+                                    @endif
                                 </tr>
                                 @if(isset($savedIncomes) && $savedIncomes->count() > 0)
                                 @foreach($savedIncomes as $index => $income)
                                 <tr class="income-row">
                                     <td class="text-center align-middle font-weight-bold row-index">{{ $index + 1 }}</td>
                                     <td>
-                                        <select name="incomes[category_id][]" class="form-control income-category-select select2-basic" style="width: 100%;" required>
+                                        <select name="incomes[category_id][]" class="form-control income-category-select select2-basic" style="width: 100%; {{ $isBudgetLocked ? 'pointer-events: none; background-color: #e9ecef;' : '' }}" required tabindex="{{ $isBudgetLocked ? '-1' : '0' }}">
                                             <option value="">-- เลือก --</option>
                                             @foreach($incomeCategoriesGrouped as $mainCat)
                                             <optgroup label="📌 {{ $mainCat->name_th }}">
@@ -595,20 +611,22 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="text" name="incomes[description][]" class="form-control" value="{{ $income->description }}">
+                                        <input type="text" name="incomes[description][]" class="form-control" value="{{ $income->description }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
-                                        <input type="text" name="incomes[unit_cost][]" class="form-control form-control-sm text-right income-unit-cost format-number-budget" value="{{ number_format($income->unit_cost, 2) }}" step="0.01" min="0" required>
+                                        <input type="text" name="incomes[unit_cost][]" class="form-control form-control-sm text-right income-unit-cost format-number-budget" value="{{ number_format($income->unit_cost, 2) }}" step="0.01" min="0" required {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
-                                        <input type="text" name="incomes[quantity][]" class="form-control form-control-sm text-center income-quantity format-number-budget" value="{{ $income->quantity }}" min="1" required>
+                                        <input type="text" name="incomes[quantity][]" class="form-control form-control-sm text-center income-quantity format-number-budget" value="{{ $income->quantity }}" min="1" required {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
                                         <input type="text" name="incomes[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold income-total-amount format-number-budget" value="{{ number_format($income->total_amount, 2) }}" readonly style="background-color: #f1f3f5;">
                                     </td>
+                                    @if(!$isBudgetLocked)
                                     <td class="text-center align-middle">
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
                                     </td>
+                                    @endif
                                 </tr>
                                 @endforeach
                                 @endif
@@ -619,7 +637,7 @@
                                     <td>
                                         <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-number-3-1 format-number-budget" id="income-grand-total" placeholder="0.00" value="{{ isset($savedIncomes) ? number_format($savedIncomes->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
                                     </td>
-                                    <td></td>
+                                    @if(!$isBudgetLocked) <td></td> @endif
                                 </tr>
                             </tfoot>
                         </table>
@@ -630,9 +648,11 @@
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
                     <h5 class="card-title mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> ส่วนที่ 3.2: แผนรายจ่าย (ค่าดำเนินการ)</h5>
+                    @if(!$isBudgetLocked)
                     <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-expense">
                         <i class="fas fa-plus-circle"></i> เพิ่มแถวรายจ่าย
                     </button>
+                    @endif
                 </div>
                 <div class="card-body bg-light p-0">
                     <div class="table-responsive">
@@ -648,7 +668,7 @@
                                     <th width="10%">หน่วยนับ (เช่น มื้อ, คน)</th>
                                     <th width="12%">จำนวนเงินรวม (บาท)</th>
                                     <th width="8%">ถัวเฉลี่ยได้? <span class="text-info" title="ระบบ Backend จะบังคับค่านี้อัตโนมัติตามหมวดหมู่"><i class="fas fa-info-circle"></i></span></th>
-                                    <th width="5%">จัดการ</th>
+                                    @if(!$isBudgetLocked) <th width="5%">จัดการ</th> @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -693,16 +713,18 @@
                                             <input type="hidden" name="expenses[can_average][]" class="can-average-hidden" value="1">
                                         </div>
                                     </td>
+                                    @if(!$isBudgetLocked)
                                     <td class="text-center align-middle">
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
                                     </td>
+                                    @endif
                                 </tr>
                                 @if(isset($savedExpenses) && $savedExpenses->count() > 0)
                                 @foreach($savedExpenses as $index => $expense)
                                 <tr class="expense-row">
                                     <td class="text-center align-middle font-weight-bold row-index">{{ $index + 1 }}</td>
                                     <td>
-                                        <select name="expenses[category_id][]" class="form-control expense-category-select select2-basic" style="width: 100%;" required>
+                                        <select name="expenses[category_id][]" class="form-control expense-category-select select2-basic" style="width: 100%; {{ $isBudgetLocked ? 'pointer-events: none; background-color: #e9ecef;' : '' }}" required tabindex="{{ $isBudgetLocked ? '-1' : '0' }}">
                                             <option value="">-- เลือก --</option>
                                             @foreach($expenseCategoriesGrouped as $mainCat)
                                             <optgroup label="📌 {{ $mainCat->name_th }}">
@@ -716,33 +738,35 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[description][]" class="form-control" value="{{ $expense->description }}">
+                                        <input type="text" name="expenses[description][]" class="form-control" value="{{ $expense->description }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[cost_per_unit][]" class="form-control form-control-sm text-right expense-cost format-number-budget" value="{{ number_format($expense->cost_per_unit, 2) }}" step="0.01" min="0" required>
+                                        <input type="text" name="expenses[cost_per_unit][]" class="form-control form-control-sm text-right expense-cost format-number-budget" value="{{ number_format($expense->cost_per_unit, 2) }}" required {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[factor_1][]" class="form-control form-control-sm text-center expense-factor1 format-number-budget format-expense" value="{{ $expense->factor_1 }}">
+                                        <input type="text" name="expenses[factor_1][]" class="form-control form-control-sm text-center expense-factor1 format-number-budget format-expense" value="{{ $expense->factor_1 }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[factor_2][]" class="form-control form-control-sm text-center expense-factor2 format-number-budget format-expense" value="{{ $expense->factor_2 }}">
+                                        <input type="text" name="expenses[factor_2][]" class="form-control form-control-sm text-center expense-factor2 format-number-budget format-expense" value="{{ $expense->factor_2 }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
-                                        <input type="text" name="expenses[uom][]" class="form-control form-control-sm text-center" value="{{ $expense->uom }}">
+                                        <input type="text" name="expenses[uom][]" class="form-control form-control-sm text-center" value="{{ $expense->uom }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
                                         <input type="text" name="expenses[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold expense-total-amount format-number-budget" value="{{ number_format($expense->total_amount, 2) }}" readonly style="background-color: #f1f3f5;">
                                     </td>
                                     <td class="text-center align-middle p-0">
                                         <div class="custom-control custom-switch pt-2">
-                                            <input type="checkbox" class="custom-control-input can-average-switch" id="avg_{{ $expense->id }}" {{ $expense->can_average ? 'checked' : '' }}>
+                                            <input type="checkbox" class="custom-control-input can-average-switch" id="avg_{{ $expense->id }}" {{ $expense->can_average ? 'checked' : '' }} {{ $isBudgetLocked ? 'disabled' : '' }}>
                                             <label class="custom-control-label" for="avg_{{ $expense->id }}"></label>
                                             <input type="hidden" name="expenses[can_average][]" class="can-average-hidden" value="{{ $expense->can_average ? 1 : 0 }}">
                                         </div>
                                     </td>
+                                    @if(!$isBudgetLocked)
                                     <td class="text-center align-middle">
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
                                     </td>
+                                    @endif
                                 </tr>
                                 @endforeach
                                 @endif
@@ -751,10 +775,10 @@
                                 <tr>
                                     <td colspan="7" class="text-right font-weight-bold p-3">รวมเป็นเงินทั้งสิ้น (บาท)</td>
                                     <td>
-                                        <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-expense" id="expense-grand-total" placeholder="0.00" value="0.00" readonly style="background-color: #f1f3f5;">
+                                        <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-expense" id="expense-grand-total" placeholder="0.00" value="{{ isset($savedExpenses) ? number_format($savedExpenses->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
                                     </td>
                                     <td></td>
-                                    <td></td>
+                                    @if(!$isBudgetLocked) <td></td> @endif
                                 </tr>
                             </tfoot>
                         </table>
@@ -765,9 +789,11 @@
             <div class="card shadow-sm border-0 mb-4 project-section">
                 <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
                     <h5 class="card-title mb-0 mt-1"><i class="fas fa-file-invoice-dollar mr-2"></i> ส่วนที่ 3.3: แผนรายจ่าย (ค่าตอบแทน)</h5>
+                    @if(!$isBudgetLocked)
                     <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-remuneration">
                         <i class="fas fa-plus-circle"></i> เพิ่มแถวรายจ่าย
                     </button>
+                    @endif
                 </div>
                 <div class="card-body bg-light p-0">
                     <div class="table-responsive">
@@ -783,7 +809,7 @@
                                     <th width="10%">หน่วยนับ (เช่น มื้อ, คน)</th>
                                     <th width="12%">จำนวนเงินรวม (บาท)</th>
                                     <th width="8%">ถัวเฉลี่ยได้? <span class="text-info" title="ระบบ Backend จะบังคับค่านี้อัตโนมัติตามหมวดหมู่"><i class="fas fa-info-circle"></i></span></th>
-                                    <th width="5%">จัดการ</th>
+                                    @if(!$isBudgetLocked) <th width="5%">จัดการ</th> @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -826,9 +852,11 @@
                                             <input type="hidden" name="remunerations[can_average][]" class="can-average-hidden" value="1">
                                         </div>
                                     </td>
+                                    @if(!$isBudgetLocked)
                                     <td class="text-center align-middle">
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
                                     </td>
+                                    @endif
                                 </tr>
 
                                 @if(isset($savedRemunerations) && $savedRemunerations->count() > 0)
@@ -836,7 +864,7 @@
                                 <tr class="remuneration-row">
                                     <td class="text-center align-middle font-weight-bold row-index">{{ $index + 1 }}</td>
                                     <td>
-                                        <select name="remunerations[category_id][]" class="form-control remuneration-category-select select2-basic" style="width: 100%;" required>
+                                        <select name="remunerations[category_id][]" class="form-control remuneration-category-select select2-basic" style="width: 100%; {{ $isBudgetLocked ? 'pointer-events: none; background-color: #e9ecef;' : '' }}" required tabindex="{{ $isBudgetLocked ? '-1' : '0' }}">
                                             <option value="">-- เลือก --</option>
                                             @foreach($expenseCategoriesGrouped as $mainCat)
                                             <optgroup label="📌 {{ $mainCat->name_th }}">
@@ -850,33 +878,35 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="text" name="remunerations[description][]" class="form-control" value="{{ $remun->description }}">
+                                        <input type="text" name="remunerations[description][]" class="form-control" value="{{ $remun->description }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
-                                        <input type="text" name="remunerations[cost_per_unit][]" class="form-control form-control-sm text-right remuneration-cost format-number-budget" value="{{ number_format($remun->cost_per_unit, 2) }}" required>
+                                        <input type="text" name="remunerations[cost_per_unit][]" class="form-control form-control-sm text-right remuneration-cost format-number-budget" value="{{ number_format($remun->cost_per_unit, 2) }}" required {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
-                                        <input type="text" name="remunerations[factor_1][]" class="form-control form-control-sm text-center remuneration-factor1 format-number-budget" value="{{ $remun->factor_1 }}">
+                                        <input type="text" name="remunerations[factor_1][]" class="form-control form-control-sm text-center remuneration-factor1 format-number-budget" value="{{ $remun->factor_1 }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
-                                        <input type="text" name="remunerations[factor_2][]" class="form-control form-control-sm text-center remuneration-factor2 format-number-budget" value="{{ $remun->factor_2 }}">
+                                        <input type="text" name="remunerations[factor_2][]" class="form-control form-control-sm text-center remuneration-factor2 format-number-budget" value="{{ $remun->factor_2 }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
-                                        <input type="text" name="remunerations[uom][]" class="form-control form-control-sm text-center" value="{{ $remun->uom }}">
+                                        <input type="text" name="remunerations[uom][]" class="form-control form-control-sm text-center" value="{{ $remun->uom }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                     </td>
                                     <td>
                                         <input type="text" name="remunerations[total_amount][]" class="form-control form-control-sm text-danger text-right font-weight-bold remuneration-total-amount format-number-budget" value="{{ number_format($remun->total_amount, 2) }}" readonly style="background-color: #f1f3f5;">
                                     </td>
                                     <td class="text-center align-middle p-0">
                                         <div class="custom-control custom-switch pt-2">
-                                            <input type="checkbox" class="custom-control-input can-average-switch" id="avg_remun_{{ $remun->id }}" {{ $remun->can_average ? 'checked' : '' }}>
+                                            <input type="checkbox" class="custom-control-input can-average-switch" id="avg_remun_{{ $remun->id }}" {{ $remun->can_average ? 'checked' : '' }} {{ $isBudgetLocked ? 'disabled' : '' }}>
                                             <label class="custom-control-label" for="avg_remun_{{ $remun->id }}"></label>
                                             <input type="hidden" name="remunerations[can_average][]" class="can-average-hidden" value="{{ $remun->can_average ? 1 : 0 }}">
                                         </div>
                                     </td>
+                                    @if(!$isBudgetLocked)
                                     <td class="text-center align-middle">
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"><i class="fas fa-trash"></i></button>
                                     </td>
+                                    @endif
                                 </tr>
                                 @endforeach
                                 @endif
@@ -888,7 +918,7 @@
                                         <input type="text" class="form-control form-control-sm text-danger text-right font-weight-bold format-remuneration" id="remuneration-grand-total" placeholder="0.00" value="{{ isset($savedRemunerations) ? number_format($savedRemunerations->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f1f3f5;">
                                     </td>
                                     <td></td>
-                                    <td></td>
+                                    @if(!$isBudgetLocked) <td></td> @endif
                                 </tr>
                             </tfoot>
                         </table>
@@ -906,21 +936,21 @@
                             <div class="form-group row align-items-center">
                                 <label class="col-sm-5 col-form-label text-right">งบประมาณทั้งโครงการ <span class="text-danger">*</span></label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control text-right font-weight-bold text-dark format-summary" class="form-control text-right font-weight-bold text-dark" name="total_budget_summary" value="0.00" readonly style="background-color: #f8f9fa;">
+                                    <input type="text" class="form-control text-right font-weight-bold text-dark format-summary" name="total_budget_summary" value="{{ isset($savedBudget->total_budget_summary) ? number_format($savedBudget->total_budget_summary, 2) : '0.00' }}" readonly style="background-color: #f8f9fa;">
                                 </div>
                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                             </div>
                             <div class="form-group row align-items-center">
                                 <label class="col-sm-5 col-form-label text-right">เงินค่าล่วงหน้าทั้งหมด</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control text-right format-summary" class="form-control text-right" name="total_advance_amount" value="0.00" readonly style="background-color: #f8f9fa;">
+                                    <input type="text" class="form-control text-right format-summary" name="total_advance_amount" value="{{ isset($savedBudget->total_advance_amount) ? number_format($savedBudget->total_advance_amount, 2) : '0.00' }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                 </div>
                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                             </div>
                             <div class="form-group row align-items-center">
                                 <label class="col-sm-5 col-form-label text-right text-danger">ค่าปรับรวมทั้งหมด</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control text-right text-danger bg-light format-summary" class="form-control text-right text-danger bg-light" name="total_fine_amount" value="0.00" readonly style="background-color: #f8f9fa;">
+                                    <input type="text" class="form-control text-right text-danger bg-light format-summary" name="total_fine_amount" value="{{ isset($savedBudget->total_fine_amount) ? number_format($savedBudget->total_fine_amount, 2) : '0.00' }}" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                 </div>
                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                             </div>
@@ -949,19 +979,19 @@
                                             </div>
                                             <div class="form-group row mb-0">
                                                 <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมบริการวิชาการ</label>
-                                                <div class="col-sm-5"><input type="number" class="form-control form-control-sm text-right" name="service_fee_percent" value="0.00" step="0.01"></div>
+                                                <div class="col-sm-5"><input type="number" class="form-control form-control-sm text-right" name="service_fee_percent" value="{{ old('service_fee_percent', $project->service_fee_percent ?? '0.00') }}" step="0.01" {{ $isBudgetLocked ? 'readonly' : '' }}></div>
                                                 <label class="col-sm-2 col-form-label px-0">%</label>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group row mb-2">
                                                 <label class="col-sm-5 col-form-label text-right">ค่าดำเนินการ</label>
-                                                <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right format-summary" class="form-control form-control-sm text-right" name="operation_fee" value="0.00" step="0.01"></div>
+                                                <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right format-summary" name="operation_fee" value="{{ isset($savedExpenses) ? number_format($savedExpenses->sum('total_amount'), 2) : '0.00' }}" readonly style="background-color: #f8f9fa;"></div>
                                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                                             </div>
                                             <div class="form-group row mb-0">
                                                 <label class="col-sm-5 col-form-label text-right">คิดเป็น</label>
-                                                <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="service_fee_amount" value="0.00" readonly></div>
+                                                <div class="col-sm-5"><input type="text" class="form-control form-control-sm text-right bg-light format-summary" name="service_fee_amount" value="{{ old('service_fee_amount', number_format($project->service_fee_amount ?? 0, 2)) }}" readonly></div>
                                                 <label class="col-sm-2 col-form-label px-0">บาท</label>
                                             </div>
                                         </div>
@@ -977,21 +1007,21 @@
                                             <div class="form-group row mb-2">
                                                 <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมมหาวิทยาลัย</label>
                                                 <div class="col-sm-5">
-                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_uni_percent" value="{{ old('alloc_uni_percent', $project->alloc_uni_percent ?? '1.50') }}" step="0.01">
+                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_uni_percent" value="{{ old('alloc_uni_percent', $project->alloc_uni_percent ?? '1.50') }}" step="0.01" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                                 </div>
                                                 <label class="col-sm-2 col-form-label px-0">%</label>
                                             </div>
                                             <div class="form-group row mb-2">
                                                 <label class="col-sm-5 col-form-label text-right">ค่าธรรมเนียมวิทยาเขต</label>
                                                 <div class="col-sm-5">
-                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_campus_percent" value="{{ old('alloc_campus_percent', $project->alloc_campus_percent ?? '2.50') }}" step="0.01">
+                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_campus_percent" value="{{ old('alloc_campus_percent', $project->alloc_campus_percent ?? '2.50') }}" step="0.01" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                                 </div>
                                                 <label class="col-sm-2 col-form-label px-0">%</label>
                                             </div>
                                             <div class="form-group row mb-0">
                                                 <label class="col-sm-5 col-form-label text-right font-weight-bold">ค่าธรรมเนียมคณะ/หน่วยงาน</label>
                                                 <div class="col-sm-5">
-                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_dept_percent" value="{{ old('alloc_dept_percent', $project->alloc_dept_percent ?? '11.00') }}" step="0.01">
+                                                    <input type="number" class="form-control form-control-sm text-right" name="alloc_dept_percent" value="{{ old('alloc_dept_percent', $project->alloc_dept_percent ?? '11.00') }}" step="0.01" {{ $isBudgetLocked ? 'readonly' : '' }}>
                                                 </div>
                                                 <label class="col-sm-2 col-form-label px-0">%</label>
                                             </div>
@@ -1025,7 +1055,6 @@
                                     <div class="row mt-3">
                                         <div class="col-12">
                                             <div class="border border-info rounded p-3" style="background-color: #f8fbff;">
-
                                                 <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-info">
                                                     <span class="badge badge-info mr-2" style="font-size: 0.85rem;">จัดสรรย่อย</span>
                                                     <strong class="text-info" style="font-size: 0.95rem;">สัดส่วนย่อยภายในคณะ/หน่วยงาน (คำนวณอัตโนมัติ)</strong>
@@ -1085,159 +1114,24 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="card shadow-sm border-0 mb-4 project-section">
-                <div class="card-header bg-custom-dark text-white d-flex align-items-center py-2">
-                    <h5 class="card-title mb-0 mt-1"><i class="fas fa-list-ol mr-2"></i> ส่วนที่ 3.5: ข้อมูลลงงวดงาน</h5>
-                    <button type="button" class="btn btn-sm btn-success shadow-sm ml-auto" id="btn-add-installment">
-                        <i class="fas fa-plus-circle mr-1"></i> เพิ่มงวดงาน
-                    </button>
-                </div>
-                <div class="card-body bg-light p-3">
-                    <div id="installments-container">
-                        @if(isset($savedInstallments) && count($savedInstallments) > 0)
-                        @foreach($savedInstallments as $index => $inst)
-                        <div class="installment-block p-4 mb-3 bg-white border rounded shadow-sm">
-                            <div class="row form-group align-items-center mb-3 border-bottom pb-2">
-                                <div class="col-md-6 d-flex align-items-center">
-                                    <h6 class="mb-0 text-primary font-weight-bold"><i class="fas fa-tasks mr-2"></i>งวดที่ <span class="installment-number-label ml-1">{{ $inst->installment_no }}</span></h6>
-                                    <input type="hidden" name="installments[installment_no][]" class="installment-no-input" value="{{ $inst->installment_no }}">
-                                </div>
-                                <div class="col-md-6 d-flex align-items-center justify-content-end">
-                                    <label class="mb-0 mr-2 text-muted">จำนวนวัน</label>
-                                    <input type="number" name="installments[duration_days][]" class="form-control form-control-sm text-center mx-2 install-duration" style="width: 100px;" min="0" value="{{ $inst->duration_days }}" readonly>
-                                    <label class="mb-0 text-muted">วัน</label>
-                                </div>
-                            </div>
-                            <div class="row form-group align-items-center mb-3">
-                                <div class="col-md-6 d-flex align-items-center">
-                                    <label class="col-sm-3 mb-0 text-right pr-2">วันที่เริ่มงาน <span class="text-danger">*</span></label>
-                                    <div class="col-sm-6 pl-0">
-                                        <input type="text" name="installments[start_date][]" class="form-control form-control-sm start-date bg-white" placeholder="--/--/----" value="{{ $inst->start_date_show ?? '' }}" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 d-flex align-items-center">
-                                    <label class="col-sm-3 mb-0 text-right pr-2">วันที่สิ้นสุด <span class="text-danger">*</span></label>
-                                    <div class="col-sm-6 pl-0">
-                                        <input type="text" name="installments[end_date][]" class="form-control form-control-sm end-date bg-white" placeholder="--/--/----" value="{{ $inst->end_date_show ?? '' }}" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row form-group align-items-center mb-2">
-                                <div class="col-md-6 d-flex align-items-center">
-                                    <label class="col-sm-4 mb-0 text-right pr-2">จำนวนเงินค่าจ้าง <span class="text-danger">*</span></label>
-                                    <input type="text" name="installments[amount][]" class="form-control form-control-sm text-right install-amount format-number-budget text-primary font-weight-bold" required value="{{ number_format($inst->amount, 2) }}">
-                                    <label class="col-sm-2 mb-0 px-0">บาท</label>
-                                </div>
-                            </div>
-
-                            <div class="row form-group align-items-center mb-4">
-                                <div class="col-md-6 d-flex align-items-center">
-                                    <label class="col-sm-4 mb-0 text-right pr-2">หักเงินค่าประกันผลงาน</label>
-                                    <div class="col-sm-6 pl-0">
-                                        <input type="number" name="installments[guarantee_pct][]" class="form-control form-control-sm text-right install-guar-pct" step="0.01" min="0" value="{{ $inst->guarantee_pct }}">
-                                    </div>
-                                    <label class="col-sm-2 mb-0 px-0">%</label>
-                                </div>
-                                <div class="col-md-6 d-flex align-items-center">
-                                    <label class="col-sm-3 mb-0 text-right pr-2">คิดเป็น</label>
-                                    <input type="text" name="installments[guarantee_amt][]" class="form-control form-control-sm text-right bg-light install-guar-amt" readonly value="{{ number_format($inst->guarantee_amt, 2) }}">
-                                    <label class="col-sm-2 mb-0 px-0">บาท</label>
-                                </div>
-                            </div>
-                            <div class="row align-items-center bg-light p-2 mx-0 rounded">
-                                <div class="col-md-12 d-flex align-items-center justify-content-end">
-                                    <label class="mb-0 font-weight-bold mr-3 text-dark">คงเหลือค่าจ้างประจำงวด:</label>
-                                    <span class="font-weight-bold text-success install-net-text mr-3" style="font-size: 1.2em;">{{ number_format($inst->net_amount, 2) }}</span>
-                                    <input type="hidden" name="installments[net_amount][]" class="install-net-input" value="{{ $inst->net_amount }}">
-                                    <label class="mb-0 font-weight-bold mr-4 text-dark">บาท</label>
-
-                                    <button type="button" class="btn btn-sm btn-outline-danger mr-2 font-weight-bold btn-remove-installment">
-                                        <i class="fas fa-trash-alt"></i> ยกเลิก/ลบ
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                        @endif
-
-                    </div>
-                </div>
-
-                <div class="installment-template d-none">
-                    <div class="installment-block p-4 mb-3 bg-white border rounded shadow-sm">
-
-                        <div class="row form-group align-items-center mb-3 border-bottom pb-2">
-                            <div class="col-md-6 d-flex align-items-center">
-                                <h6 class="mb-0 text-primary font-weight-bold"><i class="fas fa-tasks mr-2"></i>งวดที่ <span class="installment-number-label ml-1">1</span></h6>
-                                <input type="hidden" name="installments[installment_no][]" class="installment-no-input" value="1" disabled>
-                            </div>
-                            <div class="col-md-6 d-flex align-items-center justify-content-end">
-                                <label class="mb-0 mr-2 text-muted">จำนวนวัน</label>
-                                <input type="number" name="installments[duration_days][]" class="form-control form-control-sm text-center mx-2 install-duration bg-light" style="width: 100px;" min="0" readonly>
-                                <label class="mb-0 text-muted">วัน</label>
-                            </div>
-                        </div>
-                        <div class="row form-group align-items-center mb-3">
-                            <div class="col-md-6 d-flex align-items-center">
-                                <label class="col-sm-3 mb-0 text-right pr-2">วันที่เริ่มงาน <span class="text-danger">*</span></label>
-                                <div class="col-sm-6 pl-0">
-                                    <input type="text" name="installments[start_date][]" class="form-control form-control-sm start-date bg-white" placeholder="--/--/----" required disabled>
-                                </div>
-                            </div>
-                            <div class="col-md-6 d-flex align-items-center">
-                                <label class="col-sm-3 mb-0 text-right pr-2">วันที่สิ้นสุด <span class="text-danger">*</span></label>
-                                <div class="col-sm-6 pl-0">
-                                    <input type="text" name="installments[end_date][]" class="form-control form-control-sm end-date bg-white" placeholder="--/--/----" required disabled>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row form-group align-items-center mb-2">
-                            <div class="col-md-6 d-flex align-items-center">
-                                <label class="col-sm-4 mb-0 text-right pr-2">จำนวนเงินค่าจ้าง <span class="text-danger">*</span></label>
-                                <input type="text" name="installments[amount][]" class="form-control form-control-sm text-right install-amount format-number-budget text-primary font-weight-bold" required disabled>
-                                <label class="col-sm-2 mb-0 px-0">บาท</label>
-                            </div>
-                        </div>
-
-                        <div class="row form-group align-items-center mb-4">
-                            <div class="col-md-6 d-flex align-items-center">
-                                <label class="col-sm-4 mb-0 text-right pr-2">หักเงินค่าประกันผลงาน</label>
-                                <div class="col-sm-6 pl-0"><input type="number" name="installments[guarantee_pct][]" class="form-control form-control-sm text-right install-guar-pct" step="0.01" min="0" disabled></div>
-                                <label class="col-sm-2 mb-0 px-0">%</label>
-                            </div>
-                            <div class="col-md-6 d-flex align-items-center">
-                                <label class="col-sm-3 mb-0 text-right pr-2">คิดเป็น</label>
-                                <input type="text" name="installments[guarantee_amt][]" class="form-control form-control-sm text-right bg-light install-guar-amt" disabled readonly>
-                                <label class="col-sm-2 mb-0 px-0">บาท</label>
-                            </div>
-                        </div>
-                        <div class="row align-items-center bg-light p-2 mx-0 rounded">
-                            <div class="col-md-12 d-flex align-items-center justify-content-end">
-                                <label class="mb-0 font-weight-bold mr-3 text-dark">คงเหลือค่าจ้างประจำงวด:</label>
-                                <span class="font-weight-bold text-success install-net-text mr-3" style="font-size: 1.2em;">0.00</span>
-                                <input type="hidden" name="installments[net_amount][]" class="install-net-input" value="0" disabled>
-                                <label class="mb-0 font-weight-bold mr-4 text-dark">บาท</label>
-
-                                <button type="button" class="btn btn-sm btn-outline-danger mr-2 font-weight-bold btn-remove-installment">
-                                    <i class="fas fa-trash-alt"></i> ยกเลิก/ลบ
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
             <div class="card-footer bg-white text-right py-3 border-top">
                 <button type="button" class="btn btn-secondary mr-2" onclick="$('.wizard-nav a[href=\'#tab2\']').tab('show')">
                     <i class="fas fa-arrow-left"></i> ย้อนกลับ
                 </button>
+                @if(!$isBudgetLocked)
                 <button type="submit" class="btn btn-primary shadow-sm" id="btn-submit-tab3">
                     <i class="fas fa-save mr-1"></i> บันทึกข้อมูลงบประมาณ & ถัดไป <i class="fas fa-arrow-right ml-1"></i>
                 </button>
+                @else
+                <button type="button" class="btn btn-secondary shadow-sm" disabled>
+                    <i class="fas fa-lock mr-1"></i> งบประมาณถูกล็อก (ไม่สามารถบันทึกได้)
+                </button>
+                @endif
             </div>
         </form>
     </div>
@@ -1607,7 +1501,7 @@
                                         $typeBadge = '<span class="badge badge-primary px-2" style="font-size:0.8em; font-weight:normal;">บุคลากรในคณะ</span>';
                                         } else {
                                         $ext = $externals->where('id', $comm->external_id)->first();
-                                        $name = $ext ? $ext->firstname . ' ' . $ext->lastname : '-';
+                                        $name = $ext ? $ext->prefix->name_th . $ext->firstname . ' ' . $ext->lastname : '-';
                                         $typeBadge = '<span class="badge badge-secondary px-2" style="font-size:0.8em; font-weight:normal;">บุคคลภายนอก</span>';
                                         }
                                         @endphp
@@ -2025,7 +1919,10 @@
                                 <select name="signatures[{{ $index }}][staff_id]" class="form-control select2-staff" required>
                                     <option value="">-- ค้นหาชื่อบุคลากร --</option>
                                     @foreach($staffs as $staff)
-                                    <option value="{{ $staff->STAFF_ID }}" data-department="{{ $staff->DEPARTMENT_NAME_TH }}" data-position="{{ $staff->FINAL_POSITION }}" {{ $savedSig->staff_id == $staff->STAFF_ID ? 'selected' : '' }}>
+                                    <option value="{{ $staff->STAFF_ID }}"
+                                        data-department="{{ $staff->DEPARTMENT_NAME_TH }}"
+                                        data-position="{{ $staff->FINAL_POSITION }}"
+                                        {{ $savedSig->staff_id == $staff->STAFF_ID ? 'selected' : '' }}>
                                         {{ $staff->ACADEMIC_ABBR ?: $staff->TITLE_TH }}{{ $staff->NAME_TH }} {{ $staff->SURNAME_TH }}
                                     </option>
                                     @endforeach
@@ -2062,7 +1959,9 @@
                                 <select name="signatures[0][staff_id]" class="form-control select2-staff" required>
                                     <option value="">-- ค้นหาชื่อบุคลากร --</option>
                                     @foreach($staffs as $staff)
-                                    <option value="{{ $staff->STAFF_ID }}" data-department="{{ $staff->DEPARTMENT_NAME_TH }}" data-position="{{ $staff->FINAL_POSITION }}">
+                                    <option value="{{ $staff->STAFF_ID }}"
+                                        data-department="{{ $staff->DEPARTMENT_NAME_TH }}"
+                                        data-position="{{ $staff->FINAL_POSITION }}">
                                         {{ $staff->ACADEMIC_ABBR ?: $staff->TITLE_TH }}{{ $staff->NAME_TH }} {{ $staff->SURNAME_TH }}
                                     </option>
                                     @endforeach
@@ -2186,11 +2085,23 @@
                             </select></div>
                         <div class="col-md-4 form-group"><label>ชื่อ <span class="text-danger">*</span></label><input type="text" id="new_ext_firstname" class="form-control" required></div>
                         <div class="col-md-5 form-group"><label>นามสกุล <span class="text-danger">*</span></label><input type="text" id="new_ext_lastname" class="form-control" required></div>
-                        <div class="col-md-12 form-group"><label>หน่วยงาน/บริษัท <span class="text-danger">*</span></label><input type="text" id="new_ext_department" class="form-control" required></div>
+                        <div class="col-md-12 form-group"><label>หน่วยงาน/บริษัท <span class="text-danger">*</span></label><input type="text" id="new_ext_department" class="form-control" placeholder="เช่น บริษัท..." required></div>
+                        <div class="col-md-6 mb-3">
+                            <label>เบอร์โทรศัพท์</label>
+                            <input type="text" id="new_ext_phone" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>อีเมล</label>
+                            <input type="email" id="new_ext_email" class="form-control">
+                        </div>
+                        <div class="col-md-12 mb-2">
+                            <label>รายละเอียดเพิ่มเติม</label>
+                            <textarea id="new_ext_description" class="form-control" rows="2"></textarea>
+                        </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button><button type="button" class="btn btn-info" id="btn-save-new-external">บันทึก</button></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button><button type="button" class="btn btn-info" id="btn-save-new-external">บันทึกข้อมูล</button></div>
         </div>
     </div>
 </div>

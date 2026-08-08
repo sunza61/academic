@@ -295,7 +295,7 @@ class TrainingProjectController extends Controller
         $prefixes = Prefix::all();
         $customerGroups = CustomerGroup::all();
         $customerTypes = CustomerType::all();
-        $externals = External::all();
+        $externals = External::with('prefix')->get();
         $sdgs = Sdg::where('is_active', 1)->get();
         $trainingProject = TrainingProject::where('academic_project_id', $id)->first(); // ดึงข้อมูลเดิมมาโชว์
         $trainingStatuses = TrainingStatus::all();
@@ -523,7 +523,7 @@ class TrainingProjectController extends Controller
         $prefixes = Prefix::all();
         $customerGroups = CustomerGroup::all();
         $customerTypes = CustomerType::all();
-        $externals = External::all();
+        $externals = External::with('prefix')->get();
         $sdgs = Sdg::where('is_active', 1)->get();
         $trainingProject = TrainingProject::where('academic_project_id', $id)->first(); // ดึงข้อมูลเดิมมาโชว์
         $trainingStatuses = TrainingStatus::all();
@@ -984,6 +984,14 @@ class TrainingProjectController extends Controller
         // กรณีบันทึกข้อมูลจาก "แท็บ 4" (งบประมาณ)
         // =========================================
         if ($step == '4') {
+            // 🛑 1. ตรวจสอบให้แน่ใจว่ามีการดึง Model Project ขึ้นมาก่อน (ถ้าด้านบน Controller ดึงไว้แล้วก็ใช้ได้เลยครับ)
+            $project = AcademicProject::findOrFail($id); 
+
+            // 🔐 2. ใส่กุญแจล็อคเช็คสิทธิ์ตรงนี้! 
+            // ระบบจะวิ่งไปเช็คที่ TrainingProjectPolicy -> updateBudget()
+            // ถ้าสถานะ 600-700 และไม่ใช่ Admin ระบบจะหยุดทำงานและเด้งหน้า 403 ทันที
+            $this->authorize('updateBudget', $project);
+
             try {
                 DB::beginTransaction();
 
@@ -1067,7 +1075,9 @@ class TrainingProjectController extends Controller
                 }
 
                 // 5. ข้อมูลลงงบประมาณโครงการ (สรุปค่าธรรมเนียม)
-                $unformat = function($val) { return (float) str_replace(',', '', $val ?? 0); };
+                $unformat = function ($val) {
+                    return (float) str_replace(',', '', $val ?? 0);
+                };
                 AcademicBudget::create([
                     'academic_project_id'   => $id,
                     'total_budget_summary'  => $unformat($request->input('total_budget_summary')),
@@ -1706,20 +1716,22 @@ class TrainingProjectController extends Controller
 
     public function changeStatus(Request $request, $id)
     {
-        //dd('🎉 เย้! วิ่งมาถึง Controller แล้วจ้าาา', $request->all(), 'ID โครงการคือ: ' . $id);
+        // 1. 🛡️ เช็คสิทธิ์ขั้นเด็ดขาด (เฉพาะ Admin เท่านั้น)
+        if (!auth()->user()->hasRole('admin')) {
+            return response()->json(['success' => false, 'message' => 'คุณไม่มีสิทธิ์เข้าถึงการจัดการส่วนนี้'], 403);
+        }
+
+        // 2. 📝 ตรวจสอบข้อมูล (ไว้นอก try-catch เพื่อให้โยน ValidationException แบบปกติ)
+        $request->validate([
+            'new_status' => 'required|integer'
+        ], [
+            'new_status.required' => 'กรุณาเลือกสถานะใหม่',
+            'new_status.integer'  => 'รูปแบบสถานะไม่ถูกต้อง'
+        ]);
+
         try {
             $project = AcademicProject::findOrFail($id);
-            $user = auth()->user();
-
-            // 1. 🛡️ เช็คสิทธิ์ขั้นเด็ดขาด (เฉพาะ Admin เท่านั้น)
-            if (!$user->hasRole('admin')) {
-                return response()->json(['success' => false, 'message' => 'คุณไม่มีสิทธิ์เข้าถึงการจัดการส่วนนี้'], 403);
-            }
-
-            // 2. ตรวจสอบข้อมูล
-            $request->validate([
-                'new_status' => 'required|integer'
-            ]);
+            $user    = auth()->user();
 
             $oldStatus = $project->overall_status;
             $newStatus = $request->new_status;
@@ -1747,11 +1759,19 @@ class TrainingProjectController extends Controller
             ]);
 
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'อัปเดตสถานะโครงการเรียบร้อยแล้ว']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'อัปเดตสถานะโครงการเรียบร้อยแล้ว'
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Admin Change Status Error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'เกิดข้อผิดพลาดในระบบ: ' . $e->getMessage()], 500);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาดในระบบ: ' . $e->getMessage()
+            ], 500);
         }
     }
 

@@ -272,4 +272,27 @@ class ProjectContractPolicy
 
         return $user->id == $createdBy;
     }
+
+    /**
+     * 💰 กติกาการแก้ไขงบประมาณโดยเฉพาะ (Tab 3) - ฝั่งบริการวิชาการ
+     */
+    public function updateBudget(User $user, $project) 
+    {
+        // หมายเหตุ: ถ้าเป็น 'admin' จะถูกอนุญาตให้ผ่านไปตั้งแต่ฟังก์ชัน before() แล้ว
+
+        // 1. ดึงสถานะของโครงการ (เช็คจาก academicProject แม่ก่อน ถ้าไม่มีค่อยดึงจากตารางตัวเอง)
+        $status = method_exists($project, 'academicProject') 
+                        ? ($project->academicProject->overall_status ?? null) 
+                        : ($project->overall_status ?? null);
+
+        // 🛑 กฎเหล็ก: ถ้าสถานะ 600-700 ไม่อนุญาตให้แก้ไข (Return False)
+        // (ยกเว้น Admin ที่จะผ่านด่านไปแล้วจากฟังก์ชัน before)
+        if ($status >= 600 && $status <= 700) {
+            return false;
+        }
+
+        // 2. ถ้าสถานะ "ไม่ใช่" 600-700 ให้กลับไปใช้กติกาการ Update ของฟังก์ชัน update() ตามปกติ 
+        // (เช่น ให้ Staff แก้ได้ หรือ เช็คว่าเป็นเจ้าของโครงการไหม)
+        return $this->update($user, $project);
+    }
 }

@@ -38,7 +38,9 @@
 <body class="layout-top-nav text-sm">
   <div class="wrapper">
 
+    @auth
     @include('layouts.header_all')
+    @endauth
     <div class="content-wrapper">
       <div class="content pt-4">
         <div class="container-fluid">

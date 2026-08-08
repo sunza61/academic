@@ -150,6 +150,27 @@ class TrainingProjectPolicy
 
         return $user->id == $createdBy;
     }
+
+    /**
+     * 💰 กติกาการแก้ไขงบประมาณโดยเฉพาะ (Tab 4)
+     */
+    public function updateBudget(User $user, $project) 
+    {
+        // หมายเหตุ: ถ้าเป็น 'admin' จะถูกอนุญาตให้ผ่านไปตั้งแต่ฟังก์ชัน before() แล้วครับ
+
+        $status = method_exists($project, 'academicProject') 
+                        ? ($project->academicProject->overall_status ?? null) 
+                        : ($project->overall_status ?? null);
+
+        // 🛑 กฎเหล็กใหม่: ถ้าสถานะ 600-700 ไม่อนุญาตให้แก้ไขเลย (return false ทันที)
+        if ($status >= 600 && $status <= 700) {
+            return false;
+        }
+
+        // ถ้าไม่ได้อยู่สถานะ 600-700 ให้กลับไปใช้กติกาการ Update ตามปกติ 
+        // (เช่น เช็คว่าเป็นเจ้าของไหม, ห้ามแก้ตอน 200, 800, 900)
+        return $this->update($user, $project);
+    }
 }
 
 // 👑 สิทธิ์ระดับสูงสุด (God Mode)

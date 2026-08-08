@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
-// นำเข้า Controller ของระบบเดิมที่คุณมี
+// นำเข้า Controller
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AcademicController;
 use App\Http\Controllers\Admin\ApprovalController;
@@ -11,65 +11,84 @@ use App\Http\Controllers\InformController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ResearchAreaController;
 use App\Http\Controllers\ScopusController;
-
-// นำเข้า Controller ใหม่ของระบบบริการวิชาการที่เราเพิ่งออกแบบ
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProjectDeliveryController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\MasterData\EmployerController;
 use App\Http\Controllers\MasterData\BudgetCategoryController;
+use App\Http\Controllers\MasterData\BudgetExpenseController;
+use App\Http\Controllers\MasterData\BudgetIncomeController;
+use App\Http\Controllers\MasterData\ExternalController;
+use App\Http\Controllers\MasterData\ProjectPositionController;
 use App\Http\Controllers\MasterData\ProjectTypeController;
 use App\Http\Controllers\MasterData\SdgController;
 use App\Http\Controllers\MasterData\TargetGroupController;
 use App\Http\Controllers\Projects\ContractProjectController;
 use App\Http\Controllers\Projects\ProjectSelectionController;
 use App\Http\Controllers\Projects\TrainingProjectController;
+use App\Http\Controllers\Projects\LecturerProjectController;
+use App\Http\Controllers\Finance\FinanceDashboardController;
+use App\Http\Controllers\Plan\PlanDashboardController;
 
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
 
-// ระบบ Authentication (Login, Register, Logout)
+// Route สำหรับสาธารณะ (ไม่ต้องผ่าน auth)
+Route::get('/', [HomeController::class, 'publicDashboard'])->name('public.dashboard');
+
+
+// ระบบ Authentication
 Auth::routes();
 
-// หน้าแรกสุดก่อน Login (ถ้ามีหน้า Landing Page ให้เรียก view('index') ที่นี่)
 Route::get('/', function () {
     return view('index');
 });
 
-// แก้ไข Route /home ที่ซ้ำกัน ให้เหลือแค่ตัวเดียวสำหรับ Manager/User ทั่วไป
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
+
+// Route สำหรับสาธารณะ (ไม่ต้องผ่าน auth)
+Route::get('/', [HomeController::class, 'publicDashboard'])->name('public.dashboard');
 /*
 |--------------------------------------------------------------------------
 | ระบบบริการวิชาการ (ACADEMIC SERVICE)
-| ต้อง Login ก่อนถึงจะเข้าได้ เลยเอามาครอบไว้ใน Middleware 'auth'
+| ต้อง Login ก่อนถึงจะเข้าได้
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
 
-    // หน้าแรก (Dashboard ของ Admin/ระบบบริการวิชาการ)
-    // ใช้ DashboardController หรือจะใช้ HomeController ก็ได้ตามที่คุณสะดวกครับ
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
-    // เมนู "ข้อมูลพื้นฐาน" (Master Data)
-    Route::prefix('master-data')->name('master-data.')->group(function () {
+    Route::get('/finance/dashboard', [FinanceDashboardController::class, 'index'])->name('finance.dashboard');
+    Route::get('/plan/dashboard', [PlanDashboardController::class, 'index'])->name('plan.dashboard');
+
+    // 🌟 โซนข้อมูลพื้นฐาน: ล็อกประตู! เข้าได้เฉพาะ 'admin' หรือ 'staff'
+    Route::middleware(['role:admin,staff'])->prefix('master-data')->name('master-data.')->group(function () {
         Route::resource('employers', EmployerController::class);
         Route::resource('budget-categories', BudgetCategoryController::class);
         Route::resource('project-types', ProjectTypeController::class);
         Route::resource('sdgs', SdgController::class);
         Route::resource('target-groups', TargetGroupController::class);
+        Route::resource('externals', ExternalController::class);
+        Route::resource('project-positions', ProjectPositionController::class);
+        Route::resource('budget-incomes', BudgetIncomeController::class);
+        Route::post('budget-incomes/main/store-ajax', [BudgetIncomeController::class, 'storeMainAjax'])->name('budget-incomes.storeMainAjax');
+        Route::resource('budget-expenses', BudgetExpenseController::class);
+        Route::post('budget-expenses/main/store-ajax', [BudgetExpenseController::class, 'storeMainAjax'])->name('budget-expenses.storeMainAjax');
     });
 
-    // เมนู "จัดโครงการ/รับงานบริการวิชาการ" (สัญญาจ้าง)
+    // เมนูสัญญาจ้าง
     Route::prefix('contracts')->name('contracts.')->group(function () {
         Route::resource('projects', ContractProjectController::class);
+        Route::post('projects/ajax/externals', [ContractProjectController::class, 'storeExternalAjax'])->name('projects.store-external-ajax');
+        Route::post('projects/ajax/target-groups', [ContractProjectController::class, 'storeTargetGroupAjax'])->name('projects.store-target-group-ajax');
     });
-
-    // เมนู "เปิดให้บริการวิชาการ" (งานอบรม ประชุม สัมมนา)
+    Route::patch('/contracts/projects/{id}/change-status', [ContractProjectController::class, 'changeStatus'])->name('contracts.projects.change-status');
+    Route::get('/contracts/projects/{id}/report', [ContractProjectController::class, 'report'])->name('contracts.projects.report');
+    Route::post('/contracts/projects/{id}/report', [ContractProjectController::class, 'saveReport'])->name('contracts.projects.save-report');
+    Route::put('contracts/projects/{id}/cancel', [ContractProjectController::class, 'cancelProject'])->name('contracts.projects.cancel');
+    
+    
+    // เมนูงานอบรม
     Route::prefix('trainings')->name('trainings.')->group(function () {
         Route::resource('projects', TrainingProjectController::class);
     });
@@ -84,37 +103,41 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/trainings/projects/{id}/report', [TrainingProjectController::class, 'report'])->name('trainings.projects.report');
     Route::post('/trainings/projects/{id}/report', [TrainingProjectController::class, 'saveReport'])->name('trainings.projects.save-report');
 
+    // เมนูวิทยากร (ไม่หักค่าใช้จ่าย)
+    Route::prefix('lecturers')->name('lecturers.')->group(function () {
+        Route::resource('projects', LecturerProjectController::class);
+    });
 
+    
+
+    
+    
+    
+    
+    // เมนูบันทึกรายงาน
     Route::prefix('deliveries')->name('deliveries.')->group(function () {
         Route::get('/', [ProjectDeliveryController::class, 'index'])->name('index');
     });
 
-    // เมนู "รายงาน" 
+    // เมนูรายงาน
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
     });
 
-    // โซนพนักงานต้อนรับ (เลือกประเภทโครงการ)
+    // เลือกประเภทโครงการ
     Route::prefix('projects')->name('projects.')->group(function () {
         Route::get('/select-type', [ProjectSelectionController::class, 'index'])->name('select-type');
         Route::get('/gateway/{id}', [ProjectSelectionController::class, 'gateway'])->name('gateway');
     });
-});
 
+    // ==========================================================
+    // 👑 โซนผู้ดูแลระบบ: ย้ายเข้ามาในกรุ๊ป auth และล็อกเฉพาะ 'admin'
+    // ==========================================================
+    Route::middleware(['role:admin'])->prefix('admin/approvals')->name('admin.approvals.')->group(function () {
+        Route::get('/', [ApprovalController::class, 'index'])->name('index');
+        Route::get('/{id}', [ApprovalController::class, 'show'])->name('show');
+        Route::patch('/{id}/approve', [ApprovalController::class, 'approve'])->name('approve');
+        Route::patch('/{id}/reject', [ApprovalController::class, 'reject'])->name('reject');
+    });
 
-// ==========================================================
-// 👑 โซนผู้ดูแลระบบ (ADMIN ONLY): พิจารณาอนุมัติโครงการ
-// ==========================================================
-Route::prefix('admin/approvals')->name('admin.approvals.')->group(function () {
-    // หน้าตารางโครงการที่รออนุมัติ (Status 200)
-    Route::get('/', [ApprovalController::class, 'index'])->name('index');
-
-    // หน้าดูรายละเอียดโครงการเพื่อพิจารณา
-    Route::get('/{id}', [ApprovalController::class, 'show'])->name('show');
-
-    // บันทึกอนุมัติ (200 -> 300)
-    Route::patch('/{id}/approve', [ApprovalController::class, 'approve'])->name('approve');
-
-    // บันทึกตีกลับ (200 -> 110) พร้อมระบุเหตุผล
-    Route::patch('/{id}/reject', [ApprovalController::class, 'reject'])->name('reject');
 });

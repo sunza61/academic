@@ -232,7 +232,8 @@
                                 $typeBadge = '<span class="badge badge-primary px-2" style="font-size:0.8em; font-weight:normal;">บุคลากรในคณะ</span>';
                                 } else {
                                 $ext = $externals->where('id', $comm->external_id)->first();
-                                $name = $ext ? $ext->firstname . ' ' . $ext->lastname : '-';
+                                $prefixName = isset($ext->prefix) ? $ext->prefix->name_th : '';
+                                $name = $prefixName . $ext->firstname . ' ' . $ext->lastname;
                                 $typeBadge = '<span class="badge badge-secondary px-2" style="font-size:0.8em; font-weight:normal;">บุคคลภายนอก</span>';
                                 }
                                 @endphp
@@ -301,7 +302,7 @@
                                     $badge = '<span class="badge badge-primary px-1 ml-1" style="font-size:0.7em; font-weight:normal;">คนใน</span>';
                                     } else {
                                     $ext = $externals->where('id', $mem->external_id)->first();
-                                    $name = $ext ? $ext->firstname . ' ' . $ext->lastname : '-';
+                                    $name = $ext ? $ext->prefix->name_th . $ext->firstname . ' ' . $ext->lastname : '-';
                                     $badge = '<span class="badge badge-secondary px-1 ml-1" style="font-size:0.7em; font-weight:normal;">คนนอก</span>';
                                     }
                                     @endphp
@@ -821,6 +822,9 @@
         }
     }
 </style>
-<script src="{{ asset('js/trainings/projects/show.js?v=' . time()) }}"></script>
 
+
+@endsection
+@section('script')
+<script src="{{ asset('js/trainings/projects/show.js?v=' . time()) }}"></script>
 @endsection

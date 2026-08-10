@@ -30,19 +30,40 @@ use App\Http\Controllers\Projects\LecturerProjectController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
 use App\Http\Controllers\Plan\PlanDashboardController;
 
+
 /*
 |--------------------------------------------------------------------------
-| โซน Public & ระบบ Authentication (ไม่ต้องผ่าน auth)
+| โซน Public & ระบบ Authentication
 |--------------------------------------------------------------------------
 */
-// ระบบ Authentication (ล็อกอิน, สมัครสมาชิก)
+
+// Authentication
 Auth::routes();
 
-// Route สำหรับหน้าแรก (Public Dashboard)
-Route::get('/', [HomeController::class, 'publicDashboard'])->name('public.dashboard');
 
-// หน้า home ตัวนี้ Laravel มักใช้ตอนล็อกอินเสร็จใหม่ๆ
-Route::get('/home', [HomeController::class, 'index'])->name('home');
+// =====================================================
+// PUBLIC
+// =====================================================
+
+Route::get('/', [HomeController::class, 'publicDashboard'])
+    ->name('public.dashboard');
+
+
+// =====================================================
+// AUTHENTICATED USER
+// =====================================================
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+
+});
+
+
+// Laravel Default Home
+Route::get('/home', [HomeController::class, 'index'])
+    ->name('home');
 
 
 /*
@@ -54,7 +75,7 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::middleware(['auth'])->group(function () {
 
     // 🌟 หน้า Dashboard รวมตามสิทธิ์
-    Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+    //Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
     Route::get('/finance/dashboard', [FinanceDashboardController::class, 'index'])->name('finance.dashboard');
     Route::get('/plan/dashboard', [PlanDashboardController::class, 'index'])->name('plan.dashboard');
 
@@ -67,10 +88,10 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('target-groups', TargetGroupController::class);
         Route::resource('externals', ExternalController::class);
         Route::resource('project-positions', ProjectPositionController::class);
-        
+
         Route::resource('budget-incomes', BudgetIncomeController::class);
         Route::post('budget-incomes/main/store-ajax', [BudgetIncomeController::class, 'storeMainAjax'])->name('budget-incomes.storeMainAjax');
-        
+
         Route::resource('budget-expenses', BudgetExpenseController::class);
         Route::post('budget-expenses/main/store-ajax', [BudgetExpenseController::class, 'storeMainAjax'])->name('budget-expenses.storeMainAjax');
     });
@@ -91,7 +112,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('projects/{id}/report', [ContractProjectController::class, 'saveReport'])->name('projects.save-report');
         Route::put('projects/{id}/cancel', [ContractProjectController::class, 'cancelProject'])->name('projects.cancel');
     });
-    
+
     // 🌟 เมนูงานอบรม
     Route::prefix('trainings')->name('trainings.')->group(function () {
         Route::resource('projects', TrainingProjectController::class);
@@ -131,5 +152,4 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/{id}/approve', [ApprovalController::class, 'approve'])->name('approve');
         Route::patch('/{id}/reject', [ApprovalController::class, 'reject'])->name('reject');
     });
-
 });

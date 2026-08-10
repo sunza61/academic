@@ -1,219 +1,458 @@
 @extends('layouts.main_all')
+@section('title', 'Academic Service Dashboard')
+
 @section('content')
 
-<head>
-    <link href="{{ asset('adminlte/plugins/datatables-buttons/css/buttons.bootstrap4.min.css?')}}{{sha1(time())}}" rel="stylesheet">
-    <link href="{{ asset('adminlte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css?')}}{{sha1(time())}}" rel="stylesheet">
-    <style>
-        .service-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+<style>
+    body {
+        background-color: #f4f6f9;
+        /* สีพื้นหลังมาตรฐาน Dashboard */
+    }
 
-        .service-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
-        }
+    /* =========================================
+       HERO DASHBOARD (ปรับให้ดูเป็นศูนย์ข้อมูล)
+    ========================================== */
+    .hero-dashboard {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: #fff;
+        padding: 40px 30px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
 
-        .coming-soon-card {
-            opacity: 0.75;
-            filter: grayscale(80%);
-        }
-    </style>
-</head>
+    .hero-dashboard::after {
+        content: '\f080';
+        /* Icon Chart */
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        position: absolute;
+        font-size: 15rem;
+        right: -20px;
+        bottom: -40px;
+        color: rgba(255, 255, 255, 0.03);
+        transform: rotate(-15deg);
+    }
 
-<div class="container-fluid pt-4 pb-5">
-    {{-- 🛑 เช็คก่อนว่า "ล็อกอินหรือยัง?" --}}
-    @auth
+    /* =========================================
+       WIDGETS & CARDS
+    ========================================== */
+    .info-box-custom {
+        background: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        border-left: 5px solid transparent;
+        transition: transform 0.2s;
+    }
 
-    {{-- 👑 โซนของ Admin และ Manager (ผู้บริหาร / ผู้ดูแลระบบ) --}}
-    @hasanyrole('admin|manager')
-    <div class="row">
-        <div class="col-12">
-            <div class="alert alert-info border-0 shadow-sm">
-                <h5><i class="icon fas fa-chart-pie"></i> ภาพรวมหน่วยงาน (Admin / Manager)</h5>
-                <p class="mb-0">จำนวนโครงการทั้งหมดในระบบ: <strong>{{ number_format($totalProjects ?? 0) }} โครงการ</strong></p>
-            </div>
-        </div>
-    </div>
-    @endhasanyrole
+    .info-box-custom:hover {
+        transform: translateY(-3px);
+    }
 
-    {{-- 🧑‍🏫 โซนของ Staff และ User ทั่วไป (บุคลากร / อาจารย์) --}}
-    @hasanyrole('staff|user')
-    <div class="row mt-2">
-        <div class="col-12">
-            <div class="alert alert-success border-0 shadow-sm bg-white text-dark border-left border-success" style="border-width: 5px !important;">
-                <h5><i class="icon fas fa-user-tie text-success"></i> ภาระงานของฉัน (My Projects)</h5>
-                <p class="mb-0 text-muted">กำลังรอดึงข้อมูลโครงการที่กำลังดำเนินการ และกำหนดการส่งงาน...</p>
-            </div>
-        </div>
-    </div>
-    @endhasanyrole
+    .info-box-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-right: 15px;
+    }
 
-    {{-- 🛑 กรณีที่ล็อกอินแล้ว แต่ "ไม่มี" สิทธิ์อะไรเลย --}}
-    @if(!auth()->user()->hasAnyRole(['admin', 'manager', 'staff', 'user', 'finance', 'plan']))
-    <div class="row justify-content-center mt-4">
-        <div class="col-md-8">
-            <div class="card shadow-sm border-0" style="border-radius: 15px;">
-                <div class="card-body text-center p-5">
-                    <div class="mb-4">
-                        <i class="fas fa-user-clock text-warning" style="font-size: 5rem;"></i>
-                    </div>
-                    <h3 class="font-weight-bold text-dark">ยินดีต้อนรับเข้าสู่ระบบ</h3>
-                    <p class="text-muted" style="font-size: 1.1rem;">
-                        บัญชีของคุณเข้าสู่ระบบสำเร็จแล้ว แต่ยัง <strong>ไม่ได้รับการกำหนดสิทธิ์</strong> ในการเข้าถึง
-                    </p>
-                    <hr class="w-50 mx-auto my-4">
-                    <p class="text-muted">กรุณาติดต่อผู้ดูแลระบบ (Admin) เพื่อขอรับสิทธิ์เข้าใช้งาน</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-    @else
-    {{-- 1. ส่วนต้อนรับและสถิติภาพรวม --}}
-    <div class="row mb-4 align-items-center">
-        <div class="col-md-8">
-            <h2 class="font-weight-bold text-dark mb-1">
-                <i class="fas fa-globe-asia text-primary mr-2"></i> ระบบบริการวิชาการ
-            </h2>
-            <p class="text-muted" style="font-size: 1.1rem;">คณะวิทยาศาสตร์ มหาวิทยาลัยสงขลานครินทร์</p>
-        </div>
-        <div class="col-md-4 text-md-right text-left mt-3 mt-md-0">
-            <a href="{{ route('login') }}" class="btn btn-primary shadow-sm rounded-pill px-4">
-                <i class="fas fa-sign-in-alt mr-1"></i> เข้าสู่ระบบสำหรับบุคลากร
+    .info-box-content {
+        flex: 1;
+    }
+
+    .info-box-text {
+        font-size: 0.9rem;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-box-number {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #1e293b;
+        line-height: 1;
+    }
+
+    .info-box-desc {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-top: 5px;
+    }
+
+    /* =========================================
+       SDG PROGRESS BARS
+    ========================================== */
+    .sdg-progress-item {
+        margin-bottom: 15px;
+    }
+
+    .sdg-progress-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .sdg-progress-bar {
+        height: 8px;
+        background-color: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .sdg-progress-fill {
+        height: 100%;
+        border-radius: 4px;
+    }
+
+    /* Dashboard Card (General) */
+    .dash-card {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        border: none;
+        height: 100%;
+    }
+
+    .dash-card-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .dash-card-title {
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #334155;
+    }
+</style>
+
+<div class="container-fluid mt-3">
+
+    {{-- =========================================================
+         HEADER (Hero Dashboard)
+    ========================================================= --}}
+    <div class="hero-dashboard">
+        {{-- ปุ่มเข้าสู่ระบบ (มุมขวาบน) --}}
+        <div class="position-absolute" style="top: 25px; right: 30px; z-index: 10;">
+            <a href="{{ route('login') }}" class="btn btn-outline-light rounded-pill px-4 font-weight-bold" style="border-width: 2px;">
+                <i class="fas fa-sign-in-alt mr-2"></i> เข้าสู่ระบบสำหรับบุคลากร
             </a>
         </div>
+
+        <h2 class="font-weight-bold mb-2 pr-5">ระบบข้อมูลบริการวิชาการ (Academic Service Public Data)</h2>
+        <p class="mb-0 text-light" style="font-size: 1.1rem; opacity: 0.8;">
+            รายงานสถิติภาพรวมโครงการและงบประมาณ คณะวิทยาศาสตร์ มหาวิทยาลัยสงขลานครินทร์
+        </p>
+        <div class="mt-3">
+            <span class="badge badge-primary px-3 py-2 mr-2" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">
+                <i class="far fa-calendar-alt mr-1"></i> ปีงบประมาณ 2569
+            </span>
+            <span class="badge badge-dark px-3 py-2" style="background: rgba(0,0,0,0.3);">
+                <i class="fas fa-globe mr-1"></i> Public View
+            </span>
+        </div>
     </div>
 
-    {{-- สถิติแบบ Quick Info --}}
-    <div class="row mb-5">
-        <div class="col-md-3 col-6">
-            <div class="info-box shadow-sm border-0">
-                <span class="info-box-icon bg-info text-white elevation-1"><i class="fas fa-project-diagram"></i></span>
+    {{-- =========================================================
+         TOP WIDGETS (เน้นงบประมาณ & จำนวนโครงการ)
+    ========================================================= --}}
+    <div class="row mb-4">
+        {{-- Total Budget --}}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="info-box-custom" style="border-left-color: #10b981;">
+                <div class="info-box-icon" style="background: #ecfdf5; color: #10b981;">
+                    <i class="fas fa-coins"></i>
+                </div>
                 <div class="info-box-content">
-                    <span class="info-box-text text-muted">โครงการทั้งหมด</span>
-                    <span class="info-box-number" style="font-size: 1.5rem;">{{ number_format($totalProjects ?? 0) }}</span>
+                    <div class="info-box-text">งบประมาณหมุนเวียนรวม</div>
+                    <div class="info-box-number">24.5M <span style="font-size: 1rem; color: #64748b;">บาท</span></div>
+                    <div class="info-box-desc"><i class="fas fa-arrow-up text-success"></i> +12% จากปีที่แล้ว</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-6">
-            <div class="info-box shadow-sm border-0">
-                <span class="info-box-icon bg-success text-white elevation-1"><i class="fas fa-users"></i></span>
+
+        {{-- Total Projects --}}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="info-box-custom" style="border-left-color: #3b82f6;">
+                <div class="info-box-icon" style="background: #eff6ff; color: #3b82f6;">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
                 <div class="info-box-content">
-                    <span class="info-box-text text-muted">ผู้เข้าร่วมโครงการ</span>
-                    <span class="info-box-number" style="font-size: 1.5rem;">{{ number_format($totalParticipants ?? 0) }}</span>
+                    <div class="info-box-text">โครงการบริการวิชาการรวม</div>
+                    <div class="info-box-number">128</div>
+                    <div class="info-box-desc">ดำเนินการเสร็จสิ้นแล้ว 69 โครงการ</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Training / Participants --}}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="info-box-custom" style="border-left-color: #8b5cf6;">
+                <div class="info-box-icon" style="background: #f5f3ff; color: #8b5cf6;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="info-box-content">
+                    <div class="info-box-text">ผู้รับบริการ/เข้าร่วมอบรม</div>
+                    <div class="info-box-number">3,240</div>
+                    <div class="info-box-desc">จาก 36 หลักสูตรฝึกอบรม</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Networks / Partners --}}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="info-box-custom" style="border-left-color: #f59e0b;">
+                <div class="info-box-icon" style="background: #fffbeb; color: #f59e0b;">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="info-box-content">
+                    <div class="info-box-text">หน่วยงานเครือข่าย/ลูกค้า</div>
+                    <div class="info-box-number">85</div>
+                    <div class="info-box-desc">ภาครัฐและเอกชน</div>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- 2. หมวดหมู่บริการ (Our Services) --}}
-    <h4 class="font-weight-bold mb-4 text-dark"><i class="fas fa-th-large text-secondary mr-2"></i> บริการของเรา (Our Services)</h4>
-    <div class="row mb-5">
+    {{-- =========================================================
+         CHARTS & SDG SECTION
+    ========================================================= --}}
+    <div class="row mb-4">
 
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="card h-100 shadow-sm border-0 border-top border-info service-card" style="border-width: 4px !important;">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3">
-                        <div class="d-inline-flex align-items-center justify-content-center bg-info text-white rounded-circle shadow-sm" style="width: 70px; height: 70px;">
-                            <i class="fas fa-chalkboard-teacher fa-2x"></i>
+        {{-- กราฟโดนัท สัดส่วนโครงการ --}}
+        <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h5 class="dash-card-title"><i class="fas fa-chart-pie text-primary mr-2"></i> สัดส่วนโครงการตามประเภท</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="projectTypeChart" style="height: 250px;"></canvas>
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between small mb-2">
+                            <span><i class="fas fa-circle text-primary mr-1"></i> บริการวิชาการ</span>
+                            <span class="font-weight-bold">42% (54 โครงการ)</span>
+                        </div>
+                        <div class="d-flex justify-content-between small mb-2">
+                            <span><i class="fas fa-circle text-info mr-1"></i> ฝึกอบรม</span>
+                            <span class="font-weight-bold">28% (36 โครงการ)</span>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span><i class="fas fa-circle text-warning mr-1"></i> สัญญาจ้าง/วิจัย</span>
+                            <span class="font-weight-bold">30% (38 โครงการ)</span>
                         </div>
                     </div>
-                    <h5 class="font-weight-bold text-dark">อบรมและสัมมนา</h5>
-                    <p class="text-muted small mb-4">บริการจัดอบรม พัฒนาทักษะ และสัมมนาวิชาการสำหรับบุคคลทั่วไป</p>
-                    <a href="#" class="btn btn-outline-info btn-sm rounded-pill px-3 mt-auto">ดูหลักสูตร <i class="fas fa-arrow-right ml-1"></i></a>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="card h-100 shadow-sm border-0 border-top border-success service-card" style="border-width: 4px !important;">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3">
-                        <div class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-circle shadow-sm" style="width: 70px; height: 70px;">
-                            <i class="fas fa-microscope fa-2x"></i>
+        {{-- กราฟแท่ง สถิติงบประมาณรายเดือน --}}
+        <div class="col-lg-8">
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h5 class="dash-card-title"><i class="fas fa-chart-bar text-success mr-2"></i> มูลค่าโครงการบริการวิชาการรายเดือน (ล้านบาท)</h5>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool"><i class="fas fa-download"></i></button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="budgetTrendChart" style="height: 310px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- =========================================================
+         SDG IMPACT & RECENT SUCCESS
+    ========================================================= --}}
+    <div class="row mb-4">
+
+        {{-- SDG Progress --}}
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h5 class="dash-card-title"><i class="fas fa-globe-asia text-success mr-2"></i> การตอบสนองเป้าหมายการพัฒนาที่ยั่งยืน (SDGs)</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-4">สัดส่วนโครงการที่สอดคล้องกับเป้าหมาย SDGs สูงสุด 5 อันดับแรกของคณะ</p>
+
+                    <div class="sdg-progress-item">
+                        <div class="sdg-progress-label">
+                            <span style="color: #4C9F38;"><i class="fas fa-heartbeat mr-1"></i> SDG 3: สุขภาพและความเป็นอยู่ที่ดี</span>
+                            <span>45 โครงการ</span>
+                        </div>
+                        <div class="sdg-progress-bar">
+                            <div class="sdg-progress-fill" style="width: 85%; background-color: #4C9F38;"></div>
                         </div>
                     </div>
-                    <h5 class="font-weight-bold text-dark">บริการวิชาการ</h5>
-                    <p class="text-muted small mb-4">โครงการที่ปรึกษา วิจัย และบริการวิชาการแก่สังคมและหน่วยงานภายนอก</p>
-                    <a href="#" class="btn btn-outline-success btn-sm rounded-pill px-3 mt-auto">ดูรายละเอียด <i class="fas fa-arrow-right ml-1"></i></a>
+
+                    <div class="sdg-progress-item">
+                        <div class="sdg-progress-label">
+                            <span style="color: #C5192D;"><i class="fas fa-book-reader mr-1"></i> SDG 4: การศึกษาที่เท่าเทียม</span>
+                            <span>38 โครงการ</span>
+                        </div>
+                        <div class="sdg-progress-bar">
+                            <div class="sdg-progress-fill" style="width: 72%; background-color: #C5192D;"></div>
+                        </div>
+                    </div>
+
+                    <div class="sdg-progress-item">
+                        <div class="sdg-progress-label">
+                            <span style="color: #FD6925;"><i class="fas fa-industry mr-1"></i> SDG 9: อุตสาหกรรม นวัตกรรม โครงสร้างพื้นฐาน</span>
+                            <span>32 โครงการ</span>
+                        </div>
+                        <div class="sdg-progress-bar">
+                            <div class="sdg-progress-fill" style="width: 60%; background-color: #FD6925;"></div>
+                        </div>
+                    </div>
+
+                    <div class="sdg-progress-item">
+                        <div class="sdg-progress-label">
+                            <span style="color: #3F7E44;"><i class="fas fa-leaf mr-1"></i> SDG 13: การรับมือการเปลี่ยนแปลงสภาพภูมิอากาศ</span>
+                            <span>21 โครงการ</span>
+                        </div>
+                        <div class="sdg-progress-bar">
+                            <div class="sdg-progress-fill" style="width: 40%; background-color: #3F7E44;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="card h-100 shadow-sm border-0 border-top border-secondary bg-light coming-soon-card" style="border-width: 4px !important;">
-                <div class="card-body text-center p-4 position-relative">
-                    <span class="badge badge-warning position-absolute shadow-sm" style="top: 15px; right: 15px; font-size: 0.8rem;">Coming Soon</span>
-                    <div class="mb-3">
-                        <div class="d-inline-flex align-items-center justify-content-center bg-secondary text-white rounded-circle" style="width: 70px; height: 70px;">
-                            <i class="fas fa-user-tie fa-2x"></i>
-                        </div>
-                    </div>
-                    <h5 class="font-weight-bold text-secondary">วิทยากรภายนอก</h5>
-                    <p class="text-muted small mb-4">ฐานข้อมูลและการจัดการวิทยากร (กรณีไม่เบิกค่าใช้จ่าย)</p>
-                    <button class="btn btn-secondary btn-sm rounded-pill px-3 mt-auto" disabled>เร็วๆ นี้</button>
+        {{-- Recent Success Projects (แบบกะทัดรัด ไม่มีข้อมูลส่วนบุคคล) --}}
+        <div class="col-lg-6">
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h5 class="dash-card-title"><i class="fas fa-check-circle text-success mr-2"></i> โครงการที่ดำเนินการเสร็จสิ้นล่าสุด</h5>
+                    <a href="#" class="small">ดูทั้งหมด</a>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="card h-100 shadow-sm border-0 border-top border-secondary bg-light coming-soon-card" style="border-width: 4px !important;">
-                <div class="card-body text-center p-4 position-relative">
-                    <span class="badge badge-warning position-absolute shadow-sm" style="top: 15px; right: 15px; font-size: 0.8rem;">Coming Soon</span>
-                    <div class="mb-3">
-                        <div class="d-inline-flex align-items-center justify-content-center bg-secondary text-white rounded-circle" style="width: 70px; height: 70px;">
-                            <i class="fas fa-award fa-2x"></i>
-                        </div>
-                    </div>
-                    <h5 class="font-weight-bold text-secondary">ศูนย์มาตรฐานรับรอง</h5>
-                    <p class="text-muted small mb-4">บริการทดสอบ ตรวจสอบ และออกใบรับรองมาตรฐานวิชาชีพ</p>
-                    <button class="btn btn-secondary btn-sm rounded-pill px-3 mt-auto" disabled>เร็วๆ นี้</button>
+                <div class="card-body p-0">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="bg-light text-muted">
+                            <tr>
+                                <th class="border-0">ประเภท</th>
+                                <th class="border-0">ชื่อโครงการ</th>
+                                <th class="border-0 text-right">ส่งมอบเมื่อ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="align-middle"><span class="badge badge-light border text-muted">สัญญาจ้าง</span></td>
+                                <td class="align-middle font-weight-bold text-dark">โครงการที่ปรึกษาระบบกำจัดของเสียอุตสาหกรรม</td>
+                                <td class="align-middle text-right text-muted small">12 ส.ค. 2569</td>
+                            </tr>
+                            <tr>
+                                <td class="align-middle"><span class="badge badge-light border text-muted">ฝึกอบรม</span></td>
+                                <td class="align-middle font-weight-bold text-dark">หลักสูตร Data Analytics for Business</td>
+                                <td class="align-middle text-right text-muted small">08 ส.ค. 2569</td>
+                            </tr>
+                            <tr>
+                                <td class="align-middle"><span class="badge badge-light border text-muted">บริการวิชาการ</span></td>
+                                <td class="align-middle font-weight-bold text-dark">บริการตรวจวิเคราะห์คุณภาพน้ำบาดาลชุมชน</td>
+                                <td class="align-middle text-right text-muted small">01 ส.ค. 2569</td>
+                            </tr>
+                            <tr>
+                                <td class="align-middle"><span class="badge badge-light border text-muted">บริการวิชาการ</span></td>
+                                <td class="align-middle font-weight-bold text-dark">การทดสอบคุณสมบัติทางเคมีของยางพารา</td>
+                                <td class="align-middle text-right text-muted small">28 ก.ค. 2569</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
     </div>
-
-    {{-- 3. ส่วนรายการไฮไลต์ (โครงการที่เปิดรับสมัคร) --}}
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-custom-dark text-white py-3">
-            <h6 class="mb-0 font-weight-bold"><i class="fas fa-bullhorn mr-2 text-warning"></i> โครงการอบรมที่กำลังเปิดรับสมัคร</h6>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="bg-light text-muted">
-                        <tr>
-                            <th class="border-top-0 pl-4">ชื่อโครงการ</th>
-                            <th class="border-top-0">วันที่จัดอบรม</th>
-                            <th class="border-top-0 text-center">สถานะ</th>
-                            <th class="border-top-0 text-center">เพิ่มเติม</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="pl-4 font-weight-bold text-dark">โครงการอบรมเชิงปฏิบัติการ Data Science เบื้องต้น</td>
-                            <td>15 - 16 ส.ค. 2569</td>
-                            <td class="text-center"><span class="badge badge-success px-2 py-1">เปิดรับสมัคร</span></td>
-                            <td class="text-center">
-                                <a href="#" class="btn btn-sm btn-outline-primary"><i class="fas fa-search"></i> รายละเอียด</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="pl-4 font-weight-bold text-dark">บริการตรวจวัดคุณภาพน้ำสำหรับชุมชน</td>
-                            <td>ตลอดปีงบประมาณ</td>
-                            <td class="text-center"><span class="badge badge-info px-2 py-1">ให้บริการ</span></td>
-                            <td class="text-center">
-                                <a href="#" class="btn btn-sm btn-outline-primary"><i class="fas fa-search"></i> รายละเอียด</a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    @endauth
 </div>
 
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. กราฟโดนัท สัดส่วนประเภทโครงการ
+        var ctxType = document.getElementById('projectTypeChart');
+        if (ctxType) {
+            new Chart(ctxType, {
+                type: 'doughnut',
+                data: {
+                    labels: ['บริการวิชาการ', 'ฝึกอบรม', 'สัญญาจ้าง/วิจัย'],
+                    datasets: [{
+                        data: [54, 36, 38],
+                        backgroundColor: ['#3b82f6', '#0ea5e9', '#f59e0b'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. กราฟแท่ง มูลค่าโครงการรายเดือน
+        var ctxTrend = document.getElementById('budgetTrendChart');
+        if (ctxTrend) {
+            new Chart(ctxTrend, {
+                type: 'bar',
+                data: {
+                    labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.'],
+                    datasets: [{
+                        label: 'มูลค่างบประมาณ (ล้านบาท)',
+                        data: [2.1, 1.8, 3.2, 2.5, 4.1, 3.8, 4.5, 2.5],
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
 @endsection

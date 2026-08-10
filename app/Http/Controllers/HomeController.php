@@ -26,34 +26,41 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return redirect('/');
+        return redirect()->route('dashboard');
     }
 
-    public function showpage()
-    {
-        if (auth()->user()->hasRole("admin")) {
-            //return view('index');
-            return redirect('/');
-        } elseif (auth()->user()->hasRole("manager")) {
-            // return view('index');
-            return redirect('/');
-        } elseif (auth()->user()->hasRole("user")) {
-            // return view('index');
-            return redirect('/');
-        } elseif (auth()->user()->hasRole("staff")) {
-            // return view('home');
-            return redirect('/');
-        } elseif (auth()->user()->hasRole("finance")) {
-            // return view('home');
-            return redirect()->route('finance.dashboard');
-            return redirect('/');
-        } elseif (auth()->user()->hasRole("plan")) {
-            // return view('home');
-            return redirect()->route('plan.dashboard');
-        } else {
-            return abort('404');
-        }
-    }
+    //     public function showpage()
+    // {
+    //     $user = auth()->user();
+
+    //     if ($user->hasRole('admin')) {
+
+    //         return redirect()->route('admin.dashboard');
+
+    //     } elseif ($user->hasRole('manager')) {
+
+    //         return redirect()->route('manager.dashboard');
+
+    //     } elseif ($user->hasRole('staff')) {
+
+    //         return redirect()->route('staff.dashboard');
+
+    //     } elseif ($user->hasRole('user')) {
+
+    //         return redirect()->route('user.dashboard');
+
+    //     } elseif ($user->hasRole('finance')) {
+
+    //         return redirect()->route('finance.dashboard');
+
+    //     } elseif ($user->hasRole('plan')) {
+
+    //         return redirect()->route('plan.dashboard');
+
+    //     }
+
+    //     abort(403, 'คุณไม่มีสิทธิ์เข้าถึง Dashboard');
+    // }
 
     public function publicDashboard()
     {

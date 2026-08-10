@@ -15,7 +15,7 @@
         padding: 28px 30px;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,.12);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
     }
 
     .hero-admin:after {
@@ -26,7 +26,7 @@
         right: -80px;
         top: -100px;
         border-radius: 50%;
-        background: rgba(255,255,255,.05);
+        background: rgba(255, 255, 255, .05);
     }
 
     .hero-admin .hero-icon {
@@ -36,7 +36,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background: rgba(255,255,255,.10);
+        background: rgba(255, 255, 255, .10);
         font-size: 28px;
         margin-right: 15px;
     }
@@ -48,13 +48,13 @@
     }
 
     .hero-subtitle {
-        color: rgba(255,255,255,.70);
+        color: rgba(255, 255, 255, .70);
         margin: 0;
     }
 
     .hero-badge {
-        background: rgba(255,255,255,.10);
-        border: 1px solid rgba(255,255,255,.12);
+        background: rgba(255, 255, 255, .10);
+        border: 1px solid rgba(255, 255, 255, .12);
         color: #fff;
         padding: 9px 15px;
         border-radius: 50px;
@@ -65,14 +65,14 @@
         border: 0;
         border-radius: 16px;
         background: #fff;
-        box-shadow: 0 5px 18px rgba(0,0,0,.06);
+        box-shadow: 0 5px 18px rgba(0, 0, 0, .06);
         height: 100%;
         transition: all .25s ease;
     }
 
     .kpi-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 10px 25px rgba(0,0,0,.10);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, .10);
     }
 
     .kpi-icon {
@@ -101,7 +101,7 @@
         background: #fff;
         border: 0;
         border-radius: 16px;
-        box-shadow: 0 5px 18px rgba(0,0,0,.06);
+        box-shadow: 0 5px 18px rgba(0, 0, 0, .06);
         overflow: hidden;
         height: 100%;
     }
@@ -155,11 +155,30 @@
         border-radius: 20px;
     }
 
-    .progress-approved { width: 78%; background: #22c55e; }
-    .progress-review { width: 43%; background: #f59e0b; }
-    .progress-running { width: 61%; background: #3b82f6; }
-    .progress-delivery { width: 29%; background: #8b5cf6; }
-    .progress-draft { width: 21%; background: #9ca3af; }
+    .progress-approved {
+        width: 78%;
+        background: #22c55e;
+    }
+
+    .progress-review {
+        width: 43%;
+        background: #f59e0b;
+    }
+
+    .progress-running {
+        width: 61%;
+        background: #3b82f6;
+    }
+
+    .progress-delivery {
+        width: 29%;
+        background: #8b5cf6;
+    }
+
+    .progress-draft {
+        width: 21%;
+        background: #9ca3af;
+    }
 
     .activity-item {
         display: flex;
@@ -225,11 +244,9 @@
         height: 135px;
         border-radius: 50%;
         background:
-            conic-gradient(
-                #22c55e 0deg 295deg,
+            conic-gradient(#22c55e 0deg 295deg,
                 #f59e0b 295deg 342deg,
-                #ef4444 342deg 360deg
-            );
+                #ef4444 342deg 360deg);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -318,6 +335,8 @@
         font-size: .75rem;
     }
 
+
+
     @media (max-width: 767px) {
         .hero-admin {
             padding: 22px;
@@ -384,143 +403,118 @@
         ====================================================== --}}
         <div class="row mb-4">
 
-            {{-- Projects --}}
-            <div class="col-xl-3 col-md-6 mb-3">
-
-                <div class="kpi-card p-3">
-
+            {{-- 1. โครงการทั้งหมด --}}
+            <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
                     <div class="d-flex align-items-center">
-
-                        <div class="kpi-icon bg-primary text-white mr-3">
-                            <i class="fas fa-project-diagram"></i>
+                        <div class="kpi-icon bg-info text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
+                            <i class="fas fa-project-diagram fa-lg"></i>
                         </div>
-
                         <div>
-
-                            <div class="kpi-number">
+                            <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
                                 128
                             </div>
-
-                            <div class="kpi-label">
+                            <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
                                 โครงการทั้งหมด
                             </div>
-
                         </div>
-
                     </div>
-
-                    <div class="mt-3 small text-success">
-                        <i class="fas fa-arrow-up mr-1"></i>
-                        12% จากปีที่ผ่านมา
-                    </div>
-
                 </div>
-
             </div>
 
-
-            {{-- Approval --}}
-            <div class="col-xl-3 col-md-6 mb-3">
-
-                <div class="kpi-card p-3">
-
+            {{-- 2. อบรม ประชุม สัมมนาฯ --}}
+            <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
                     <div class="d-flex align-items-center">
-
-                        <div class="kpi-icon bg-warning text-white mr-3">
-                            <i class="fas fa-file-signature"></i>
+                        <div class="kpi-icon bg-primary text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
+                            <i class="fas fa-chalkboard-teacher fa-lg"></i>
                         </div>
-
                         <div>
-
-                            <div class="kpi-number">
-                                18
+                            <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
+                                45
                             </div>
-
-                            <div class="kpi-label">
-                                โครงการรออนุมัติ
+                            <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
+                                อบรม ประชุม สัมมนาฯ
                             </div>
-
                         </div>
-
                     </div>
-
-                    <div class="mt-3 small text-warning">
-                        <i class="fas fa-clock mr-1"></i>
-                        ต้องดำเนินการ
-                    </div>
-
                 </div>
-
             </div>
 
-
-            {{-- Pending --}}
-            <div class="col-xl-3 col-md-6 mb-3">
-
-                <div class="kpi-card p-3">
-
+            {{-- 3. บริการวิชาการ --}}
+            <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
                     <div class="d-flex align-items-center">
-
-                        <div class="kpi-icon bg-danger text-white mr-3">
-                            <i class="fas fa-exclamation-triangle"></i>
+                        <div class="kpi-icon bg-success text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
+                            <i class="fas fa-hands-helping fa-lg"></i>
                         </div>
-
                         <div>
-
-                            <div class="kpi-number">
-                                7
+                            <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
+                                38
                             </div>
-
-                            <div class="kpi-label">
-                                รายการที่ต้องติดตาม
+                            <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
+                                บริการวิชาการ
                             </div>
-
                         </div>
-
                     </div>
-
-                    <div class="mt-3 small text-danger">
-                        <i class="fas fa-bell mr-1"></i>
-                        มีรายการค้าง
-                    </div>
-
                 </div>
-
             </div>
 
-
-            {{-- Users --}}
-            <div class="col-xl-3 col-md-6 mb-3">
-
-                <div class="kpi-card p-3">
-
+            {{-- 4. วิทยากร --}}
+            <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
                     <div class="d-flex align-items-center">
-
-                        <div class="kpi-icon bg-success text-white mr-3">
-                            <i class="fas fa-users-cog"></i>
+                        <div class="kpi-icon bg-warning text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
+                            <i class="fas fa-user-tie fa-lg"></i>
                         </div>
-
                         <div>
-
-                            <div class="kpi-number">
-                                64
+                            <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
+                                15
                             </div>
-
-                            <div class="kpi-label">
-                                ผู้ใช้งานระบบ
+                            <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
+                                วิทยากร
                             </div>
-
                         </div>
-
                     </div>
-
-                    <div class="mt-3 small text-success">
-                        <i class="fas fa-check-circle mr-1"></i>
-                        ระบบพร้อมใช้งาน
-                    </div>
-
                 </div>
+            </div>
 
+            {{-- 5. วิเคราะห์ทดสอบ --}}
+            <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-danger text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
+                            <i class="fas fa-flask fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
+                                20
+                            </div>
+                            <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
+                                วิเคราะห์ทดสอบ
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 6. นำส่งเงิน --}}
+            <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-secondary text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
+                            <i class="fas fa-file-invoice-dollar fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
+                                10
+                            </div>
+                            <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
+                                นำส่งเงิน
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -533,213 +527,159 @@
 
             {{-- Workflow --}}
             <div class="col-lg-7 mb-4">
-
                 <div class="dashboard-card">
 
                     <div class="dashboard-card-header">
-
                         <h5 class="dashboard-card-title">
                             <i class="fas fa-stream text-primary"></i>
                             Project Workflow
                         </h5>
-
-                        <span class="badge badge-light">
-                            128 โครงการ
+                        <span class="badge badge-light shadow-sm">
+                            รวมทั้งหมด 100 โครงการ (Mock)
                         </span>
-
                     </div>
 
                     <div class="card-body">
 
-                        <div class="workflow-item">
+                        {{-- 🟢 Legend (ป้ายกำกับสีประเภทโครงการ) --}}
+                        <div class="mb-4 pb-3 border-bottom d-flex flex-wrap align-items-center justify-content-between" style="font-size: 0.85rem;">
+                            <span class="mr-2 mb-1"><i class="fas fa-circle text-primary mr-1"></i> อบรม ประชุม สัมมนาฯ</span>
+                            <span class="mr-2 mb-1"><i class="fas fa-circle text-success mr-1"></i> บริการวิชาการ</span>
+                            <span class="mr-2 mb-1"><i class="fas fa-circle text-warning mr-1"></i> วิทยากร</span>
+                            <span class="mb-1"><i class="fas fa-circle text-danger mr-1"></i> วิเคราะห์ทดสอบ</span>
+                        </div>
 
-                            <div class="workflow-label">
-                                <strong>อนุมัติแล้ว</strong>
-                                <span>46 โครงการ</span>
+                        {{-- 🔵 ข้อมูลจำลอง (Mock Data) สำหรับ 10 สถานะ --}}
+                        @php
+                        $workflowStatuses = [
+                        ['id' => 100, 'name' => 'เตรียมการ / ฉบับร่าง', 'total' => 10, 'type1' => 5, 'type2' => 3, 'type3' => 1, 'type4' => 1],
+                        ['id' => 110, 'name' => 'ตีกลับ', 'total' => 2, 'type1' => 2, 'type2' => 0, 'type3' => 0, 'type4' => 0],
+                        ['id' => 200, 'name' => 'เสนอขออนุมัติ', 'total' => 8, 'type1' => 4, 'type2' => 4, 'type3' => 0, 'type4' => 0],
+                        ['id' => 300, 'name' => 'อนุมัติแล้ว / รอเปิดรับสมัคร', 'total' => 15, 'type1' => 8, 'type2' => 5, 'type3' => 2, 'type4' => 0],
+                        ['id' => 400, 'name' => 'เปิดรับสมัคร', 'total' => 12, 'type1' => 10, 'type2' => 2, 'type3' => 0, 'type4' => 0],
+                        ['id' => 500, 'name' => 'ปิดรับสมัคร / เตรียมจัดงาน', 'total' => 5, 'type1' => 5, 'type2' => 0, 'type3' => 0, 'type4' => 0],
+                        ['id' => 600, 'name' => 'อยู่ระหว่างดำเนินการ', 'total' => 20, 'type1' => 10, 'type2' => 5, 'type3' => 3, 'type4' => 2],
+                        ['id' => 700, 'name' => 'รอประเมินผลและรายงาน', 'total' => 10, 'type1' => 6, 'type2' => 4, 'type3' => 0, 'type4' => 0],
+                        ['id' => 800, 'name' => 'เสร็จสิ้นโครงการ', 'total' => 15, 'type1' => 8, 'type2' => 4, 'type3' => 2, 'type4' => 1],
+                        ['id' => 900, 'name' => 'ยกเลิกโครงการ', 'total' => 3, 'type1' => 2, 'type2' => 1, 'type3' => 0, 'type4' => 0],
+                        ];
+                        @endphp
+
+                        {{-- 🟣 วนลูปแสดงผลกราฟ Stacked Progress Bar --}}
+                        @foreach($workflowStatuses as $status)
+                        @php
+                        // คำนวณ % ความกว้างของแต่ละประเภท
+                        $total = $status['total'] > 0 ? $status['total'] : 1;
+                        $pct1 = ($status['type1'] / $total) * 100;
+                        $pct2 = ($status['type2'] / $total) * 100;
+                        $pct3 = ($status['type3'] / $total) * 100;
+                        $pct4 = ($status['type4'] / $total) * 100;
+                        @endphp
+
+                        <div class="workflow-item mb-4">
+
+                            {{-- ชื่อสถานะ และ จำนวนรวม --}}
+                            <div class="workflow-label d-flex justify-content-between mb-2">
+                                <div>
+                                    <span class="badge badge-light border text-muted mr-1" style="font-size: 0.75em;">{{ $status['id'] }}</span>
+                                    <strong class="text-dark">{{ $status['name'] }}</strong>
+                                </div>
+                                <span class="font-weight-bold">{{ $status['total'] }} โครงการ</span>
                             </div>
 
-                            <div class="workflow-bar">
-                                <div class="workflow-progress progress-approved"></div>
+                            {{-- หลอดสีแบบซ้อนกัน (Stacked) --}}
+                            <div class="progress shadow-sm" style="height: 12px; border-radius: 6px; background-color: #f1f3f5;">
+
+                                @if($status['type1'] > 0)
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $pct1 }}%"
+                                    data-toggle="tooltip" data-placement="top" title="อบรมฯ: {{ $status['type1'] }} โครงการ"></div>
+                                @endif
+
+                                @if($status['type2'] > 0)
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ $pct2 }}%"
+                                    data-toggle="tooltip" data-placement="top" title="บริการวิชาการ: {{ $status['type2'] }} โครงการ"></div>
+                                @endif
+
+                                @if($status['type3'] > 0)
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $pct3 }}%"
+                                    data-toggle="tooltip" data-placement="top" title="วิทยากร: {{ $status['type3'] }} โครงการ"></div>
+                                @endif
+
+                                @if($status['type4'] > 0)
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: {{ $pct4 }}%"
+                                    data-toggle="tooltip" data-placement="top" title="วิเคราะห์ทดสอบ: {{ $status['type4'] }} โครงการ"></div>
+                                @endif
+
                             </div>
 
                         </div>
-
-
-                        <div class="workflow-item">
-
-                            <div class="workflow-label">
-                                <strong>รอตรวจสอบ / อนุมัติ</strong>
-                                <span>18 โครงการ</span>
-                            </div>
-
-                            <div class="workflow-bar">
-                                <div class="workflow-progress progress-review"></div>
-                            </div>
-
-                        </div>
-
-
-                        <div class="workflow-item">
-
-                            <div class="workflow-label">
-                                <strong>กำลังดำเนินการ</strong>
-                                <span>35 โครงการ</span>
-                            </div>
-
-                            <div class="workflow-bar">
-                                <div class="workflow-progress progress-running"></div>
-                            </div>
-
-                        </div>
-
-
-                        <div class="workflow-item">
-
-                            <div class="workflow-label">
-                                <strong>รอส่งมอบ / ปิดโครงการ</strong>
-                                <span>17 โครงการ</span>
-                            </div>
-
-                            <div class="workflow-bar">
-                                <div class="workflow-progress progress-delivery"></div>
-                            </div>
-
-                        </div>
-
-
-                        <div class="workflow-item">
-
-                            <div class="workflow-label">
-                                <strong>ร่าง / ยังไม่ส่ง</strong>
-                                <span>12 โครงการ</span>
-                            </div>
-
-                            <div class="workflow-bar">
-                                <div class="workflow-progress progress-draft"></div>
-                            </div>
-
-                        </div>
+                        @endforeach
 
                     </div>
-
                 </div>
-
             </div>
 
 
             {{-- Activity --}}
             <div class="col-lg-5 mb-4">
 
-                <div class="dashboard-card">
+                <div class="dashboard-card h-100">
 
                     <div class="dashboard-card-header">
-
                         <h5 class="dashboard-card-title">
                             <i class="fas fa-history text-info"></i>
                             System Activity
                         </h5>
-
-                        <span class="badge badge-info">
+                        <span class="badge badge-info shadow-sm">
                             Live Mock
                         </span>
-
                     </div>
 
-                    <div class="card-body">
+                    {{-- กระจายพื้นที่ให้พอดีโดยไม่มี Scrollbar --}}
+                    <div class="card-body d-flex flex-column justify-content-between pb-3">
 
-                        <div class="activity-item">
+                        {{-- 🟢 จำลองข้อมูล Activity ครบทั้ง 10 สถานะ --}}
+                        @php
+                        $mockActivities = [
+                        ['status' => '100', 'icon' => 'fas fa-plus', 'color' => 'bg-success', 'title' => 'เพิ่งสร้างโครงการใหม่', 'meta' => 'โครงการพัฒนาทักษะดิจิทัล • 2 นาทีที่แล้ว'],
+                        ['status' => '110', 'icon' => 'fas fa-reply', 'color' => 'bg-danger', 'title' => 'ตีกลับโครงการ (ให้แก้ไข)', 'meta' => 'โครงการอบรมระยะสั้น • 15 นาทีที่แล้ว'],
+                        ['status' => '200', 'icon' => 'fas fa-paper-plane', 'color' => 'bg-primary', 'title' => 'เสนอขออนุมัติโครงการ', 'meta' => 'โครงการสัมมนาวิชาการ • 45 นาทีที่แล้ว'],
+                        ['status' => '300', 'icon' => 'fas fa-user-check', 'color' => 'bg-info', 'title' => 'อนุมัติโครงการแล้ว', 'meta' => 'โครงการบริการตรวจวิเคราะห์ดิน • 1 ชั่วโมงที่แล้ว'],
+                        ['status' => '400', 'icon' => 'fas fa-door-open', 'color' => 'bg-success', 'title' => 'เปิดรับสมัครผู้เข้าร่วม', 'meta' => 'โครงการอบรม Data Science • 3 ชั่วโมงที่แล้ว'],
+                        ['status' => '500', 'icon' => 'fas fa-door-closed', 'color' => 'bg-secondary', 'title' => 'ปิดรับสมัคร / เตรียมจัดงาน', 'meta' => 'โครงการอบรม Python • 5 ชั่วโมงที่แล้ว'],
+                        ['status' => '600', 'icon' => 'fas fa-play', 'color' => 'bg-primary', 'title' => 'เริ่มดำเนินการโครงการ', 'meta' => 'โครงการค่ายคณิตศาสตร์ • 1 วันที่แล้ว'],
+                        ['status' => '700', 'icon' => 'fas fa-file-upload', 'color' => 'bg-info', 'title' => 'ส่งรายงานผลการดำเนินงาน', 'meta' => 'โครงการบริการวิชาการชุมชน • 1 วันที่แล้ว'],
+                        ['status' => '800', 'icon' => 'fas fa-flag-checkered', 'color' => 'bg-success', 'title' => 'เสร็จสิ้นโครงการสมบูรณ์', 'meta' => 'โครงการอบรมเชิงปฏิบัติการ AI • 2 วันที่แล้ว'],
+                        ['status' => '900', 'icon' => 'fas fa-ban', 'color' => 'bg-dark', 'title' => 'ยกเลิกโครงการ', 'meta' => 'โครงการศึกษาดูงาน • 3 วันที่แล้ว']
+                        ];
+                        @endphp
 
-                            <div class="activity-icon bg-success text-white">
-                                <i class="fas fa-plus"></i>
+                        {{-- 🔵 วนลูปแสดงผล Activity 10 รายการแบบบีบอัด (Compact) --}}
+                        @foreach($mockActivities as $activity)
+                        {{-- ใช้ mb-2 เพื่อลดช่องว่างให้ยัด 10 แถวได้พอดี --}}
+                        <div class="activity-item d-flex {{ $loop->last ? '' : 'mb-2' }}">
+
+                            {{-- ไอคอน (ย่อขนาดเหลือ 32px เพื่อประหยัดพื้นที่แนวตั้ง) --}}
+                            <div class="activity-icon {{ $activity['color'] }} text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm mr-2" style="width: 32px; height: 32px; flex-shrink: 0; font-size: 0.8rem;">
+                                <i class="{{ $activity['icon'] }}"></i>
                             </div>
 
-                            <div>
-                                <div class="activity-title">
-                                    สร้างโครงการใหม่
+                            {{-- รายละเอียด (min-width: 0 ช่วยไม่ให้ flex แตก) --}}
+                            <div style="min-width: 0; width: 100%;">
+                                {{-- ชื่อ Activity ลด margin-bottom เป็น 0 และบีบ line-height --}}
+                                <div class="activity-title font-weight-bold text-dark mb-0 text-truncate" style="font-size: 0.85rem; line-height: 1.2;">
+                                    {{ $activity['title'] }}
+                                    <span class="badge badge-light border text-muted ml-1" style="font-size: 0.65em;">{{ $activity['status'] }}</span>
                                 </div>
 
-                                <div class="activity-meta">
-                                    โครงการบริการตรวจวิเคราะห์ • 5 นาทีที่แล้ว
-                                </div>
-                            </div>
-
-                        </div>
-
-
-                        <div class="activity-item">
-
-                            <div class="activity-icon bg-warning text-white">
-                                <i class="fas fa-exchange-alt"></i>
-                            </div>
-
-                            <div>
-                                <div class="activity-title">
-                                    เปลี่ยนสถานะโครงการ
-                                </div>
-
-                                <div class="activity-meta">
-                                    โครงการอบรม Data Science • 18 นาทีที่แล้ว
-                                </div>
-                            </div>
-
-                        </div>
-
-
-                        <div class="activity-item">
-
-                            <div class="activity-icon bg-primary text-white">
-                                <i class="fas fa-edit"></i>
-                            </div>
-
-                            <div>
-                                <div class="activity-title">
-                                    แก้ไขข้อมูลโครงการ
-                                </div>
-
-                                <div class="activity-meta">
-                                    โครงการบริการวิชาการ • 42 นาทีที่แล้ว
+                                {{-- Meta Text ย่อฟอนต์ลงเล็กน้อย --}}
+                                <div class="activity-meta text-muted text-truncate" style="font-size: 0.75rem; line-height: 1.2;">
+                                    {{ $activity['meta'] }}
                                 </div>
                             </div>
 
                         </div>
-
-
-                        <div class="activity-item">
-
-                            <div class="activity-icon bg-danger text-white">
-                                <i class="fas fa-user-check"></i>
-                            </div>
-
-                            <div>
-                                <div class="activity-title">
-                                    อนุมัติโครงการ
-                                </div>
-
-                                <div class="activity-meta">
-                                    ผู้ดูแลระบบ • 1 ชั่วโมงที่แล้ว
-                                </div>
-                            </div>
-
-                        </div>
-
-
-                        <div class="activity-item">
-
-                            <div class="activity-icon bg-secondary text-white">
-                                <i class="fas fa-file-upload"></i>
-                            </div>
-
-                            <div>
-                                <div class="activity-title">
-                                    ส่งรายงานโครงการ
-                                </div>
-
-                                <div class="activity-meta">
-                                    Project #AC-2569-014 • 2 ชั่วโมงที่แล้ว
-                                </div>
-                            </div>
-
-                        </div>
+                        @endforeach
 
                     </div>
 
@@ -1132,4 +1072,3 @@
 </div>
 
 @endsection
-

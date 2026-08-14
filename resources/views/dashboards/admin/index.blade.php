@@ -622,9 +622,7 @@
                             <i class="fas fa-history text-info"></i>
                             System Activity
                         </h5>
-                        <span class="badge badge-info shadow-sm">
-                            Live Mock
-                        </span>
+                       
                     </div>
 
                     {{-- กระจายพื้นที่ให้พอดีโดยไม่มี Scrollbar --}}
@@ -686,7 +684,7 @@
                         </h5>
 
                         <span class="badge badge-warning">
-                            18 รายการ
+                            {{ $countWaitingApproval + $countWaitingRevision + $countAttention }} รายการ
                         </span>
 
                     </div>
@@ -707,7 +705,7 @@
                                             </div>
 
                                             <div class="queue-number text-warning">
-                                                7
+                                                {{ $countWaitingApproval }}
                                             </div>
                                         </div>
 
@@ -736,7 +734,7 @@
                                             </div>
 
                                             <div class="queue-number text-danger">
-                                                6
+                                                {{ $countWaitingRevision }}
                                             </div>
                                         </div>
 
@@ -765,7 +763,7 @@
                                             </div>
 
                                             <div class="queue-number text-primary">
-                                                5
+                                                {{ $countAttention }}
                                             </div>
                                         </div>
 
@@ -774,7 +772,7 @@
                                     </div>
 
                                     <div class="small text-muted mt-2">
-                                        รายการใกล้ครบกำหนด
+                                        รายการใกล้ครบกำหนด (7 วัน)
                                     </div>
 
                                 </div>

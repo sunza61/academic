@@ -14,13 +14,13 @@ class DashboardController extends Controller
      * ตรวจสอบ Role ของผู้ใช้งาน
      * แล้วส่งไปยัง Dashboard ที่เหมาะสม
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
 
         if ($user->hasRole('admin')) {
             //dd('ddddd');
-            return $this->admin();
+            return $this->admin($request);
         }
 
         if ($user->hasRole('manager')) {
@@ -70,7 +70,7 @@ class DashboardController extends Controller
             ?? ($fiscalYears->first()->id ?? null);
 
         // =====================================================
-        // เริ่มต้นส่วนการคำนวณ KPI (สำหรับ Admin Dashboard)
+        // เริ่มต้นส่วนการคำนวณ Project Workflow
         // =====================================================
 
         // คำนวณจำนวนโครงการตามประเภท
@@ -162,11 +162,28 @@ class DashboardController extends Controller
             }
         }
 
+        // 3. คำนวณ Approval & Attention Queue
+        $countWaitingApproval = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
+            ->where('overall_status', 200)
+            ->where('del_status', '!=', 1)
+            ->count();
+
+        $countWaitingRevision = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
+            ->where('overall_status', 110)
+            ->where('del_status', '!=', 1)
+            ->count();
+
+        $countAttention = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
+            ->where('del_status', '!=', 1)
+            ->whereNotIn('overall_status', [800, 900])
+            ->whereBetween('end_date', [now(), now()->addDays(7)])
+            ->count();
+
         // =====================================================
         // สิ้นสุดส่วนการคำนวณ Project Workflow & System Activity
         // =====================================================
 
-        return view('dashboards.admin.index', compact('fiscalYears', 'selectedFiscalYearId', 'countTotal', 'countTraining', 'countAcademic', 'workflowStatuses', 'latestActivities'));
+        return view('dashboards.admin.index', compact('fiscalYears', 'selectedFiscalYearId', 'countTotal', 'countTraining', 'countAcademic', 'workflowStatuses', 'latestActivities', 'countWaitingApproval', 'countWaitingRevision', 'countAttention'));
     }
 
 

@@ -377,20 +377,25 @@
 
                     <div>
                         <div class="hero-title">
-                            System Control Center
+                            ยินดีต้อนรับ, {{ auth()->user()->name ?? 'ผู้ดูแลระบบ' }} (ผู้ดูแลระบบ)
                         </div>
 
                         <p class="hero-subtitle">
-                            ระบบบริหารจัดการบริการวิชาการ
-                            คณะวิทยาศาสตร์ มหาวิทยาลัยสงขลานครินทร์
+                            ระบบสารสนเทศเพื่อการบริหารจัดการบริการวิชาการแบบบูรณาการ คณะวิทยาศาสตร์ มหาวิทยาลัยสงขลานครินทร์
                         </p>
                     </div>
 
                 </div>
 
-                <div class="hero-badge">
+                <div class="hero-badge" style="position: relative; z-index: 100;">
                     <i class="far fa-calendar-alt mr-1"></i>
-                    ปีงบประมาณ 2569
+                    <select name="fiscal_year" id="fiscal_year" class="text-white font-weight-bold" style="background-color: transparent; border: none; cursor: pointer;">
+                        @foreach($fiscalYears as $year)
+                            <option value="{{ $year->id }}" {{ $selectedFiscalYearId == $year->id ? 'selected' : '' }} class="text-dark">
+                                ปีงบประมาณ {{ $year->fiscal_year_be }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
             </div>
@@ -412,7 +417,7 @@
                         </div>
                         <div>
                             <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
-                                128
+                                {{ $countTotal }}
                             </div>
                             <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
                                 โครงการทั้งหมด
@@ -431,7 +436,7 @@
                         </div>
                         <div>
                             <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
-                                45
+                                {{ $countTraining }}
                             </div>
                             <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
                                 อบรม ประชุม สัมมนาฯ
@@ -450,7 +455,7 @@
                         </div>
                         <div>
                             <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
-                                38
+                                {{ $countAcademic }}
                             </div>
                             <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
                                 บริการวิชาการ
@@ -462,14 +467,14 @@
 
             {{-- 4. วิทยากร --}}
             <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
-                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
+                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded" style="opacity: 0.6; filter: grayscale(100%); cursor: not-allowed;">
                     <div class="d-flex align-items-center">
                         <div class="kpi-icon bg-warning text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
                             <i class="fas fa-user-tie fa-lg"></i>
                         </div>
                         <div>
                             <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
-                                15
+                                0
                             </div>
                             <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
                                 วิทยากร
@@ -481,14 +486,14 @@
 
             {{-- 5. วิเคราะห์ทดสอบ --}}
             <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
-                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
+                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded" style="opacity: 0.6; filter: grayscale(100%); cursor: not-allowed;">
                     <div class="d-flex align-items-center">
                         <div class="kpi-icon bg-danger text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
                             <i class="fas fa-flask fa-lg"></i>
                         </div>
                         <div>
                             <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
-                                20
+                                0
                             </div>
                             <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
                                 วิเคราะห์ทดสอบ
@@ -500,14 +505,14 @@
 
             {{-- 6. นำส่งเงิน --}}
             <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
-                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
+                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded" style="opacity: 0.6; filter: grayscale(100%); cursor: not-allowed;">
                     <div class="d-flex align-items-center">
                         <div class="kpi-icon bg-secondary text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
                             <i class="fas fa-file-invoice-dollar fa-lg"></i>
                         </div>
                         <div>
                             <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
-                                10
+                                0
                             </div>
                             <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
                                 นำส่งเงิน
@@ -535,7 +540,7 @@
                             Project Workflow
                         </h5>
                         <span class="badge badge-light shadow-sm">
-                            รวมทั้งหมด 100 โครงการ (Mock)
+                            รวมทั้งหมด {{ $countTotal }} โครงการ
                         </span>
                     </div>
 
@@ -549,22 +554,8 @@
                             <span class="mb-1"><i class="fas fa-circle text-danger mr-1"></i> วิเคราะห์ทดสอบ</span>
                         </div>
 
-                        {{-- 🔵 ข้อมูลจำลอง (Mock Data) สำหรับ 10 สถานะ --}}
-                        @php
-                        $workflowStatuses = [
-                        ['id' => 100, 'name' => 'เตรียมการ / ฉบับร่าง', 'total' => 10, 'type1' => 5, 'type2' => 3, 'type3' => 1, 'type4' => 1],
-                        ['id' => 110, 'name' => 'ตีกลับ', 'total' => 2, 'type1' => 2, 'type2' => 0, 'type3' => 0, 'type4' => 0],
-                        ['id' => 200, 'name' => 'เสนอขออนุมัติ', 'total' => 8, 'type1' => 4, 'type2' => 4, 'type3' => 0, 'type4' => 0],
-                        ['id' => 300, 'name' => 'อนุมัติแล้ว / รอเปิดรับสมัคร', 'total' => 15, 'type1' => 8, 'type2' => 5, 'type3' => 2, 'type4' => 0],
-                        ['id' => 400, 'name' => 'เปิดรับสมัคร', 'total' => 12, 'type1' => 10, 'type2' => 2, 'type3' => 0, 'type4' => 0],
-                        ['id' => 500, 'name' => 'ปิดรับสมัคร / เตรียมจัดงาน', 'total' => 5, 'type1' => 5, 'type2' => 0, 'type3' => 0, 'type4' => 0],
-                        ['id' => 600, 'name' => 'อยู่ระหว่างดำเนินการ', 'total' => 20, 'type1' => 10, 'type2' => 5, 'type3' => 3, 'type4' => 2],
-                        ['id' => 700, 'name' => 'รอประเมินผลและรายงาน', 'total' => 10, 'type1' => 6, 'type2' => 4, 'type3' => 0, 'type4' => 0],
-                        ['id' => 800, 'name' => 'เสร็จสิ้นโครงการ', 'total' => 15, 'type1' => 8, 'type2' => 4, 'type3' => 2, 'type4' => 1],
-                        ['id' => 900, 'name' => 'ยกเลิกโครงการ', 'total' => 3, 'type1' => 2, 'type2' => 1, 'type3' => 0, 'type4' => 0],
-                        ];
-                        @endphp
-
+                        {{-- 🔵 ข้อมูลจริงจากฐานข้อมูล --}}
+                        
                         {{-- 🟣 วนลูปแสดงผลกราฟ Stacked Progress Bar --}}
                         @foreach($workflowStatuses as $status)
                         @php
@@ -600,13 +591,14 @@
                                     data-toggle="tooltip" data-placement="top" title="บริการวิชาการ: {{ $status['type2'] }} โครงการ"></div>
                                 @endif
 
+                                {{-- ส่วนโมดูลอนาคต: ใส่ style จางๆ --}}
                                 @if($status['type3'] > 0)
-                                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $pct3 }}%"
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $pct3 }}%; opacity: 0.5;"
                                     data-toggle="tooltip" data-placement="top" title="วิทยากร: {{ $status['type3'] }} โครงการ"></div>
                                 @endif
 
                                 @if($status['type4'] > 0)
-                                <div class="progress-bar bg-danger" role="progressbar" style="width: {{ $pct4 }}%"
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: {{ $pct4 }}%; opacity: 0.5;"
                                     data-toggle="tooltip" data-placement="top" title="วิเคราะห์ทดสอบ: {{ $status['type4'] }} โครงการ"></div>
                                 @endif
 
@@ -638,41 +630,27 @@
                     {{-- กระจายพื้นที่ให้พอดีโดยไม่มี Scrollbar --}}
                     <div class="card-body d-flex flex-column justify-content-between pb-3">
 
-                        {{-- 🟢 จำลองข้อมูล Activity ครบทั้ง 10 สถานะ --}}
-                        @php
-                        $mockActivities = [
-                        ['status' => '100', 'icon' => 'fas fa-plus', 'color' => 'bg-success', 'title' => 'เพิ่งสร้างโครงการใหม่', 'meta' => 'โครงการพัฒนาทักษะดิจิทัล • 2 นาทีที่แล้ว'],
-                        ['status' => '110', 'icon' => 'fas fa-reply', 'color' => 'bg-danger', 'title' => 'ตีกลับโครงการ (ให้แก้ไข)', 'meta' => 'โครงการอบรมระยะสั้น • 15 นาทีที่แล้ว'],
-                        ['status' => '200', 'icon' => 'fas fa-paper-plane', 'color' => 'bg-primary', 'title' => 'เสนอขออนุมัติโครงการ', 'meta' => 'โครงการสัมมนาวิชาการ • 45 นาทีที่แล้ว'],
-                        ['status' => '300', 'icon' => 'fas fa-user-check', 'color' => 'bg-info', 'title' => 'อนุมัติโครงการแล้ว', 'meta' => 'โครงการบริการตรวจวิเคราะห์ดิน • 1 ชั่วโมงที่แล้ว'],
-                        ['status' => '400', 'icon' => 'fas fa-door-open', 'color' => 'bg-success', 'title' => 'เปิดรับสมัครผู้เข้าร่วม', 'meta' => 'โครงการอบรม Data Science • 3 ชั่วโมงที่แล้ว'],
-                        ['status' => '500', 'icon' => 'fas fa-door-closed', 'color' => 'bg-secondary', 'title' => 'ปิดรับสมัคร / เตรียมจัดงาน', 'meta' => 'โครงการอบรม Python • 5 ชั่วโมงที่แล้ว'],
-                        ['status' => '600', 'icon' => 'fas fa-play', 'color' => 'bg-primary', 'title' => 'เริ่มดำเนินการโครงการ', 'meta' => 'โครงการค่ายคณิตศาสตร์ • 1 วันที่แล้ว'],
-                        ['status' => '700', 'icon' => 'fas fa-file-upload', 'color' => 'bg-info', 'title' => 'ส่งรายงานผลการดำเนินงาน', 'meta' => 'โครงการบริการวิชาการชุมชน • 1 วันที่แล้ว'],
-                        ['status' => '800', 'icon' => 'fas fa-flag-checkered', 'color' => 'bg-success', 'title' => 'เสร็จสิ้นโครงการสมบูรณ์', 'meta' => 'โครงการอบรมเชิงปฏิบัติการ AI • 2 วันที่แล้ว'],
-                        ['status' => '900', 'icon' => 'fas fa-ban', 'color' => 'bg-dark', 'title' => 'ยกเลิกโครงการ', 'meta' => 'โครงการศึกษาดูงาน • 3 วันที่แล้ว']
-                        ];
-                        @endphp
-
-                        {{-- 🔵 วนลูปแสดงผล Activity 10 รายการแบบบีบอัด (Compact) --}}
-                        @foreach($mockActivities as $activity)
-                        {{-- ใช้ mb-2 เพื่อลดช่องว่างให้ยัด 10 แถวได้พอดี --}}
+                        {{-- 🔵 ข้อมูลจริงจากฐานข้อมูล --}}
+                        
+                        {{-- 🟣 วนลูปแสดงผลรายการกิจกรรมล่าสุด --}}
+                        @foreach($latestActivities as $activity)
+                        {{-- ใช้ mb-2 เพื่อลดช่องว่างให้ยัดได้พอดี --}}
                         <div class="activity-item d-flex {{ $loop->last ? '' : 'mb-2' }}">
 
-                            {{-- ไอคอน (ย่อขนาดเหลือ 32px เพื่อประหยัดพื้นที่แนวตั้ง) --}}
+                            {{-- ไอคอน --}}
                             <div class="activity-icon {{ $activity['color'] }} text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm mr-2" style="width: 32px; height: 32px; flex-shrink: 0; font-size: 0.8rem;">
                                 <i class="{{ $activity['icon'] }}"></i>
                             </div>
 
-                            {{-- รายละเอียด (min-width: 0 ช่วยไม่ให้ flex แตก) --}}
+                            {{-- รายละเอียด --}}
                             <div style="min-width: 0; width: 100%;">
-                                {{-- ชื่อ Activity ลด margin-bottom เป็น 0 และบีบ line-height --}}
+                                {{-- ชื่อสถานะ --}}
                                 <div class="activity-title font-weight-bold text-dark mb-0 text-truncate" style="font-size: 0.85rem; line-height: 1.2;">
                                     {{ $activity['title'] }}
                                     <span class="badge badge-light border text-muted ml-1" style="font-size: 0.65em;">{{ $activity['status'] }}</span>
                                 </div>
 
-                                {{-- Meta Text ย่อฟอนต์ลงเล็กน้อย --}}
+                                {{-- Meta Text --}}
                                 <div class="activity-meta text-muted text-truncate" style="font-size: 0.75rem; line-height: 1.2;">
                                     {{ $activity['meta'] }}
                                 </div>
@@ -1050,25 +1028,17 @@
                                     ส่งมอบ
                                 </span>
                             </td>
-
                         </tr>
-
                     </tbody>
-
                 </table>
-
             </div>
-
         </div>
-
-
-        <div class="text-right system-footer">
-            <i class="fas fa-shield-alt mr-1"></i>
-            Admin Dashboard • Mock Data • Academic Service
-        </div>
-
     </div>
-
 </div>
 
+@endsection
+
+@section('script')
+
+<script src="{{ asset('js/dashboards/admin/index.js?v=' . time()) }}"></script>
 @endsection

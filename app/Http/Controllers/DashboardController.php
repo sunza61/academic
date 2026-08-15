@@ -193,6 +193,7 @@ class DashboardController extends Controller
         // 7. ส่วน Recent Project Activity (ตาราง 4 โครงการล่าสุด)
         // =====================================================
         $recentProjectActivity = AcademicProject::with(['latestLog.user'])
+            ->where('fiscal_year_id', $selectedFiscalYearId)
             ->where('del_status', '!=', 1)
             ->latest('updated_at')
             ->take(4)

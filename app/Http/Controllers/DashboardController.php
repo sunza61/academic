@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\MasterData\FiscalYears;
 use App\Models\Academic\AcademicProject;
+use App\Models\MasterData\FiscalYears;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -19,7 +19,6 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         if ($user->hasRole('admin')) {
-            //dd('ddddd');
             return $this->admin($request);
         }
 
@@ -46,9 +45,6 @@ class DashboardController extends Controller
         abort(403, 'คุณไม่มีสิทธิ์เข้าถึง Dashboard');
     }
 
-
-
-
     /**
      * =====================================================
      * ADMIN DASHBOARD
@@ -56,24 +52,22 @@ class DashboardController extends Controller
      */
     public function admin(Request $request = null)
     {
-        // คำนวณปีงบประมาณปัจจุบัน (1 ต.ค. - 30 ก.ย.)
+        // =====================================================
+        // 1. ข้อมูลพื้นฐาน
+        // =====================================================
         $currentFiscalYearBe = (now()->month >= 10 ? now()->year + 1 : now()->year) + 543;
 
-        // ดึงข้อมูลปีงบประมาณเฉพาะปีปัจจุบันย้อนหลังไป
         $fiscalYears = FiscalYears::where('fiscal_year_be', '<=', $currentFiscalYearBe)
             ->orderBy('fiscal_year_be', 'desc')
             ->get();
 
-        // เลือกปีจาก Request หรือใช้ปีปัจจุบัน
-        $selectedFiscalYearId = ($request ? $request->query('fiscal_year') : null)
+        $selectedFiscalYearId = ($request ? $request->query('fiscal_year') : null) 
             ?? $fiscalYears->firstWhere('fiscal_year_be', $currentFiscalYearBe)->id 
             ?? ($fiscalYears->first()->id ?? null);
 
         // =====================================================
-        // เริ่มต้นส่วนการคำนวณ Project Workflow
+        // 2. ส่วน KPI
         // =====================================================
-
-        // คำนวณจำนวนโครงการตามประเภท
         $countTraining = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
             ->where('project_type_id', 2)
             ->where('del_status', '!=', 1)
@@ -84,14 +78,11 @@ class DashboardController extends Controller
             ->where('del_status', '!=', 1)
             ->count();
 
-        // รวมยอดรวมโครงการ
         $countTotal = $countTraining + $countAcademic;
 
         // =====================================================
-        // เริ่มต้นส่วนการคำนวณ Project Workflow
+        // 3. ส่วน Project Workflow
         // =====================================================
-        
-        // นิยามสถานะโครงการ (อ้างอิงจากเดิมใน View)
         $statuses = [
             100 => ['name' => 'เตรียมการ / ฉบับร่าง', 'icon' => 'fas fa-plus', 'color' => 'bg-success'],
             110 => ['name' => 'ตีกลับ', 'icon' => 'fas fa-reply', 'color' => 'bg-danger'],
@@ -105,64 +96,50 @@ class DashboardController extends Controller
             900 => ['name' => 'ยกเลิกโครงการ', 'icon' => 'fas fa-ban', 'color' => 'bg-dark'],
         ];
 
-        // 1. คำนวณ Workflow Statistics
-        $data = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
+        $allProjects = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
             ->where('del_status', '!=', 1)
-            ->selectRaw('overall_status, project_type_id, count(*) as total')
-            ->groupBy('overall_status', 'project_type_id')
             ->get();
 
         $workflowStatuses = [];
         foreach ($statuses as $id => $statusInfo) {
-            $statusData = $data->where('overall_status', $id);
+            $statusProjects = $allProjects->where('overall_status', $id);
             $workflowStatuses[] = [
                 'id' => $id,
                 'name' => $statusInfo['name'],
-                'total' => $statusData->sum('total'),
-                'type1' => $statusData->where('project_type_id', 2)->sum('total'),
-                'type2' => $statusData->where('project_type_id', 3)->sum('total'),
+                'total' => $statusProjects->count(),
+                'projects' => $statusProjects,
+                'type1' => $statusProjects->where('project_type_id', 2)->count(),
+                'type2' => $statusProjects->where('project_type_id', 3)->count(),
                 'type3' => 0,
                 'type4' => 0,
             ];
         }
 
-        // 2. คำนวณ System Activity (ล่าสุดของแต่ละสถานะ)
-        $latestProjects = AcademicProject::select('academic_projects.*')
+        // =====================================================
+        // 4. ส่วน System Activity (10 สถานะ)
+        // =====================================================
+        $allActiveProjects = AcademicProject::with(['latestLog.user'])
             ->where('fiscal_year_id', $selectedFiscalYearId)
             ->where('del_status', '!=', 1)
-            ->whereIn('updated_at', function ($query) use ($selectedFiscalYearId) {
-                $query->selectRaw('MAX(updated_at)')
-                    ->from('academic_projects')
-                    ->where('fiscal_year_id', $selectedFiscalYearId)
-                    ->where('del_status', '!=', 1)
-                    ->groupBy('overall_status');
-            })
             ->get()
-            ->keyBy('overall_status');
+            ->groupBy('overall_status');
 
         $latestActivities = [];
         foreach ($statuses as $id => $statusInfo) {
-            if ($latestProjects->has($id)) {
-                $project = $latestProjects->get($id);
-                $latestActivities[] = [
-                    'status' => $id,
-                    'icon' => $statusInfo['icon'],
-                    'color' => $statusInfo['color'],
-                    'title' => $statusInfo['name'],
-                    'meta' => $project->name_th . ' • ' . $project->updated_at->diffForHumans(),
-                ];
-            } else {
-                $latestActivities[] = [
-                    'status' => $id,
-                    'icon' => $statusInfo['icon'],
-                    'color' => 'bg-light text-secondary',
-                    'title' => $statusInfo['name'],
-                    'meta' => 'ยังไม่มีโครงการในสถานะนี้',
-                ];
-            }
+            $project = $allActiveProjects->has($id) ? $allActiveProjects->get($id)->sortByDesc('updated_at')->first() : null;
+            
+            $latestActivities[] = [
+                'status' => $id,
+                'icon'   => $statusInfo['icon'],
+                'color'  => $statusInfo['color'],
+                'title'  => $statusInfo['name'],
+                'meta'   => $project ? ($project->name_th . ' • ' . $project->updated_at->diffForHumans()) : 'ยังไม่มีโครงการ',
+            ];
         }
 
-        // 3. คำนวณ Approval & Attention Queue
+        // =====================================================
+        // 5. ส่วน Approval & Attention Queue
+        // =====================================================
         $countWaitingApproval = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
             ->where('overall_status', 200)
             ->where('del_status', '!=', 1)
@@ -180,12 +157,81 @@ class DashboardController extends Controller
             ->count();
 
         // =====================================================
-        // สิ้นสุดส่วนการคำนวณ Project Workflow & System Activity
+        // 6. ส่วน Project Health
         // =====================================================
+        $allActiveProjectsHealth = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
+            ->where('del_status', '!=', 1)
+            ->leftJoin('overall_statuses', 'academic_projects.overall_status', '=', 'overall_statuses.code')
+            ->select('academic_projects.*', 'overall_statuses.name_th as status_name_th')
+            ->get();
 
-        return view('dashboards.admin.index', compact('fiscalYears', 'selectedFiscalYearId', 'countTotal', 'countTraining', 'countAcademic', 'workflowStatuses', 'latestActivities', 'countWaitingApproval', 'countWaitingRevision', 'countAttention'));
+        $totalActive = $allActiveProjectsHealth->count();
+
+        $criticalProjects = $allActiveProjectsHealth->filter(function ($project) {
+            return in_array($project->overall_status, [900, 110]) ||
+                ($project->overall_status < 800 && $project->end_date && $project->end_date < now());
+        });
+
+        $attentionProjects = $allActiveProjectsHealth->filter(function ($project) {
+            return in_array($project->overall_status, [200, 700]) ||
+                ($project->overall_status < 800 && $project->end_date && $project->end_date >= now() && $project->end_date <= now()->addDays(7));
+        });
+
+        $onTrackProjects = $allActiveProjectsHealth->diff($criticalProjects)->diff($attentionProjects);
+
+        $pctCritical  = $totalActive > 0 ? ($criticalProjects->count() / $totalActive) * 100 : 0;
+        $pctAttention = $totalActive > 0 ? ($attentionProjects->count() / $totalActive) * 100 : 0;
+        $pctOnTrack   = $totalActive > 0 ? ($onTrackProjects->count() / $totalActive) * 100 : 0;
+
+        $healthData = [
+            'critical'  => ['count' => $criticalProjects->count(), 'pct' => $pctCritical, 'projects' => $criticalProjects],
+            'attention' => ['count' => $attentionProjects->count(), 'pct' => $pctAttention, 'projects' => $attentionProjects],
+            'on_track'  => ['count' => $onTrackProjects->count(), 'pct' => $pctOnTrack, 'projects' => $onTrackProjects],
+        ];
+
+        // =====================================================
+        // 7. ส่วน Recent Project Activity (ตาราง 4 โครงการล่าสุด)
+        // =====================================================
+        $recentProjectActivity = AcademicProject::with(['latestLog.user'])
+            ->where('del_status', '!=', 1)
+            ->latest('updated_at')
+            ->take(4)
+            ->get()
+            ->map(function ($project) use ($statuses) {
+                $latestLog = $project->latestLog;
+                $statusCode = $project->overall_status ?? 0;
+                $statusInfo = $statuses[$statusCode] ?? ['name' => 'ไม่ระบุ', 'color' => 'bg-secondary'];
+
+                return [
+                    'project_id'   => $project->id,
+                    'project_name' => $project->name_th,
+                    'project_type' => $project->project_type_id,
+                    'user_name'    => ($latestLog && $latestLog->user) ? $latestLog->user->name : '-',
+                    'action'       => $latestLog ? ($latestLog->comment ?: $latestLog->action) : 'อัปเดตข้อมูล',
+                    'time'         => $project->updated_at->diffForHumans(),
+                    'status_name'  => $statusInfo['name'],
+                    'status_color' => $statusInfo['color'],
+                ];
+            });
+
+        // =====================================================
+        // สรุปข้อมูลส่งออก
+        // =====================================================
+        return view('dashboards.admin.index', compact(
+            'fiscalYears', 
+            'selectedFiscalYearId', 
+            'countTotal', 
+            'countTraining', 
+            'countAcademic', 
+            'workflowStatuses', 
+            'latestActivities', 
+            'recentProjectActivity',
+            'countWaitingApproval', 
+            'countWaitingRevision', 
+            'countAttention', 
+            'healthData'
+        ));
     }
-
 
     /**
      * =====================================================
@@ -197,7 +243,6 @@ class DashboardController extends Controller
         return view('dashboards.manager.index');
     }
 
-
     /**
      * =====================================================
      * STAFF DASHBOARD
@@ -207,7 +252,6 @@ class DashboardController extends Controller
     {
         return view('dashboards.staff.index');
     }
-
 
     /**
      * =====================================================
@@ -219,26 +263,20 @@ class DashboardController extends Controller
         return view('dashboards.user.index');
     }
 
-
     /**
      * =====================================================
      * FINANCE DASHBOARD
      * =====================================================
-     *
-     * ใช้ FinanceDashboardController เดิม
      */
     public function finance()
     {
         return redirect()->route('finance.dashboard');
     }
 
-
     /**
      * =====================================================
      * PLAN DASHBOARD
      * =====================================================
-     *
-     * ใช้ PlanDashboardController เดิม
      */
     public function plan()
     {

@@ -243,10 +243,11 @@
         width: 135px;
         height: 135px;
         border-radius: 50%;
-        background:
-            conic-gradient(#22c55e 0deg 295deg,
-                #f59e0b 295deg 342deg,
-                #ef4444 342deg 360deg);
+        background: conic-gradient(
+            #22c55e 0deg {{ $healthData['on_track']['pct'] * 3.6 }}deg,
+            #f59e0b {{ $healthData['on_track']['pct'] * 3.6 }}deg {{ ($healthData['on_track']['pct'] + $healthData['attention']['pct']) * 3.6 }}deg,
+            #ef4444 {{ ($healthData['on_track']['pct'] + $healthData['attention']['pct']) * 3.6 }}deg 360deg
+        );
         display: flex;
         align-items: center;
         justify-content: center;
@@ -575,7 +576,9 @@
                                     <span class="badge badge-light border text-muted mr-1" style="font-size: 0.75em;">{{ $status['id'] }}</span>
                                     <strong class="text-dark">{{ $status['name'] }}</strong>
                                 </div>
-                                <span class="font-weight-bold">{{ $status['total'] }} โครงการ</span>
+                                <span class="font-weight-bold" style="cursor: pointer; text-decoration: underline;" data-toggle="modal" data-target="#modalStatus{{ $status['id'] }}">
+                                    {{ $status['total'] }} โครงการ
+                                </span>
                             </div>
 
                             {{-- หลอดสีแบบซ้อนกัน (Stacked) --}}
@@ -604,6 +607,42 @@
 
                             </div>
 
+                        </div>
+
+                        {{-- Modal รายชื่อโครงการในสถานะนี้ --}}
+                        <div class="modal fade" id="modalStatus{{ $status['id'] }}" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">โครงการในสถานะ: {{ $status['name'] }}</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center">รหัสโครงการ</th>
+                                                    <th class="text-left">ชื่อโครงการ</th>
+                                                    <th>ประเภท</th>
+                                                    <th>วันสิ้นสุด</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($status['projects'] as $project)
+                                                    <tr>
+                                                        <td class="text-center">{{ $project->id }}</td>
+                                                        <td class="text-left">{{ $project->name_th }}</td>
+                                                        <td>{{ $project->project_type_id == 2 ? 'อบรมฯ' : 'บริการวิชาการ' }}</td>
+                                                        <td>{{ $project->end_date ? \Carbon\Carbon::parse($project->end_date)->format('d/m/Y') : '-' }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         @endforeach
 
@@ -645,7 +684,6 @@
                                 {{-- ชื่อสถานะ --}}
                                 <div class="activity-title font-weight-bold text-dark mb-0 text-truncate" style="font-size: 0.85rem; line-height: 1.2;">
                                     {{ $activity['title'] }}
-                                    <span class="badge badge-light border text-muted ml-1" style="font-size: 0.65em;">{{ $activity['status'] }}</span>
                                 </div>
 
                                 {{-- Meta Text --}}
@@ -798,8 +836,39 @@
                         <h5 class="dashboard-card-title">
                             <i class="fas fa-heartbeat text-success"></i>
                             Project Health
+                            <i class="fas fa-info-circle text-muted ml-2" style="cursor: pointer; font-size: 0.9rem;" data-toggle="modal" data-target="#healthModal"></i>
                         </h5>
 
+                    </div>
+
+                    {{-- Modal อธิบายสถานะ --}}
+                    <div class="modal fade" id="healthModal" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">เกณฑ์การวัด Project Health</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <ul class="list-unstyled">
+                                        <li class="mb-3">
+                                            <strong class="text-success"><i class="fas fa-circle mr-1"></i> On Track:</strong> 
+                                            โครงการที่ดำเนินงานตามปกติ (สถานะ 300, 400, 500, 600, 800)
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong class="text-warning"><i class="fas fa-circle mr-1"></i> Attention:</strong> 
+                                            โครงการรออนุมัติ(200), รอประเมิน(700) หรือใกล้ครบกำหนดใน 7 วัน
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong class="text-danger"><i class="fas fa-circle mr-1"></i> Critical:</strong> 
+                                            โครงการที่ตีกลับ(110), ยกเลิก(900) หรือเกินกำหนดแล้วยังไม่เสร็จ
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="card-body text-center">
@@ -809,7 +878,7 @@
                             <div class="health-ring-inner">
 
                                 <div class="health-number">
-                                    82%
+                                    {{ number_format($healthData['on_track']['pct'], 0) }}%
                                 </div>
 
                                 <div class="health-text">
@@ -823,22 +892,84 @@
 
                         <div class="health-legend">
 
-                            <div class="legend-item">
+                            <div class="legend-item" style="cursor: pointer;" data-toggle="modal" data-target="#modalOnTrack">
                                 <span class="legend-dot bg-success"></span>
-                                On Track 82%
+                                On Track {{ number_format($healthData['on_track']['pct'], 0) }}% ({{ $healthData['on_track']['count'] }} โครงการ)
                             </div>
 
-                            <div class="legend-item">
+                            <div class="legend-item" style="cursor: pointer;" data-toggle="modal" data-target="#modalAttention">
                                 <span class="legend-dot bg-warning"></span>
-                                Attention 13%
+                                Attention {{ number_format($healthData['attention']['pct'], 0) }}% ({{ $healthData['attention']['count'] }} โครงการ)
                             </div>
 
-                            <div class="legend-item">
+                            <div class="legend-item" style="cursor: pointer;" data-toggle="modal" data-target="#modalCritical">
                                 <span class="legend-dot bg-danger"></span>
-                                Critical 5%
+                                Critical {{ number_format($healthData['critical']['pct'], 0) }}% ({{ $healthData['critical']['count'] }} โครงการ)
                             </div>
 
                         </div>
+
+                        {{-- Modals สำหรับรายชื่อโครงการ --}}
+                        @foreach(['onTrack' => 'on_track', 'attention' => 'attention', 'critical' => 'critical'] as $key => $dataKey)
+                            <div class="modal fade" id="modal{{ ucfirst($key) }}" tabindex="-1" role="dialog" aria-hidden="true">
+                                <div class="modal-dialog modal-lg" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">รายการโครงการ: {{ ucfirst($key) }}</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>รหัสโครงการ</th>
+                                                        <th class="text-left">ชื่อโครงการ</th>
+                                                        <th>สถานะ</th>
+                                                        <th>วันสิ้นสุด</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($healthData[$dataKey]['projects'] as $project)
+                                                        <tr>
+                                                            <td>{{ $project->id }}</td>
+                                                            <td class="text-left">{{ $project->name_th }}</td>
+                                                            <td>
+                                                                    @if($project->overall_status == 100)
+                                                                        <span class="badge badge-secondary px-2 py-1"><i class="fas fa-edit"></i> {{ $project->status_name_th }}</span>
+                                                                    @elseif($project->overall_status == 110)
+                                                                        <span class="badge badge-danger px-2 py-1"><i class="fas fa-hourglass-half"></i> {{ $project->status_name_th }}</span>
+                                                                    @elseif($project->overall_status == 200)
+                                                                        <span class="badge badge-warning px-2 py-1"><i class="fas fa-hourglass-half"></i> {{ $project->status_name_th }}</span>
+                                                                    @elseif($project->overall_status == 300)
+                                                                        <span class="badge badge-info px-2 py-1"><i class="fas fa-check"></i> {{ $project->status_name_th }}</span>
+                                                                    @elseif($project->overall_status == 400)
+                                                                        <span class="badge badge-primary px-2 py-1"><i class="fas fa-bullhorn"></i> {{ $project->status_name_th }}</span>
+                                                                    @elseif($project->overall_status == 500)
+                                                                        <span class="badge badge-dark px-2 py-1"><i class="fas fa-door-closed"></i> {{ $project->status_name_th }}</span>
+                                                                    @elseif($project->overall_status == 600)
+                                                                        <span class="badge" style="background-color: #fd7e14; color: white;"><i class="fas fa-spinner fa-spin"></i> {{ $project->status_name_th }}</span>
+                                                                    @elseif($project->overall_status == 700)
+                                                                        <span class="badge badge-info px-2 py-1"><i class="fas fa-clipboard-list"></i> {{ $project->status_name_th }}</span>
+                                                                    @elseif($project->overall_status == 800)
+                                                                        <span class="badge badge-success px-2 py-1"><i class="fas fa-flag-checkered"></i> {{ $project->status_name_th }}</span>
+                                                                    @elseif($project->overall_status == 900)
+                                                                        <span class="badge badge-danger px-2 py-1"><i class="fas fa-times-circle"></i> {{ $project->status_name_th }}</span>
+                                                                    @else
+                                                                        <span class="badge badge-light px-2 py-1">ไม่ทราบสถานะ</span>
+                                                                    @endif
+                                                                </td>
+                                                                <td>{{ $project->end_date ? \Carbon\Carbon::parse($project->end_date)->format('d/m/Y') : '-' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
 
                     </div>
 
@@ -877,9 +1008,9 @@
 
                         <tr>
                             <th class="pl-4">โครงการ</th>
-                            <th>ผู้ดำเนินการ</th>
-                            <th>กิจกรรม</th>
-                            <th>เวลา</th>
+                            <th>ผู้ดำเนินการล่าสุด</th>
+                            <th>กิจกรรมล่าสุด</th>
+                            <th>อัปเดตเมื่อ</th>
                             <th class="text-center">สถานะ</th>
                         </tr>
 
@@ -887,146 +1018,30 @@
 
 
                     <tbody>
-
+                        @foreach($recentProjectActivity as $activity)
                         <tr>
-
                             <td class="pl-4">
                                 <div class="project-name">
-                                    บริการตรวจวิเคราะห์คุณภาพน้ำ
+                                    @php
+                                        // ตรวจสอบ route ตามประเภทโครงการ: type 2 คือ อบรม, อื่นๆ คือ บริการวิชาการ
+                                        $route = ($activity['project_type'] == 2) ? 'trainings.projects.show' : 'contracts.projects.show';
+                                    @endphp
+                                    <a href="{{ route($route, $activity['project_id']) }}">
+                                        {{ $activity['project_name'] }}
+                                    </a>
                                 </div>
-
-                                <small class="text-muted">
-                                    AC-2569-014
-                                </small>
+                                <small class="text-muted">ID: {{ $activity['project_id'] }}</small>
                             </td>
-
                             <td>
-                                <span class="user-avatar">WK</span>
-                                เจ้าหน้าที่
+                                {{ $activity['user_name'] }}
                             </td>
-
-                            <td>
-                                เปลี่ยนสถานะโครงการ
-                            </td>
-
-                            <td>
-                                10 นาทีที่แล้ว
-                            </td>
-
+                            <td>{{ $activity['action'] }}</td>
+                            <td>{{ $activity['time'] }}</td>
                             <td class="text-center">
-                                <span class="badge badge-success">
-                                    อนุมัติ
-                                </span>
-                            </td>
-
-                        </tr>
-
-
-                        <tr>
-
-                            <td class="pl-4">
-
-                                <div class="project-name">
-                                    อบรม Data Science
-                                </div>
-
-                                <small class="text-muted">
-                                    TR-2569-008
-                                </small>
-
-                            </td>
-
-                            <td>
-                                <span class="user-avatar">PS</span>
-                                ผู้ประสานงาน
-                            </td>
-
-                            <td>
-                                ส่งเอกสารโครงการ
-                            </td>
-
-                            <td>
-                                32 นาทีที่แล้ว
-                            </td>
-
-                            <td class="text-center">
-                                <span class="badge badge-warning">
-                                    รอตรวจ
-                                </span>
-                            </td>
-
-                        </tr>
-
-
-                        <tr>
-
-                            <td class="pl-4">
-
-                                <div class="project-name">
-                                    ที่ปรึกษาระบบห้องปฏิบัติการ
-                                </div>
-
-                                <small class="text-muted">
-                                    AC-2569-006
-                                </small>
-
-                            </td>
-
-                            <td>
-                                <span class="user-avatar">NT</span>
-                                นักวิจัย
-                            </td>
-
-                            <td>
-                                แก้ไขรายละเอียดโครงการ
-                            </td>
-
-                            <td>
-                                1 ชั่วโมงที่แล้ว
-                            </td>
-
-                            <td class="text-center">
-                                <span class="badge badge-info">
-                                    ดำเนินการ
-                                </span>
-                            </td>
-
-                        </tr>
-
-
-                        <tr>
-
-                            <td class="pl-4">
-
-                                <div class="project-name">
-                                    โครงการอบรมเชิงปฏิบัติการ
-                                </div>
-
-                                <small class="text-muted">
-                                    TR-2569-003
-                                </small>
-
-                            </td>
-
-                            <td>
-                                <span class="user-avatar">AK</span>
-                                ผู้ประสานงาน
-                            </td>
-
-                            <td>
-                                บันทึกผลการดำเนินงาน
-                            </td>
-
-                            <td>
-                                2 ชั่วโมงที่แล้ว
-                            </td>
-
-                            <td class="text-center">
-                                <span class="badge badge-primary">
-                                    ส่งมอบ
-                                </span>
+                                <span class="badge {{ $activity['status_color'] }} text-white">{{ $activity['status_name'] }}</span>
                             </td>
                         </tr>
+                        @endforeach
                     </tbody>
                 </table>
             </div>

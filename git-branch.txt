@@ -107,7 +107,18 @@ n lts
 nvm install node
 node -v
 
+// server ใหม่
+su root
+nvm install 24
+nvm alias default 24
+
 ----------------------------------------------------------------
 geminicli
 ----------------------------------------------------------------
 npm install -g @google/gemini-cli
+
+
+---------------------------------------------------------------
+ลดแรม
+---------------------------------------------------------------
+ps aux |grep node |grep -v 'code-server' |awk '{print $2}' |xargs kill

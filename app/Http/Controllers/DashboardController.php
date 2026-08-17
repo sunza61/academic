@@ -71,12 +71,15 @@ class DashboardController extends Controller
         $countTraining = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
             ->where('project_type_id', 2)
             ->where('del_status', '!=', 1)
+            ->orWhereNull('del_status')
             ->count();
 
         $countAcademic = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
             ->where('project_type_id', 3)
             ->where('del_status', '!=', 1)
+            ->orWhereNull('del_status')
             ->count();
+        //dd($countTraining , $countAcademic);
 
         $countTotal = $countTraining + $countAcademic;
 
@@ -205,6 +208,7 @@ class DashboardController extends Controller
 
                 return [
                     'project_id'   => $project->id,
+                    'project_code' => $project->project_code,
                     'project_name' => $project->name_th,
                     'project_type' => $project->project_type_id,
                     'user_name'    => ($latestLog && $latestLog->user) ? $latestLog->user->name : '-',

@@ -200,7 +200,9 @@ class TrainingProjectController extends Controller
             DB::beginTransaction();
 
             // Step A: บันทึกข้อมูลพื้นฐานลงตารางแม่ 
+            $projectCode = AcademicProject::generateProjectCode($request->fiscal_year_id, $request->project_type_id);
             $academicProject = AcademicProject::create([
+                'project_code' => $projectCode,
                 'project_type_id' => $request->project_type_id,
                 'fiscal_year_id' => $request->fiscal_year_id,
                 'name_th' => trim($request->name_th), // 🌟 เพิ่ม trim() ทำความสะอาดข้อมูล

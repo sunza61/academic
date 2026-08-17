@@ -632,7 +632,7 @@
                                             <tbody>
                                                 @foreach($status['projects'] as $project)
                                                     <tr>
-                                                        <td class="text-center">{{ $project->id }}</td>
+                                                        <td class="text-center">{{ $project->project_code }}</td>
                                                         <td class="text-left">{{ $project->name_th }}</td>
                                                         <td>{{ $project->project_type_id == 2 ? 'อบรมฯ' : 'บริการวิชาการ' }}</td>
                                                         <td>{{ $project->end_date ? \Carbon\Carbon::parse($project->end_date)->format('d/m/Y') : '-' }}</td>
@@ -933,7 +933,7 @@
                                                 <tbody>
                                                     @foreach($healthData[$dataKey]['projects'] as $project)
                                                         <tr>
-                                                            <td>{{ $project->id }}</td>
+                                                            <td>{{ $project->project_code }}</td>
                                                             <td class="text-left">{{ $project->name_th }}</td>
                                                             <td>
                                                                     @if($project->overall_status == 100)
@@ -1030,7 +1030,7 @@
                                         {{ $activity['project_name'] }}
                                     </a>
                                 </div>
-                                <small class="text-muted">ID: {{ $activity['project_id'] }}</small>
+                                <small class="text-muted">ID: {{ $activity['project_code'] }}</small>
                             </td>
                             <td>
                                 {{ $activity['user_name'] }}

@@ -7,7 +7,7 @@
             แก้ไขโครงการ : <span class="text-primary">{{ $projectType->name_th ?? 'ฝึกอบรม' }}</span>
         </h3>
         <p class="text-muted mb-0 mt-1">
-            รหัสโครงการ: <span class="badge badge-success px-2 py-1" style="font-size: 1em;">{{ $project->id }}</span>
+            รหัสโครงการ: <span class="badge badge-success px-2 py-1" style="font-size: 1em;">{{ $project->project_code }}</span>
             <span class="mx-2">|</span>
             สถานะ:
             <strong class="text-dark">

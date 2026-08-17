@@ -41,7 +41,7 @@
                     <td class="text-center align-middle">{{ $key + 1 }}</td>
 
                     <td class="text-center align-middle text-success font-weight-bold">
-                        {{ $item->id }}
+                        {{ $item->project_code }}
                     </td>
 
                     <td class="align-middle">

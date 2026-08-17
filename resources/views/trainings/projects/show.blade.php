@@ -7,7 +7,7 @@
             <i class="fas fa-search text-info mr-2"></i> รายละเอียดโครงการ: <span class="text-primary">{{ $project->name_th ?? '-' }}</span>
         </h3>
         <p class="text-muted mb-0 mt-1">
-            รหัสโครงการ: <span class="badge badge-success px-2 py-1" style="font-size: 1em;">{{ $project->id }}</span>
+            รหัสโครงการ: <span class="badge badge-success px-2 py-1" style="font-size: 1em;">{{ $project->project_code }}</span>
             <span class="mx-2">|</span>
             สถานะ:
             <strong class="text-dark">
@@ -59,7 +59,7 @@
                 <tbody>
                     <tr>
                         <th width="20%" class="bg-light text-right align-middle">รหัสโครงการ :</th>
-                        <td width="30%" class="align-middle font-weight-bold text-success">{{ $project->id }}</td>
+                        <td width="30%" class="align-middle font-weight-bold text-success">{{ $project->project_code }}</td>
                         <th width="20%" class="bg-light text-right align-middle">ปีงบประมาณ :</th>
                         <td width="30%" class="align-middle font-weight-bold">{{ $fiscalYears->where('id', $project->fiscal_year_id)->first()->fiscal_year_be ?? '-' }}</td>
                     </tr>

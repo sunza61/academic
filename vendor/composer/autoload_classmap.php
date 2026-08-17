@@ -206,6 +206,7 @@ return array(
     'App\\Http\\Middleware\\TrustProxies' => $baseDir . '/app/Http/Middleware/TrustProxies.php',
     'App\\Http\\Middleware\\VerifyCsrfToken' => $baseDir . '/app/Http/Middleware/VerifyCsrfToken.php',
     'App\\Models\\AcademicProjectLog' => $baseDir . '/app/Models/AcademicProjectLog.php',
+    'App\\Models\\Academic\\AcademicBudget' => $baseDir . '/app/Models/Academic/AcademicBudget.php',
     'App\\Models\\Academic\\AcademicBudgetExpenses' => $baseDir . '/app/Models/Academic/AcademicBudgetExpenses.php',
     'App\\Models\\Academic\\AcademicBudgetIncomes' => $baseDir . '/app/Models/Academic/AcademicBudgetIncomes.php',
     'App\\Models\\Academic\\AcademicCourses' => $baseDir . '/app/Models/Academic/AcademicCourses.php',

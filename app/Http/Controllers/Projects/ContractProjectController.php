@@ -182,7 +182,9 @@ class ContractProjectController extends Controller
         DB::beginTransaction();
         try {
             // 2. บันทึกข้อมูลโครงการหลัก (ตาราง academic_projects)
+            $projectCode = AcademicProject::generateProjectCode($request->fiscal_year_id, $request->project_type_id);
             $project = AcademicProject::create([
+                'project_code' => $projectCode,
                 'project_type_id' => $request->project_type_id,
                 'fiscal_year_id' => $request->fiscal_year_id,
                 'name_th' => $request->name_th,

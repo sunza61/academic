@@ -200,9 +200,9 @@ class ComposerStaticInit5c7b1034f87adab030c29d892a5d7d56
         ),
         'phpDocumentor\\Reflection\\' => 
         array (
-            0 => __DIR__ . '/..' . '/phpdocumentor/reflection-common/src',
-            1 => __DIR__ . '/..' . '/phpdocumentor/reflection-docblock/src',
-            2 => __DIR__ . '/..' . '/phpdocumentor/type-resolver/src',
+            0 => __DIR__ . '/..' . '/phpdocumentor/reflection-docblock/src',
+            1 => __DIR__ . '/..' . '/phpdocumentor/type-resolver/src',
+            2 => __DIR__ . '/..' . '/phpdocumentor/reflection-common/src',
         ),
         'XdgBaseDir\\' => 
         array (
@@ -754,6 +754,7 @@ class ComposerStaticInit5c7b1034f87adab030c29d892a5d7d56
         'App\\Http\\Middleware\\TrustProxies' => __DIR__ . '/../..' . '/app/Http/Middleware/TrustProxies.php',
         'App\\Http\\Middleware\\VerifyCsrfToken' => __DIR__ . '/../..' . '/app/Http/Middleware/VerifyCsrfToken.php',
         'App\\Models\\AcademicProjectLog' => __DIR__ . '/../..' . '/app/Models/AcademicProjectLog.php',
+        'App\\Models\\Academic\\AcademicBudget' => __DIR__ . '/../..' . '/app/Models/Academic/AcademicBudget.php',
         'App\\Models\\Academic\\AcademicBudgetExpenses' => __DIR__ . '/../..' . '/app/Models/Academic/AcademicBudgetExpenses.php',
         'App\\Models\\Academic\\AcademicBudgetIncomes' => __DIR__ . '/../..' . '/app/Models/Academic/AcademicBudgetIncomes.php',
         'App\\Models\\Academic\\AcademicCourses' => __DIR__ . '/../..' . '/app/Models/Academic/AcademicCourses.php',

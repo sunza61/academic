@@ -86,8 +86,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/contracts/projects/{id}/report', [ContractProjectController::class, 'report'])->name('contracts.projects.report');
     Route::post('/contracts/projects/{id}/report', [ContractProjectController::class, 'saveReport'])->name('contracts.projects.save-report');
     Route::put('contracts/projects/{id}/cancel', [ContractProjectController::class, 'cancelProject'])->name('contracts.projects.cancel');
-    
-    
+
+
     // เมนูงานอบรม
     Route::prefix('trainings')->name('trainings.')->group(function () {
         Route::resource('projects', TrainingProjectController::class);
@@ -108,12 +108,12 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('projects', LecturerProjectController::class);
     });
 
-    
 
-    
-    
-    
-    
+
+
+
+
+
     // เมนูบันทึกรายงาน
     Route::prefix('deliveries')->name('deliveries.')->group(function () {
         Route::get('/', [ProjectDeliveryController::class, 'index'])->name('index');
@@ -139,5 +139,4 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/{id}/approve', [ApprovalController::class, 'approve'])->name('approve');
         Route::patch('/{id}/reject', [ApprovalController::class, 'reject'])->name('reject');
     });
-
 });

@@ -43,19 +43,24 @@ class ProjectTypeController extends Controller
      */
     public function store(Request $request)
     {
-        //
-        // ตรวจสอบข้อมูลว่ากรอกมาครบไหม
+        // ตรวจสอบข้อมูลว่ากรอกมาครบไหม และไม่ซ้ำ
         $request->validate([
-            'name_th' => 'required|string|max:150',
+            'name_th' => 'required|string|max:150|unique:project_types,name_th',
+            'abbreviation' => 'required|string|max:10|unique:project_types,abbreviation',
         ], [
             'name_th.required' => 'กรุณากรอกชื่อประเภทโครงการ',
+            'name_th.unique' => 'ชื่อประเภทโครงการนี้มีในระบบแล้ว',
+            'abbreviation.required' => 'กรุณากรอกอักษรย่อโครงการ',
+            'abbreviation.unique' => 'อักษรย่อนี้มีในระบบแล้ว',
         ]);
 
         // บันทึกลงฐานข้อมูล
         ProjectType::create([
             'name_th' => $request->name_th,
-            'name_en' => $request->name_th,
-
+            'name_en' => $request->name_th, // กรณีไม่มีฟิลด์ name_en แยก
+            'abbreviation' => $request->abbreviation,
+            'description' => $request->description,
+            'is_active' => $request->has('is_active') ? 1 : 0,
         ]);
 
         // กลับไปหน้าตารางพร้อมส่งข้อความแจ้งเตือน
@@ -100,14 +105,21 @@ class ProjectTypeController extends Controller
     {
         //
         $request->validate([
-            'name_th' => 'required|string|max:150',
+            'name_th' => 'required|string|max:150|unique:project_types,name_th,' . $id,
+            'abbreviation' => 'required|string|max:10|unique:project_types,abbreviation,' . $id,
         ], [
             'name_th.required' => 'กรุณากรอกชื่อประเภทโครงการ',
+            'name_th.unique' => 'ชื่อประเภทโครงการนี้มีในระบบแล้ว',
+            'abbreviation.required' => 'กรุณากรอกอักษรย่อโครงการ',
+            'abbreviation.unique' => 'อักษรย่อนี้มีในระบบแล้ว',
         ]);
 
         $projectType = ProjectType::findOrFail($id);
         $projectType->update([
             'name_th' => $request->name_th,
+            'abbreviation' => $request->abbreviation,
+            'description' => $request->description,
+            'is_active' => $request->has('is_active') ? 1 : 0,
         ]);
 
         return redirect()->route('master-data.project-types.index')

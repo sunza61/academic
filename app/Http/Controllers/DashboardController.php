@@ -61,8 +61,8 @@ class DashboardController extends Controller
             ->orderBy('fiscal_year_be', 'desc')
             ->get();
 
-        $selectedFiscalYearId = ($request ? $request->query('fiscal_year') : null) 
-            ?? $fiscalYears->firstWhere('fiscal_year_be', $currentFiscalYearBe)->id 
+        $selectedFiscalYearId = ($request ? $request->query('fiscal_year') : null)
+            ?? $fiscalYears->firstWhere('fiscal_year_be', $currentFiscalYearBe)->id
             ?? ($fiscalYears->first()->id ?? null);
 
         // =====================================================
@@ -70,18 +70,23 @@ class DashboardController extends Controller
         // =====================================================
         $countTraining = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
             ->where('project_type_id', 2)
-            ->where('del_status', '!=', 1)
-            ->orWhereNull('del_status')
+            ->where(function ($query) {
+                $query->where('del_status', '!=', 1)
+                    ->orWhereNull('del_status');
+            })
             ->count();
 
         $countAcademic = AcademicProject::where('fiscal_year_id', $selectedFiscalYearId)
             ->where('project_type_id', 3)
-            ->where('del_status', '!=', 1)
-            ->orWhereNull('del_status')
+            ->where(function ($query) {
+                $query->where('del_status', '!=', 1)
+                    ->orWhereNull('del_status');
+            })
             ->count();
-        //dd($countTraining , $countAcademic);
 
         $countTotal = $countTraining + $countAcademic;
+
+        //dd($countTraining, $countAcademic, $countTotal);
 
         // =====================================================
         // 3. ส่วน Project Workflow
@@ -130,7 +135,7 @@ class DashboardController extends Controller
         $latestActivities = [];
         foreach ($statuses as $id => $statusInfo) {
             $project = $allActiveProjects->has($id) ? $allActiveProjects->get($id)->sortByDesc('updated_at')->first() : null;
-            
+
             $latestActivities[] = [
                 'status' => $id,
                 'icon'   => $statusInfo['icon'],
@@ -223,17 +228,17 @@ class DashboardController extends Controller
         // สรุปข้อมูลส่งออก
         // =====================================================
         return view('dashboards.admin.index', compact(
-            'fiscalYears', 
-            'selectedFiscalYearId', 
-            'countTotal', 
-            'countTraining', 
-            'countAcademic', 
-            'workflowStatuses', 
-            'latestActivities', 
+            'fiscalYears',
+            'selectedFiscalYearId',
+            'countTotal',
+            'countTraining',
+            'countAcademic',
+            'workflowStatuses',
+            'latestActivities',
             'recentProjectActivity',
-            'countWaitingApproval', 
-            'countWaitingRevision', 
-            'countAttention', 
+            'countWaitingApproval',
+            'countWaitingRevision',
+            'countAttention',
             'healthData'
         ));
     }

@@ -30,6 +30,27 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
+
+            <div class="form-group">
+                <label for="abbreviation">อักษรย่อโครงการ <span class="text-danger">*</span></label>
+                <input type="text" class="form-control @error('abbreviation') is-invalid @enderror" 
+                       id="abbreviation" name="abbreviation" value="{{ old('abbreviation') }}" 
+                       placeholder="กรุณากรอกอักษรย่อ (เช่น TR, RES)" required maxlength="10">
+                
+                @error('abbreviation')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="description">รายละเอียดเพิ่มเติม</label>
+                <textarea class="form-control" id="description" name="description" rows="3">{{ old('description') }}</textarea>
+            </div>
+
+            <div class="form-group custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="is_active" name="is_active" value="1" checked>
+                <label class="custom-control-label" for="is_active">เปิดใช้งาน</label>
+            </div>
         </div>
         
         <div class="card-footer bg-white">

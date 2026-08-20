@@ -14,5 +14,6 @@ class ProjectType extends Model
         'name_en',
         'description',
         'abbreviation',
+        'is_active',
     ];
 }

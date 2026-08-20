@@ -3,11 +3,11 @@
 @section('content')
 <div class="row mb-2">
     <div class="col-sm-6">
-        <h3 class="m-0"><i class="fas fa-users"></i> ข้อมูลบุคคลภายนอก (Externals)</h3>
+        <h3 class="m-0"><i class="fas fa-users"></i> ข้อมูลผู้ว่าจ้าง/บุคคลภายนอก (Externals)</h3>
     </div>
     <div class="col-sm-6 text-right">
         <a href="{{ route('master-data.externals.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> เพิ่มบุคคลภายนอก
+            <i class="fas fa-plus"></i> เพิ่มผู้ว่าจ้าง/บุคคลภายนอก
         </a>
     </div>
 </div>

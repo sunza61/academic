@@ -141,7 +141,7 @@ $(document).on(
         if (val !== "" && !isNaN(val)) {
             $(this).val(window.formatNumber(val));
         }
-    }
+    },
 );
 
 // ============================================================
@@ -153,7 +153,7 @@ $(document).ready(function () {
     // Format Existing Numbers
     // -------------------------
     $(
-        ".format-number-budget, .format-expense, .format-remuneration, .format-summary"
+        ".format-number-budget, .format-expense, .format-remuneration, .format-summary",
     ).each(function () {
         let val = $(this).val().replace(/,/g, "");
 
@@ -502,11 +502,11 @@ $(document).ready(function () {
         $("#table-budget-incomes tbody tr:not(.template-row)").each(
             function () {
                 let unitCost = window.unformatNumber(
-                    $(this).find(".income-unit-cost").val()
+                    $(this).find(".income-unit-cost").val(),
                 );
 
                 let quantity = window.unformatNumber(
-                    $(this).find(".income-quantity").val()
+                    $(this).find(".income-quantity").val(),
                 );
 
                 let total = unitCost * quantity;
@@ -520,15 +520,17 @@ $(document).ready(function () {
                 } else {
                     $(this).find(".income-total-amount").val("");
                 }
-            }
+            },
         );
 
         $("#income-grand-total").val(
-            grandTotal > 0 ? window.formatNumber(grandTotal.toFixed(2)) : ""
+            grandTotal > 0 ? window.formatNumber(grandTotal.toFixed(2)) : "",
         );
 
         $('input[name="total_budget_summary"]').val(
-            grandTotal > 0 ? window.formatNumber(grandTotal.toFixed(2)) : "0.00"
+            grandTotal > 0
+                ? window.formatNumber(grandTotal.toFixed(2))
+                : "0.00",
         );
 
         calculateSummary();
@@ -544,17 +546,17 @@ $(document).ready(function () {
         $("#table-budget-expenses tbody tr:not(.template-row)").each(
             function () {
                 let costPerUnit = window.unformatNumber(
-                    $(this).find(".expense-cost").val()
+                    $(this).find(".expense-cost").val(),
                 );
 
                 let factor1 =
                     window.unformatNumber(
-                        $(this).find(".expense-factor1").val()
+                        $(this).find(".expense-factor1").val(),
                     ) || 1;
 
                 let factor2 =
                     window.unformatNumber(
-                        $(this).find(".expense-factor2").val()
+                        $(this).find(".expense-factor2").val(),
                     ) || 1;
 
                 let total = costPerUnit * factor1 * factor2;
@@ -568,15 +570,19 @@ $(document).ready(function () {
                 } else {
                     $(this).find(".expense-total-amount").val("");
                 }
-            }
+            },
         );
 
         $("#expense-grand-total").val(
-            grandTotal > 0 ? window.formatNumber(grandTotal.toFixed(2)) : "0.00"
+            grandTotal > 0
+                ? window.formatNumber(grandTotal.toFixed(2))
+                : "0.00",
         );
 
         $('input[name="operation_fee"]').val(
-            grandTotal > 0 ? window.formatNumber(grandTotal.toFixed(2)) : "0.00"
+            grandTotal > 0
+                ? window.formatNumber(grandTotal.toFixed(2))
+                : "0.00",
         );
 
         calculateSummary();
@@ -592,17 +598,17 @@ $(document).ready(function () {
         $("#table-budget-remuneration tbody tr:not(.template-row)").each(
             function () {
                 let costPerUnit = window.unformatNumber(
-                    $(this).find(".remuneration-cost").val()
+                    $(this).find(".remuneration-cost").val(),
                 );
 
                 let factor1 =
                     window.unformatNumber(
-                        $(this).find(".remuneration-factor1").val()
+                        $(this).find(".remuneration-factor1").val(),
                     ) || 1;
 
                 let factor2 =
                     window.unformatNumber(
-                        $(this).find(".remuneration-factor2").val()
+                        $(this).find(".remuneration-factor2").val(),
                     ) || 1;
 
                 let total = costPerUnit * factor1 * factor2;
@@ -616,15 +622,19 @@ $(document).ready(function () {
                 } else {
                     $(this).find(".remuneration-total-amount").val("");
                 }
-            }
+            },
         );
 
         $("#remuneration-grand-total").val(
-            grandTotal > 0 ? window.formatNumber(grandTotal.toFixed(2)) : "0.00"
+            grandTotal > 0
+                ? window.formatNumber(grandTotal.toFixed(2))
+                : "0.00",
         );
 
         $('input[name="remuneration_fee"]').val(
-            grandTotal > 0 ? window.formatNumber(grandTotal.toFixed(2)) : "0.00"
+            grandTotal > 0
+                ? window.formatNumber(grandTotal.toFixed(2))
+                : "0.00",
         );
 
         calculateSummary();
@@ -636,15 +646,15 @@ $(document).ready(function () {
 
     window.calculateSummary = function () {
         let totalProjectBudget = window.unformatNumber(
-            $('input[name="total_budget_summary"]').val()
+            $('input[name="total_budget_summary"]').val(),
         );
 
         let totalRemuneration = window.unformatNumber(
-            $('input[name="remuneration_fee"]').val()
+            $('input[name="remuneration_fee"]').val(),
         );
 
         let totalOperation = window.unformatNumber(
-            $('input[name="operation_fee"]').val()
+            $('input[name="operation_fee"]').val(),
         );
 
         let sumExpenses = totalRemuneration + totalOperation;
@@ -654,11 +664,11 @@ $(document).ready(function () {
         let serviceFeeAmountLabel = (totalProjectBudget * 15) / 115;
 
         $("#max_expense_label").text(
-            window.formatNumber(maxExpense.toFixed(2)) + " บาท"
+            window.formatNumber(maxExpense.toFixed(2)) + " บาท",
         );
 
         $("#service_fee_label").text(
-            window.formatNumber(serviceFeeAmountLabel.toFixed(2)) + " บาท"
+            window.formatNumber(serviceFeeAmountLabel.toFixed(2)) + " บาท",
         );
 
         let serviceFeePercent =
@@ -675,7 +685,7 @@ $(document).ready(function () {
         }
 
         $('input[name="service_fee_percent"]').val(
-            serviceFeePercent.toFixed(2)
+            serviceFeePercent.toFixed(2),
         );
 
         let serviceFeeAmount =
@@ -686,7 +696,7 @@ $(document).ready(function () {
         }
 
         $('input[name="service_fee_amount"]').val(
-            window.formatNumber(serviceFeeAmount.toFixed(2))
+            window.formatNumber(serviceFeeAmount.toFixed(2)),
         );
 
         $('input[name="alloc_dept_percent"]').val(allocDeptPercent.toFixed(2));
@@ -698,15 +708,15 @@ $(document).ready(function () {
         let allocDeptAmount = maxExpense * (allocDeptPercent / 100);
 
         $('input[name="alloc_uni_amount"]').val(
-            window.formatNumber(allocUniAmount.toFixed(2))
+            window.formatNumber(allocUniAmount.toFixed(2)),
         );
 
         $('input[name="alloc_campus_amount"]').val(
-            window.formatNumber(allocCampusAmount.toFixed(2))
+            window.formatNumber(allocCampusAmount.toFixed(2)),
         );
 
         $('input[name="alloc_dept_amount"]').val(
-            window.formatNumber(allocDeptAmount.toFixed(2))
+            window.formatNumber(allocDeptAmount.toFixed(2)),
         );
         window.calculateSubDeptAllocations();
     };
@@ -731,13 +741,13 @@ $(document).ready(function () {
 
         // อัปเดตเปอร์เซ็นต์ลงในช่อง Input (ใช้ toFixed(3) เพื่อให้ได้ทศนิยม 3 ตำแหน่ง)
         $('input[name="fund_research_percent"]').val(
-            fundResearchPercent.toFixed(3)
+            fundResearchPercent.toFixed(3),
         );
         $('input[name="faculty_percent"]').val(
-            facultyAndCenterPercent.toFixed(3)
+            facultyAndCenterPercent.toFixed(3),
         );
         $('input[name="center_percent"]').val(
-            facultyAndCenterPercent.toFixed(3)
+            facultyAndCenterPercent.toFixed(3),
         );
 
         // ---------------------------------------------------------
@@ -754,19 +764,19 @@ $(document).ready(function () {
             fundResearchAmount.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
-            })
+            }),
         );
         $('input[name="faculty_amount"]').val(
             facultyAndCenterAmount.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
-            })
+            }),
         );
         $('input[name="center_amount"]').val(
             facultyAndCenterAmount.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
-            })
+            }),
         );
     }
 
@@ -776,7 +786,7 @@ $(document).ready(function () {
         'input[name="alloc_dept_percent"], input[name="alloc_dept_amount"]',
         function () {
             calculateSubDeptAllocations();
-        }
+        },
     );
 
     // ========================================================
@@ -794,13 +804,13 @@ $(document).ready(function () {
         let facultyAndCenterPercent = (deptPercent - fundResearchPercent) / 2;
 
         $('input[name="fund_research_percent"]').val(
-            fundResearchPercent.toFixed(3)
+            fundResearchPercent.toFixed(3),
         );
         $('input[name="faculty_percent"]').val(
-            facultyAndCenterPercent.toFixed(3)
+            facultyAndCenterPercent.toFixed(3),
         );
         $('input[name="center_percent"]').val(
-            facultyAndCenterPercent.toFixed(3)
+            facultyAndCenterPercent.toFixed(3),
         );
 
         // คำนวณยอดเงิน
@@ -811,19 +821,19 @@ $(document).ready(function () {
             fundResearchAmount.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
-            })
+            }),
         );
         $('input[name="faculty_amount"]').val(
             facultyAndCenterAmount.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
-            })
+            }),
         );
         $('input[name="center_amount"]').val(
             facultyAndCenterAmount.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
-            })
+            }),
         );
     };
 
@@ -833,7 +843,7 @@ $(document).ready(function () {
         'input[name="alloc_dept_percent"]',
         function () {
             window.calculateSubDeptAllocations();
-        }
+        },
     );
 
     // ========================================================
@@ -843,19 +853,19 @@ $(document).ready(function () {
     $("#table-budget-incomes").on(
         "keyup change input",
         ".income-unit-cost, .income-quantity",
-        window.calculateIncome
+        window.calculateIncome,
     );
 
     $("#table-budget-expenses").on(
         "keyup change input",
         ".expense-cost, .expense-factor1, .expense-factor2",
-        window.calculateExpense
+        window.calculateExpense,
     );
 
     $("#table-budget-remuneration").on(
         "keyup change input",
         ".remuneration-cost, .remuneration-factor1, .remuneration-factor2",
-        window.calculateRemuneration
+        window.calculateRemuneration,
     );
 
     // ========================================================
@@ -1010,7 +1020,7 @@ $(document).ready(function () {
 
         // วนลูปเช็คทุกงวดที่อยู่ใน container (ไม่รวมตัวต้นแบบ template)
         $(
-            "#installments-container .installment-block:not(.installment-template)"
+            "#installments-container .installment-block:not(.installment-template)",
         ).each(function (index) {
             // ดึงค่าจากช่องวันที่
             let start = $(this).find(".start-date").val();
@@ -1023,9 +1033,8 @@ $(document).ready(function () {
             // เงื่อนไข: ถ้าช่องวันเริ่มว่าง หรือ วันสิ้นสุดว่าง หรือ จำนวนเงินเป็น 0
             if (!start || !end || isNaN(amount) || amount <= 0) {
                 isValid = false;
-                errorMessage = `กรุณากรอกข้อมูล "งวดที่ ${
-                    index + 1
-                }" ให้ครบถ้วน (วันที่ และจำนวนเงินต้องมากกว่า 0)`;
+                errorMessage = `กรุณากรอกข้อมูล "งวดที่ ${index + 1
+                    }" ให้ครบถ้วน (วันที่ และจำนวนเงินต้องมากกว่า 0)`;
                 return false; // สั่ง break ลูป each ทันที
             }
         });
@@ -1134,7 +1143,7 @@ function initInstallmentDatePicker(block) {
         allowInput: true,
         onChange: function (selectedDates, dateStr, instance) {
             let currentBlock = $(instance.element).closest(
-                ".installment-block"
+                ".installment-block",
             );
 
             // ตรวจสอบความถูกต้องของวันที่
@@ -1155,7 +1164,7 @@ function initInstallmentDatePicker(block) {
         allowInput: true,
         onChange: function (selectedDates, dateStr, instance) {
             let currentBlock = $(instance.element).closest(
-                ".installment-block"
+                ".installment-block",
             );
 
             // ตรวจสอบความถูกต้องของวันที่
@@ -1175,7 +1184,7 @@ function initInstallmentDatePicker(block) {
 // -------------------------
 function validateInstallmentDates(currentBlock) {
     let allBlocks = $(
-        "#installments-container .installment-block:not(.installment-template)"
+        "#installments-container .installment-block:not(.installment-template)",
     );
     let currentIndex = allBlocks.index(currentBlock);
 
@@ -1228,7 +1237,7 @@ function validateInstallmentDates(currentBlock) {
 // -------------------------
 function refreshInstallmentDateConstraints() {
     let blocks = $(
-        "#installments-container .installment-block:not(.installment-template)"
+        "#installments-container .installment-block:not(.installment-template)",
     );
     let previousEndDate = null; // เก็บวันสิ้นสุดของงวดก่อนหน้า
 
@@ -1393,7 +1402,7 @@ $(document).on("input", ".install-amount", function () {
     // Project Budget
     // -------------------------
     let totalProjectBudget = window.unformatNumber(
-        $('input[name="total_budget_summary"]').val()
+        $('input[name="total_budget_summary"]').val(),
     );
 
     // -------------------------
@@ -1408,7 +1417,7 @@ $(document).on("input", ".install-amount", function () {
             });
         } else {
             alert(
-                "กรุณากรอกแผนรายรับ (ส่วนที่ 3.1) เพื่อกำหนดงบประมาณโครงการก่อนครับ"
+                "กรุณากรอกแผนรายรับ (ส่วนที่ 3.1) เพื่อกำหนดงบประมาณโครงการก่อนครับ",
             );
         }
 
@@ -1478,7 +1487,7 @@ $(document).on("input change", ".install-guar-pct", function () {
 
 $("#form-tab3-budget").on("submit", function (e) {
     let totalProjectBudget = window.unformatNumber(
-        $('input[name="total_budget_summary"]').val()
+        $('input[name="total_budget_summary"]').val(),
     );
 
     let sumInstallments = 0;
@@ -1593,13 +1602,12 @@ $(document).ready(function () {
             $("#signature-container .signature-row").each(function (index) {
                 // 1. อัปเดต Label ลำดับที่
                 let labelText = $(this).find(
-                    'label:contains("ชื่อ-นามสกุลผู้ลงนาม")'
+                    'label:contains("ชื่อ-นามสกุลผู้ลงนาม")',
                 );
                 if (labelText.length > 0) {
                     labelText.html(
-                        `${
-                            index + 1
-                        }. ชื่อ-นามสกุลผู้ลงนาม <span class="text-danger">*</span>`
+                        `${index + 1
+                        }. ชื่อ-นามสกุลผู้ลงนาม <span class="text-danger">*</span>`,
                     );
                 }
 
@@ -1655,7 +1663,7 @@ $(document).ready(function () {
 
             // คัดลอกแถวแรกสุดมาเป็นต้นแบบ
             let template = $(
-                "#signature-container .signature-row:first"
+                "#signature-container .signature-row:first",
             ).clone();
 
             // **สำคัญมาก**: ลบ Select2 ของเดิมทิ้งก่อน เพื่อให้ทำงานได้ตอน Clone
@@ -1756,7 +1764,7 @@ $(document).ready(function () {
             let btn = $(this);
             let originalText = btn.html();
             btn.html(
-                '<i class="fas fa-spinner fa-spin mr-1"></i> กำลังบันทึก...'
+                '<i class="fas fa-spinner fa-spin mr-1"></i> กำลังบันทึก...',
             ).prop("disabled", true);
 
             $.ajax({
@@ -1775,7 +1783,7 @@ $(document).ready(function () {
                             function () {
                                 if (
                                     $(this).find(
-                                        "option[value='" + response.id + "']"
+                                        "option[value='" + response.id + "']",
                                     ).length === 0
                                 ) {
                                     let displayName = response.full_path
@@ -1786,11 +1794,11 @@ $(document).ready(function () {
                                             displayName,
                                             response.id,
                                             false,
-                                            false
-                                        )
+                                            false,
+                                        ),
                                     );
                                 }
-                            }
+                            },
                         );
 
                         // เลือกค่าให้ช่องที่กำลังถูกเปิดใช้งานอยู่โดยอัตโนมัติ
@@ -1843,7 +1851,7 @@ $(document).ready(function () {
             let btn = $(this);
             let originalText = btn.html();
             btn.html(
-                '<i class="fas fa-spinner fa-spin mr-1"></i> กำลังบันทึก...'
+                '<i class="fas fa-spinner fa-spin mr-1"></i> กำลังบันทึก...',
             ).prop("disabled", true);
 
             $.ajax({
@@ -1865,7 +1873,7 @@ $(document).ready(function () {
                         $(".select2-external").each(function () {
                             if (
                                 $(this).find(
-                                    "option[value='" + response.id + "']"
+                                    "option[value='" + response.id + "']",
                                 ).length === 0
                             ) {
                                 $(this).append(
@@ -1873,8 +1881,8 @@ $(document).ready(function () {
                                         response.fullname,
                                         response.id,
                                         false,
-                                        false
-                                    )
+                                        false,
+                                    ),
                                 );
                             }
                         });

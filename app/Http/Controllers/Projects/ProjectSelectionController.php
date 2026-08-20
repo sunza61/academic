@@ -10,9 +10,8 @@ class ProjectSelectionController extends Controller
 {
     public function index()
     {
-        // ดึงข้อมูลประเภทโครงการทั้งหมดมาแสดงให้ User เลือก
-        // ถ้าคุณมีฟิลด์ is_active ก็ใส่ where('is_active', 1) ได้นะครับ
-        $projectTypes = ProjectType::orderBy('id', 'asc')->get();
+        // ดึงเฉพาะประเภทโครงการที่เปิดใช้งานเท่านั้น
+        $projectTypes = ProjectType::where('is_active', 1)->orderBy('id', 'asc')->get();
 
         return view('projects.selection.index', compact('projectTypes'));
     }

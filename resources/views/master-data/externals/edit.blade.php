@@ -3,7 +3,7 @@
 @section('content')
 <div class="row mb-2">
     <div class="col-sm-6">
-        <h3 class="m-0">แก้ไขข้อมูลบุคคลภายนอก</h3>
+        <h3 class="m-0">แก้ไขข้อมูลผู้ว่าจ้าง/บุคคลภายนอก</h3>
     </div>
     <div class="col-sm-6 text-right">
         <a href="{{ route('master-data.externals.index') }}" class="btn btn-secondary">
@@ -14,7 +14,7 @@
 
 <div class="card shadow-sm border-0 mt-3">
     <div class="card-header bg-custom-dark text-white">
-        <h3 class="card-title">แบบฟอร์มแก้ไขข้อมูลบุคคลภายนอก</h3>
+        <h3 class="card-title">แบบฟอร์มแก้ไขข้อมูลผู้ว่าจ้าง/บุคคลภายนอก</h3>
     </div>
 
     <form action="{{ route('master-data.externals.update', $external->id) }}" method="POST">

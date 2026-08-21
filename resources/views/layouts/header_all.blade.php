@@ -136,23 +136,42 @@
                                 </li>
                                 {{-- <li><a href="{{ route('master-data.employers.index') }}" class="dropdown-item {{ request()->routeIs('master-data.employers.*') ? 'active' : '' }}">ข้อมูลผู้ว่าจ้าง</a></li> --}}
                                 <li><a href="{{ route('master-data.target-groups.index') }}"
-                                        class="dropdown-item {{ request()->routeIs('master-data.target-groups.*') ? 'active' : '' }}">ข้อมูลกลุ่มเป้าหมาย</a>
+                                        class="dropdown-item {{ request()->routeIs('master-data.target-groups.*') ? 'active' : '' }}">ข้อมูลกลุ่มเป้าหมาย
+                                    </a>
                                 </li>
-                                <li><a href="#" class="dropdown-item disabled" tabindex="-1"
-                                        aria-disabled="true">หมวดหมู่งบประมาณ</a></li>
                                 <li><a href="{{ route('master-data.externals.index') }}"
                                         class="dropdown-item {{ request()->routeIs('master-data.externals.*') ? 'active' : '' }}">ข้อมูลผู้ว่าจ้าง/บุคคลภายนอก</a>
                                 </li>
                                 <li><a href="{{ route('master-data.project-positions.index') }}"
                                         class="dropdown-item {{ request()->routeIs('master-data.project-positions.*') ? 'active' : '' }}">ข้อมูลตำแหน่งในโครงการ</a>
                                 </li>
-                                <li><a href="{{ route('master-data.budget-incomes.index') }}"
-                                        class="dropdown-item {{ request()->routeIs('master-data.budget-incomes.*') ? 'active' : '' }}">หมวดหมู่รายรับ</a>
-                                </li>
-
                                 <li><a href="{{ route('master-data.sdgs.index') }}"
                                         class="dropdown-item {{ request()->routeIs('master-data.sdgs.*') ? 'active' : '' }}">ตั้งค่า
                                         SDGs</a></li>
+                                <div class="dropdown-divider"></div>
+                                <li class="dropdown-header text-muted font-weight-bold pt-0">หมวดหมู่งบประมาณรายรับ</li>
+                                <li><a href="{{ route('master-data.budget-incomes.main.index') }}"
+                                        class="dropdown-item pl-4 {{ request()->routeIs('master-data.budget-incomes.main.*') ? 'active' : '' }}">
+                                        หมวดหมู่หลักรายรับ
+                                    </a>
+                                </li>
+                                <li><a href="{{ route('master-data.budget-incomes.index') }}"
+                                        class="dropdown-item pl-4 {{ request()->routeIs('master-data.budget-incomes.index', 'master-data.budget-incomes.create', 'master-data.budget-incomes.edit') ? 'active' : '' }}">
+                                        หมวดหมู่ย่อยรายรับ
+                                    </a>
+                                </li>
+                                <div class="dropdown-divider"></div>
+                                <li class="dropdown-header text-muted font-weight-bold pt-0">หมวดหมู่งบประมาณรายจ่าย</li>
+                                <li><a href="{{ route('master-data.budget-expenses.main.index') }}"
+                                        class="dropdown-item pl-4 {{ request()->routeIs('master-data.budget-expenses.main.*') ? 'active' : '' }}">
+                                        หมวดหมู่หลักรายจ่าย
+                                    </a>
+                                </li>
+                                <li><a href="{{ route('master-data.budget-expenses.index') }}"
+                                        class="dropdown-item pl-4 {{ request()->routeIs('master-data.budget-expenses.index', 'master-data.budget-expenses.create', 'master-data.budget-expenses.edit') ? 'active' : '' }}">
+                                        หมวดหมู่ย่อยรายจ่าย
+                                    </a>
+                                </li>
                                 <li class="dropdown-divider"></li>
                                 <li><a href="#" class="dropdown-item">จัดการผู้ใช้งาน</a></li>
                             </ul>

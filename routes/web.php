@@ -17,7 +17,9 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\MasterData\EmployerController;
 use App\Http\Controllers\MasterData\BudgetCategoryController;
 use App\Http\Controllers\MasterData\BudgetExpenseController;
+use App\Http\Controllers\MasterData\BudgetExpenseMainController;
 use App\Http\Controllers\MasterData\BudgetIncomeController;
+use App\Http\Controllers\MasterData\BudgetIncomeMainController;
 use App\Http\Controllers\MasterData\ExternalController;
 use App\Http\Controllers\MasterData\ProjectPositionController;
 use App\Http\Controllers\MasterData\ProjectTypeController;
@@ -90,9 +92,11 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('project-positions', ProjectPositionController::class);
 
         Route::resource('budget-incomes', BudgetIncomeController::class);
+        Route::resource('budget-incomes-main', BudgetIncomeMainController::class)->names('budget-incomes.main');
         Route::post('budget-incomes/main/store-ajax', [BudgetIncomeController::class, 'storeMainAjax'])->name('budget-incomes.storeMainAjax');
 
         Route::resource('budget-expenses', BudgetExpenseController::class);
+        Route::resource('budget-expenses-main', BudgetExpenseMainController::class)->names('budget-expenses.main');
         Route::post('budget-expenses/main/store-ajax', [BudgetExpenseController::class, 'storeMainAjax'])->name('budget-expenses.storeMainAjax');
     });
 

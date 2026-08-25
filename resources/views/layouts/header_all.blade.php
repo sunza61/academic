@@ -185,8 +185,7 @@
                         </a>
 
                         <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="#"><i class="fas fa-user mr-2"></i> โปรไฟล์ของฉัน</a>
-                            <div class="dropdown-divider"></div>
+                                          
                             <a class="dropdown-item text-danger" href="{{ route('logout') }}"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class="fas fa-sign-out-alt mr-2"></i> {{ __('ออกจากระบบ') }}

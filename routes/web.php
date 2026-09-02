@@ -106,6 +106,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/gateway/{id}', [ProjectSelectionController::class, 'gateway'])->name('gateway');
     });
 
+    // 🌟 โครงการทั้งหมด
+    Route::prefix('all-projects')->name('all-projects.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Projects\AllProjectsController::class, 'index'])->name('index');
+    });
+
     // 🌟 เมนูสัญญาจ้าง
     Route::prefix('contracts')->name('contracts.')->group(function () {
         Route::resource('projects', ContractProjectController::class);

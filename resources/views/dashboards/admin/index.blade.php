@@ -411,59 +411,65 @@
 
             {{-- 1. โครงการทั้งหมด --}}
             <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
-                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
-                    <div class="d-flex align-items-center">
-                        <div class="kpi-icon bg-info text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
-                            <i class="fas fa-project-diagram fa-lg"></i>
-                        </div>
-                        <div>
-                            <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
-                                {{ $countTotal }}
+                <a href="{{ route('all-projects.index', ['fiscal_year_id' => $selectedFiscalYearId]) }}" class="text-decoration-none" style="display: block; height: 100%;">
+                    <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded" style="cursor: pointer;">
+                        <div class="d-flex align-items-center">
+                            <div class="kpi-icon bg-info text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
+                                <i class="fas fa-project-diagram fa-lg"></i>
                             </div>
-                            <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
-                                โครงการทั้งหมด
+                            <div>
+                                <div class="kpi-number font-weight-bold text-dark" style="font-size: 1.4rem;">
+                                    {{ $countTotal }}
+                                </div>
+                                <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
+                                    โครงการทั้งหมด
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             {{-- 2. อบรม ประชุม สัมมนาฯ --}}
             <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
-                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
-                    <div class="d-flex align-items-center">
-                        <div class="kpi-icon bg-primary text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
-                            <i class="fas fa-chalkboard-teacher fa-lg"></i>
-                        </div>
-                        <div>
-                            <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
-                                {{ $countTraining }}
+                <a href="{{ route('all-projects.index', ['fiscal_year_id' => $selectedFiscalYearId, 'type_id' => 2]) }}" class="text-decoration-none" style="display: block; height: 100%;">
+                    <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded" style="cursor: pointer;">
+                        <div class="d-flex align-items-center">
+                            <div class="kpi-icon bg-primary text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
+                                <i class="fas fa-chalkboard-teacher fa-lg"></i>
                             </div>
-                            <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
-                                อบรม ประชุม สัมมนาฯ
+                            <div>
+                                <div class="kpi-number font-weight-bold text-dark" style="font-size: 1.4rem;">
+                                    {{ $countTraining }}
+                                </div>
+                                <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
+                                    อบรม ประชุม สัมมนาฯ
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             {{-- 3. บริการวิชาการ --}}
             <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
-                <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded">
-                    <div class="d-flex align-items-center">
-                        <div class="kpi-icon bg-success text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
-                            <i class="fas fa-hands-helping fa-lg"></i>
-                        </div>
-                        <div>
-                            <div class="kpi-number font-weight-bold" style="font-size: 1.4rem;">
-                                {{ $countAcademic }}
+                <a href="{{ route('all-projects.index', ['fiscal_year_id' => $selectedFiscalYearId, 'type_id' => 3]) }}" class="text-decoration-none" style="display: block; height: 100%;">
+                    <div class="kpi-card p-3 h-100 shadow-sm border-0 rounded" style="cursor: pointer;">
+                        <div class="d-flex align-items-center">
+                            <div class="kpi-icon bg-success text-white mr-3 d-flex align-items-center justify-content-center rounded" style="width: 45px; height: 45px;">
+                                <i class="fas fa-hands-helping fa-lg"></i>
                             </div>
-                            <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
-                                บริการวิชาการ
+                            <div>
+                                <div class="kpi-number font-weight-bold text-dark" style="font-size: 1.4rem;">
+                                    {{ $countAcademic }}
+                                </div>
+                                <div class="kpi-label text-muted" style="font-size: 0.8rem; line-height: 1.2;">
+                                    บริการวิชาการ
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             {{-- 4. วิทยากร --}}
@@ -732,89 +738,68 @@
                         <div class="row">
 
                             <div class="col-md-4">
-
-                                <div class="queue-card">
-
-                                    <div class="d-flex justify-content-between align-items-center">
-
-                                        <div>
-                                            <div class="queue-title">
-                                                รออนุมัติ
+                                <a href="{{ route('admin.approvals.index') }}" class="text-decoration-none">
+                                    <div class="queue-card">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="queue-title text-dark">
+                                                    รออนุมัติ
+                                                </div>
+                                                <div class="queue-number text-warning">
+                                                    {{ $countWaitingApproval }}
+                                                </div>
                                             </div>
-
-                                            <div class="queue-number text-warning">
-                                                {{ $countWaitingApproval }}
-                                            </div>
+                                            <i class="fas fa-file-signature fa-2x text-warning opacity-50"></i>
                                         </div>
-
-                                        <i class="fas fa-file-signature fa-2x text-warning opacity-50"></i>
-
+                                        <div class="small text-muted mt-2">
+                                            โครงการรอการพิจารณา
+                                        </div>
                                     </div>
-
-                                    <div class="small text-muted mt-2">
-                                        โครงการรอการพิจารณา
-                                    </div>
-
-                                </div>
-
+                                </a>
                             </div>
 
 
                             <div class="col-md-4">
-
-                                <div class="queue-card">
-
-                                    <div class="d-flex justify-content-between align-items-center">
-
-                                        <div>
-                                            <div class="queue-title">
-                                                รอแก้ไข
+                                <a href="{{ route('all-projects.index', ['fiscal_year_id' => $selectedFiscalYearId, 'status' => 110]) }}" class="text-decoration-none">
+                                    <div class="queue-card">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="queue-title text-dark">
+                                                    รอแก้ไข
+                                                </div>
+                                                <div class="queue-number text-danger">
+                                                    {{ $countWaitingRevision }}
+                                                </div>
                                             </div>
-
-                                            <div class="queue-number text-danger">
-                                                {{ $countWaitingRevision }}
-                                            </div>
+                                            <i class="fas fa-edit fa-2x text-danger opacity-50"></i>
                                         </div>
-
-                                        <i class="fas fa-edit fa-2x text-danger opacity-50"></i>
-
+                                        <div class="small text-muted mt-2">
+                                            เอกสารหรือข้อมูลไม่ครบ
+                                        </div>
                                     </div>
-
-                                    <div class="small text-muted mt-2">
-                                        เอกสารหรือข้อมูลไม่ครบ
-                                    </div>
-
-                                </div>
-
+                                </a>
                             </div>
 
 
                             <div class="col-md-4">
-
-                                <div class="queue-card">
-
-                                    <div class="d-flex justify-content-between align-items-center">
-
-                                        <div>
-                                            <div class="queue-title">
-                                                ต้องติดตาม
+                                <a href="{{ route('all-projects.index', ['fiscal_year_id' => $selectedFiscalYearId, 'attention' => 1]) }}" class="text-decoration-none">
+                                    <div class="queue-card">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="queue-title text-dark">
+                                                    ต้องติดตาม
+                                                </div>
+                                                <div class="queue-number text-primary">
+                                                    {{ $countAttention }}
+                                                </div>
                                             </div>
-
-                                            <div class="queue-number text-primary">
-                                                {{ $countAttention }}
-                                            </div>
+                                            <i class="fas fa-bell fa-2x text-primary opacity-50"></i>
                                         </div>
-
-                                        <i class="fas fa-bell fa-2x text-primary opacity-50"></i>
-
+                                        <div class="small text-muted mt-2">
+                                            รายการใกล้ครบกำหนด (7 วัน)
+                                        </div>
                                     </div>
-
-                                    <div class="small text-muted mt-2">
-                                        รายการใกล้ครบกำหนด (7 วัน)
-                                    </div>
-
-                                </div>
-
+                                </a>
                             </div>
 
                         </div>

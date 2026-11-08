@@ -42,6 +42,11 @@ class AcademicProject extends Model
                     ->orderBy('sign_order', 'asc'); // แถมการเรียงลำดับให้ด้วยเลย ดึงปุ๊บเรียง 1-10 ให้ปั๊บ
     }
 
+    public function projectType()
+    {
+        return $this->belongsTo(\App\Models\MasterData\ProjectType::class, 'project_type_id', 'id');
+    }
+
     public function latestLog()
     {
         return $this->hasOne(AcademicProjectLog::class, 'academic_project_id')->latest('id');

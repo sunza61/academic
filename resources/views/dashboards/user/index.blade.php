@@ -237,9 +237,15 @@
                         </p>
                     </div>
                 </div>
-                <div class="hero-badge mt-3 mt-md-0 d-flex align-items-center">
-                    <i class="fas fa-user mr-2"></i>
-                    สถานะ: ผู้ขอใช้บริการ
+                <div class="hero-badge mt-3 mt-md-0 d-flex align-items-center" style="position: relative; z-index: 1000;">
+                    <i class="far fa-calendar-alt mr-2"></i>
+                    <select name="fiscal_year" id="fiscal_year_user" class="text-white font-weight-bold" style="background-color: transparent; border: none; cursor: pointer; outline: none; appearance: auto;">
+                        @foreach($fiscalYears as $year)
+                            <option value="{{ $year->id }}" {{ $selectedFiscalYearId == $year->id ? 'selected' : '' }} class="text-dark">
+                                ปีงบประมาณ {{ $year->fiscal_year_be }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
         </div>
@@ -250,62 +256,70 @@
         <div class="row mb-4">
             {{-- Total My Projects --}}
             <div class="col-xl-3 col-md-6 mb-3">
-                <div class="kpi-card p-3">
-                    <div class="d-flex align-items-center">
-                        <div class="kpi-icon bg-primary text-white mr-3">
-                            <i class="fas fa-folder"></i>
-                        </div>
-                        <div>
-                            <div class="kpi-number text-primary">5</div>
-                            <div class="kpi-label">โครงการทั้งหมดของฉัน</div>
+                <a href="{{ route('all-projects.index', ['fiscal_year_id' => $selectedFiscalYearId]) }}" class="text-decoration-none" style="display: block; height: 100%;">
+                    <div class="kpi-card p-3 h-100" style="cursor: pointer;">
+                        <div class="d-flex align-items-center">
+                            <div class="kpi-icon bg-primary text-white mr-3">
+                                <i class="fas fa-folder"></i>
+                            </div>
+                            <div>
+                                <div class="kpi-number text-primary">{{ $totalMyProjects }}</div>
+                                <div class="kpi-label">โครงการทั้งหมดของฉัน</div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             {{-- Drafts --}}
             <div class="col-xl-3 col-md-6 mb-3">
-                <div class="kpi-card p-3">
-                    <div class="d-flex align-items-center">
-                        <div class="kpi-icon bg-secondary text-white mr-3">
-                            <i class="fas fa-pencil-alt"></i>
-                        </div>
-                        <div>
-                            <div class="kpi-number text-secondary">1</div>
-                            <div class="kpi-label">ฉบับร่าง (ยังไม่ส่ง)</div>
+                <a href="{{ route('all-projects.index', ['fiscal_year_id' => $selectedFiscalYearId, 'status' => 100]) }}" class="text-decoration-none" style="display: block; height: 100%;">
+                    <div class="kpi-card p-3 h-100" style="cursor: pointer;">
+                        <div class="d-flex align-items-center">
+                            <div class="kpi-icon bg-secondary text-white mr-3">
+                                <i class="fas fa-pencil-alt"></i>
+                            </div>
+                            <div>
+                                <div class="kpi-number text-secondary">{{ $countDraft }}</div>
+                                <div class="kpi-label">ฉบับร่าง (ยังไม่ส่ง)</div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             {{-- Waiting Approval --}}
             <div class="col-xl-3 col-md-6 mb-3">
-                <div class="kpi-card p-3">
-                    <div class="d-flex align-items-center">
-                        <div class="kpi-icon bg-warning text-white mr-3">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div>
-                            <div class="kpi-number text-warning">2</div>
-                            <div class="kpi-label">รอคณะพิจารณาอนุมัติ</div>
+                <a href="{{ route('all-projects.index', ['fiscal_year_id' => $selectedFiscalYearId, 'status' => 200]) }}" class="text-decoration-none" style="display: block; height: 100%;">
+                    <div class="kpi-card p-3 h-100" style="cursor: pointer;">
+                        <div class="d-flex align-items-center">
+                            <div class="kpi-icon bg-warning text-white mr-3">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <div class="kpi-number text-warning">{{ $countWaitingApproval }}</div>
+                                <div class="kpi-label">รอคณะพิจารณาอนุมัติ</div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             {{-- Needs Revision --}}
             <div class="col-xl-3 col-md-6 mb-3">
-                <div class="kpi-card p-3 border-left border-danger" style="border-left-width: 4px !important;">
-                    <div class="d-flex align-items-center">
-                        <div class="kpi-icon bg-danger text-white mr-3">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div>
-                            <div class="kpi-number text-danger">1</div>
-                            <div class="kpi-label text-danger font-weight-bold">ส่งกลับให้แก้ไข !</div>
+                <a href="{{ route('all-projects.index', ['fiscal_year_id' => $selectedFiscalYearId, 'status' => 110]) }}" class="text-decoration-none" style="display: block; height: 100%;">
+                    <div class="kpi-card p-3 h-100 border-left border-danger" style="border-left-width: 4px !important; cursor: pointer;">
+                        <div class="d-flex align-items-center">
+                            <div class="kpi-icon bg-danger text-white mr-3">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div>
+                                <div class="kpi-number text-danger">{{ $countNeedsRevision }}</div>
+                                <div class="kpi-label text-danger font-weight-bold">ส่งกลับให้แก้ไข !</div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
 
@@ -317,49 +331,66 @@
             <div class="col-lg-8 mb-4 mb-lg-0">
                 <div class="dashboard-card">
                     <div class="dashboard-card-header">
-                        <h5 class="dashboard-card-title">
-                            <i class="fas fa-tasks text-success mr-2"></i>
-                            งานที่ต้องดำเนินการ (My Tasks)
-                        </h5>
-                        @php $hasTasks = true; /* จำลองข้อมูล */ @endphp
-                        @if($hasTasks)
-                            <span class="badge badge-danger px-2 py-1">2 งานด่วน</span>
+                        <div>
+                            <h5 class="dashboard-card-title">
+                                <i class="fas fa-tasks text-success mr-2"></i>
+                                งานที่ต้องดำเนินการ (My Tasks)
+                            </h5>
+                            <small class="text-muted">รายการโครงการที่รอการแก้ไข หรือฉบับร่างที่ค้างอยู่</small>
+                        </div>
+                        @if($totalTasks > 0)
+                            <span class="badge badge-danger px-2 py-1">{{ $totalTasks }} งาน</span>
                         @endif
                     </div>
                     <div class="card-body">
-                        
-                        {{-- Task 1: คืนมาให้แก้ไข --}}
+                        {{-- โครงการที่ต้องแก้ไข --}}
+                        @foreach($tasksNeedsRevision as $task)
                         <div class="todo-item">
                             <div class="todo-icon bg-danger text-white">
                                 <i class="fas fa-tools"></i>
                             </div>
                             <div class="todo-content flex-grow-1">
                                 <h6 class="text-danger">โปรดแก้ไขข้อเสนอโครงการ</h6>
-                                <p><strong>โครงการ:</strong> อบรมการใช้ AI เบื้องต้น (Draft)<br>
-                                   <span class="text-muted"><i class="fas fa-comment-dots mr-1"></i> หมายเหตุจากเจ้าหน้าที่: รบกวนปรับแก้สัดส่วนงบประมาณหมวดค่าตอบแทนครับ</span>
+                                <p><strong>โครงการ:</strong> {{ $task->name_th }}<br>
+                                   <span class="text-muted"><i class="fas fa-comment-dots mr-1"></i> หมายเหตุ: {{ $task->latestLog->comment ?? 'ไม่พบหมายเหตุ' }}</span>
                                 </p>
-                                <button class="btn btn-sm btn-danger px-3">
+                                @php
+                                    $routeEdit = ($task->project_type_id == 2) ? 'trainings.projects.edit' : 'contracts.projects.edit';
+                                @endphp
+                                <a href="{{ route($routeEdit, $task->id) }}" class="btn btn-sm btn-danger px-3">
                                     <i class="fas fa-edit mr-1"></i> เข้าไปแก้ไข
-                                </button>
+                                </a>
                             </div>
                         </div>
+                        @endforeach
 
-                        {{-- Task 2: ทำร่างค้างไว้ --}}
+                        {{-- โครงการฉบับร่าง --}}
+                        @foreach($recentDrafts as $draft)
                         <div class="todo-item">
                             <div class="todo-icon bg-secondary text-white">
                                 <i class="fas fa-save"></i>
                             </div>
                             <div class="todo-content flex-grow-1">
                                 <h6>มีแบบร่างโครงการที่ยังสร้างไม่เสร็จ</h6>
-                                <p><strong>โครงการ:</strong> บริการตรวจวิเคราะห์คุณภาพน้ำ (Draft)<br>
-                                   <span class="text-muted">บันทึกล่าสุด: เมื่อวานนี้ เวลา 16:30 น.</span>
+                                <p><strong>โครงการ:</strong> {{ $draft->name_th }}<br>
+                                   <span class="text-muted">บันทึกล่าสุด: {{ $draft->updated_at->diffForHumans() }}</span>
                                 </p>
-                                <button class="btn btn-sm btn-outline-secondary px-3">
+                                @php
+                                    $routeEdit = ($draft->project_type_id == 2) ? 'trainings.projects.edit' : 'contracts.projects.edit';
+                                @endphp
+                                <a href="{{ route($routeEdit, $draft->id) }}" class="btn btn-sm btn-outline-secondary px-3">
                                     <i class="fas fa-arrow-right mr-1"></i> ทำต่อให้เสร็จ
-                                </button>
+                                </a>
                             </div>
                         </div>
+                        @endforeach
 
+                        @if($totalTasks == 0)
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-check-circle fa-2x mb-2 text-success"></i><br>
+                                ไม่มีงานที่ต้องดำเนินการในขณะนี้
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -372,7 +403,7 @@
                     </h5>
                     
                     {{-- สร้างโครงการใหม่ โดดเด่นสุด --}}
-                    <a href="#" class="quick-action-btn" style="background: #10b981; color: white; border-color: #059669; box-shadow: 0 4px 10px rgba(16,185,129,0.2);">
+                    <a href="{{ route('projects.select-type') }}" class="quick-action-btn" style="background: #10b981; color: white; border-color: #059669; box-shadow: 0 4px 10px rgba(16,185,129,0.2);">
                         <i class="fas fa-plus-circle text-white"></i>
                         <span class="flex-grow-1">สร้างโครงการใหม่</span>
                         <i class="fas fa-chevron-right small"></i>
@@ -405,7 +436,7 @@
                     <i class="fas fa-list text-primary mr-2"></i>
                     ประวัติโครงการของฉัน
                 </h5>
-                <a href="#" class="btn btn-sm btn-outline-primary">ดูทั้งหมด</a>
+                <a href="{{ route('all-projects.index', ['fiscal_year_id' => $selectedFiscalYearId]) }}" class="btn btn-sm btn-outline-primary">ดูทั้งหมด</a>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover table-dashboard mb-0">
@@ -420,65 +451,56 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{-- ตัวอย่างข้อมูล 1 --}}
+                        @foreach($recentProjects as $project)
                         <tr>
-                            <td class="pl-4 font-weight-bold text-muted">-</td>
+                            <td class="pl-4 font-weight-bold text-primary">{{ $project->project_code ?? '-' }}</td>
                             <td>
-                                <a href="#" class="text-dark font-weight-bold">โครงการอบรมการใช้ AI เบื้องต้น</a>
+                                <a href="#" class="text-dark font-weight-bold">{{ $project->name_th }}</a>
                             </td>
-                            <td><span class="badge badge-light text-muted border">ฝึกอบรม</span></td>
-                            <td>-</td>
+                            <td><span class="badge badge-light text-muted border">{{ $project->projectType->name_th ?? 'ไม่ระบุ' }}</span></td>
+                            <td>{{ $project->created_at ? $project->created_at->addYears(543)->format('d/m/Y') : '-' }}</td>
                             <td class="text-center">
-                                <span class="badge badge-soft bg-danger text-white">
-                                    <i class="fas fa-times-circle mr-1"></i> ส่งกลับให้แก้ไข
-                                </span>
+                                @if($project->overall_status == 100)
+                                    <span class="badge badge-secondary px-2 py-1"><i class="fas fa-edit"></i> เตรียมการ / ฉบับร่าง</span>
+                                @elseif($project->overall_status == 110)
+                                    <span class="badge badge-danger px-2 py-1"><i class="fas fa-hourglass-half"></i> ส่งกลับให้แก้ไข</span>
+                                @elseif($project->overall_status == 200)
+                                    <span class="badge badge-warning px-2 py-1"><i class="fas fa-hourglass-half"></i> รอพิจารณาอนุมัติ</span>
+                                @elseif($project->overall_status == 300)
+                                    <span class="badge badge-info px-2 py-1"><i class="fas fa-check"></i> อนุมัติแล้ว</span>
+                                @elseif($project->overall_status == 400)
+                                    <span class="badge badge-primary px-2 py-1"><i class="fas fa-bullhorn"></i> เปิดรับสมัคร</span>
+                                @elseif($project->overall_status == 500)
+                                    <span class="badge badge-dark px-2 py-1"><i class="fas fa-door-closed"></i> ปิดรับสมัคร</span>
+                                @elseif($project->overall_status == 600)
+                                    <span class="badge" style="background-color: #fd7e14; color: white;"><i class="fas fa-spinner fa-spin"></i> อยู่ระหว่างดำเนินการ</span>
+                                @elseif($project->overall_status == 700)
+                                    <span class="badge badge-info px-2 py-1"><i class="fas fa-clipboard-list"></i> รอประเมินผล</span>
+                                @elseif($project->overall_status == 800)
+                                    <span class="badge badge-success px-2 py-1"><i class="fas fa-flag-checkered"></i> เสร็จสิ้นโครงการ</span>
+                                @elseif($project->overall_status == 900)
+                                    <span class="badge badge-danger px-2 py-1"><i class="fas fa-times-circle"></i> ยกเลิกโครงการ</span>
+                                @else
+                                    <span class="badge badge-light px-2 py-1">ไม่ทราบสถานะ</span>
+                                @endif
                             </td>
                             <td class="text-center">
-                                <button class="btn btn-sm btn-light text-primary" title="แก้ไข">
-                                    <i class="fas fa-edit"></i>
-                                </button>
+                                @php
+                                    $routeShow = ($project->project_type_id == 2) ? 'trainings.projects.show' : 'contracts.projects.show';
+                                    $routeEdit = ($project->project_type_id == 2) ? 'trainings.projects.edit' : 'contracts.projects.edit';
+                                @endphp
+                                @if($project->overall_status == 100 || $project->overall_status == 110)
+                                    <a href="{{ route($routeEdit, $project->id) }}" class="btn btn-sm btn-light text-primary" title="แก้ไข">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                @else
+                                    <a href="{{ route($routeShow, $project->id) }}" class="btn btn-sm btn-light text-info" title="ดูรายละเอียด">
+                                        <i class="fas fa-search"></i>
+                                    </a>
+                                @endif
                             </td>
                         </tr>
-
-                        {{-- ตัวอย่างข้อมูล 2 --}}
-                        <tr>
-                            <td class="pl-4 font-weight-bold text-primary">AC-2569-005</td>
-                            <td>
-                                <a href="#" class="text-dark font-weight-bold">โครงการที่ปรึกษาระบบจัดการสิ่งแวดล้อม</a>
-                            </td>
-                            <td><span class="badge badge-light text-muted border">บริการวิชาการ</span></td>
-                            <td>12 ต.ค. 2568</td>
-                            <td class="text-center">
-                                <span class="badge badge-soft bg-warning text-dark">
-                                    <i class="fas fa-hourglass-half mr-1"></i> รอพิจารณาอนุมัติ
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-light text-info" title="ดูรายละเอียด">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </td>
-                        </tr>
-
-                        {{-- ตัวอย่างข้อมูล 3 --}}
-                        <tr>
-                            <td class="pl-4 font-weight-bold text-primary">TR-2568-042</td>
-                            <td>
-                                <a href="#" class="text-dark font-weight-bold">โครงการอบรมการวิเคราะห์ข้อมูลสถิติ</a>
-                            </td>
-                            <td><span class="badge badge-light text-muted border">ฝึกอบรม</span></td>
-                            <td>05 ก.ย. 2568</td>
-                            <td class="text-center">
-                                <span class="badge badge-soft bg-success text-white">
-                                    <i class="fas fa-check-circle mr-1"></i> อนุมัติแล้ว (ดำเนินการ)
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-light text-info" title="ดูรายละเอียด">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </td>
-                        </tr>
+                        @endforeach
                     </tbody>
                 </table>
             </div>
@@ -487,4 +509,8 @@
     </div>
 </div>
 
+@endsection
+
+@section('script')
+<script src="{{ asset('js/dashboards/user/index.js?v=' . time()) }}"></script>
 @endsection

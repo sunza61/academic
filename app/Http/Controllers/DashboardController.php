@@ -31,7 +31,7 @@ class DashboardController extends Controller
         }
 
         if ($user->hasRole('user')) {
-            return $this->user();
+            return $this->user($request);
         }
 
         if ($user->hasRole('finance')) {
@@ -268,9 +268,80 @@ class DashboardController extends Controller
      * USER DASHBOARD
      * =====================================================
      */
-    public function user()
+    public function user(Request $request)
     {
-        return view('dashboards.user.index');
+        $userId = auth()->id();
+        
+        // 1. หาปีงบประมาณปัจจุบัน
+        $currentFiscalYearBe = (now()->month >= 10 ? now()->year + 1 : now()->year) + 543;
+
+        $fiscalYears = FiscalYears::where('fiscal_year_be', '<=', $currentFiscalYearBe)
+            ->orderBy('fiscal_year_be', 'desc')
+            ->get();
+
+        $selectedFiscalYearId = ($request ? $request->query('fiscal_year') : null)
+            ?? $fiscalYears->firstWhere('fiscal_year_be', $currentFiscalYearBe)->id
+            ?? ($fiscalYears->first()->id ?? null);
+
+        // 2. Query ข้อมูลโครงการของผู้ใช้ปัจจุบัน
+        $baseQuery = \App\Models\Academic\AcademicProject::where('created_by', $userId)
+            ->where('fiscal_year_id', $selectedFiscalYearId) // กรองปีงบประมาณ
+            ->where(function ($query) {
+                $query->where('del_status', '!=', 1)
+                    ->orWhereNull('del_status');
+            });
+
+        $totalMyProjects = (clone $baseQuery)->count();
+        $countDraft = (clone $baseQuery)->where('overall_status', 100)->count();
+        $countWaitingApproval = (clone $baseQuery)->where('overall_status', 200)->count();
+        $countNeedsRevision = (clone $baseQuery)->where('overall_status', 110)->count();
+
+        // 3. งานที่ต้องดำเนินการ (My Tasks) - ไม่กรองปีงบประมาณ เพื่อให้เห็นงานค้างทั้งหมด
+        $tasksNeedsRevision = \App\Models\Academic\AcademicProject::where('created_by', $userId)
+            ->where('overall_status', 110)
+            ->where(function ($query) {
+                $query->where('del_status', '!=', 1)
+                    ->orWhereNull('del_status');
+            })
+            ->with(['latestLog.user'])
+            ->get();
+
+        $recentDrafts = \App\Models\Academic\AcademicProject::where('created_by', $userId)
+            ->where('overall_status', 100)
+            ->where(function ($query) {
+                $query->where('del_status', '!=', 1)
+                    ->orWhereNull('del_status');
+            })
+            ->orderBy('updated_at', 'desc')
+            ->take(3)
+            ->get();
+
+        $totalTasks = $tasksNeedsRevision->count() + $recentDrafts->count();
+
+        // 4. โครงการล่าสุด - กรองตามปีงบประมาณที่เลือก เพื่อความชัดเจนในการติดตามรายปี
+        $recentProjects = \App\Models\Academic\AcademicProject::with('projectType')
+            ->where('created_by', $userId)
+            ->where('fiscal_year_id', $selectedFiscalYearId) // กรองตามปีที่เลือก
+            ->where(function ($query) {
+                $query->where('del_status', '!=', 1)
+                    ->orWhereNull('del_status');
+            })
+            ->orderBy('updated_at', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('dashboards.user.index', compact(
+            'totalMyProjects', 
+            'countDraft', 
+            'countWaitingApproval', 
+            'countNeedsRevision',
+            'fiscalYears',
+            'selectedFiscalYearId',
+            'tasksNeedsRevision',
+            'recentDrafts',
+            'totalTasks',
+            'recentProjects'
+        ));
     }
 
     /**

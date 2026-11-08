@@ -55,6 +55,7 @@
                     <th width="15%" class="align-middle">วันที่เริ่ม - สิ้นสุด</th>
                     <th width="15%" class="align-middle">ผู้สร้างโครงการ</th>
                     <th width="15%" class="align-middle">สถานะภาพรวม</th>
+                    <th width="10%" class="align-middle">จัดการ</th>
                 </tr>
             </thead>
             <tbody>
@@ -64,7 +65,6 @@
 
                     <td class="text-center align-middle text-success font-weight-bold">
                         @php
-                            // ตรวจสอบ route ตามประเภทโครงการ: type 2 คือ อบรม, อื่นๆ คือ บริการวิชาการ
                             $route = ($item->project_type_id == 2) ? 'trainings.projects.show' : 'contracts.projects.show';
                         @endphp
                         <a href="{{ route($route, $item->id) }}" class="text-success" title="ดูรายละเอียดโครงการ">
@@ -97,36 +97,22 @@
                     </td>
 
                     <td class="text-center align-middle">
-                        @if($item->overall_status == 100)
-                            <span class="badge badge-secondary px-2 py-1"><i class="fas fa-edit"></i> {{ $item->status_name }}</span>
-                        @elseif($item->overall_status == 110)
-                            <span class="badge badge-danger px-2 py-1"><i class="fas fa-hourglass-half"></i> {{ $item->status_name }}</span>
-                        @elseif($item->overall_status == 200)
-                            <span class="badge badge-warning px-2 py-1"><i class="fas fa-hourglass-half"></i> {{ $item->status_name }}</span>
-                        @elseif($item->overall_status == 300)
-                            <span class="badge badge-info px-2 py-1"><i class="fas fa-check"></i> {{ $item->status_name }}</span>
-                        @elseif($item->overall_status == 400)
-                            <span class="badge badge-primary px-2 py-1"><i class="fas fa-bullhorn"></i> {{ $item->status_name }}</span>
-                        @elseif($item->overall_status == 500)
-                            <span class="badge badge-dark px-2 py-1"><i class="fas fa-door-closed"></i> {{ $item->status_name }}</span>
-                        @elseif($item->overall_status == 600)
-                            <span class="badge" style="background-color: #fd7e14; color: white;"><i class="fas fa-spinner fa-spin"></i> {{ $item->status_name }}</span>
-                        @elseif($item->overall_status == 700)
-                            <span class="badge badge-info px-2 py-1"><i class="fas fa-clipboard-list"></i> {{ $item->status_name }}</span>
-                        @elseif($item->overall_status == 800)
-                            <span class="badge badge-success px-2 py-1"><i class="fas fa-flag-checkered"></i> {{ $item->status_name }}</span>
-                        @elseif($item->overall_status == 900)
-                            <span class="badge badge-danger px-2 py-1"><i class="fas fa-times-circle"></i> {{ $item->status_name }}</span>
-                        @else
-                            <span class="badge badge-light px-2 py-1">{{ $item->status_name }}</span>
-                        @endif
+                        <span class="badge badge-primary">{{ $item->status_name }}</span>
+                    </td>
+                    
+                    <td class="text-center align-middle">
+                        <a href="{{ route($route, $item->id) }}" class="btn btn-sm btn-info">ดู</a>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-5">
-                        <i class="fas fa-folder-open fa-3x mb-3 text-light"></i><br>
-                        ไม่พบข้อมูลโครงการในปีงบประมาณนี้
+                    <td class="text-center align-middle">-</td>
+                    <td class="text-center align-middle">-</td>
+                    <td class="text-center align-middle" colspan="6">
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-folder-open fa-3x mb-3 text-light"></i><br>
+                            ไม่พบข้อมูลโครงการในปีงบประมาณนี้
+                        </div>
                     </td>
                 </tr>
                 @endforelse

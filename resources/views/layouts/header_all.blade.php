@@ -173,7 +173,7 @@
                                     </a>
                                 </li>
                                 <li class="dropdown-divider"></li>
-                                <li><a href="#" class="dropdown-item">จัดการผู้ใช้งาน</a></li>
+                                <li><a href="{{ route('admin.users.index') }}" class="dropdown-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">จัดการผู้ใช้งาน</a></li>
                             </ul>
                         </li>
                     @endif

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AcademicController;
 use App\Http\Controllers\Admin\ApprovalController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\InformController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ResearchAreaController;
@@ -153,8 +154,12 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ==========================================================
-    // 👑 โซนผู้ดูแลระบบ: ล็อกเฉพาะ 'admin'
+    // 👑 โซนผู้ดูแลระบบ: ล็อกเฉพาะ 'admin' หรือ 'staff'
     // ==========================================================
+    Route::middleware(['role:admin,staff'])->prefix('admin/users')->name('admin.users.')->group(function () {
+        Route::resource('/', UserController::class)->parameters(['' => 'id']);
+    });
+
     Route::middleware(['role:admin'])->prefix('admin/approvals')->name('admin.approvals.')->group(function () {
         Route::get('/', [ApprovalController::class, 'index'])->name('index');
         Route::get('/{id}', [ApprovalController::class, 'show'])->name('show');

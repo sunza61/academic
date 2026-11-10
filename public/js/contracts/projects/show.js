@@ -35,45 +35,37 @@ document.addEventListener('keydown', function (event) {
 });
 
 // =========================================================
-// 🌟 ส่วนของ AJAX ล้วนๆ แยกออกมาให้เป็นระเบียบ
+// 🌟 ส่วนของ AJAX: จัดการสถานะ (Admin Override)
 // =========================================================
-
-
-
-
 
 $(document).ready(function() {
     
-    // 1. เคลียร์ Event เก่าทิ้งก่อนผูกใหม่ ป้องกันการทำงานซ้ำซ้อน
+    // เคลียร์ Event เก่าทิ้งก่อนผูกใหม่ ป้องกันการทำงานซ้ำซ้อน
     $('.btn-force-change-status').off('click').on('click', function(e) {
-        e.preventDefault();
+        e.preventDefault(); // ป้องกันฟอร์มเด้งเปลี่ยนหน้าแบบปกติ
         
-        // เราใช้ $(this) เพียวๆ ไม่ผ่าน document แล้ว จะได้ไม่หลง
         let btn = $(this);
-        let form = $('#form-admin-change-status'); // เรียกฟอร์มด้วย ID ชัวร์สุด
+        let form = $('#form-admin-change-status'); 
         let url = form.attr('action');
         let statusText = $('#admin_new_status option:selected').text(); 
 
-        console.log("📍 [Step 1] URL ที่จะส่ง: ", url);
+        console.log("📍 [Admin] ยิงไปที่ URL: ", url);
 
         Swal.fire({
             title: 'ยืนยันการใช้อำนาจผู้ดูแลระบบ?',
-            html: `คุณกำลังจะบังคับเปลี่ยนสถานะเป็น<br><strong class="text-danger">"${statusText}"</strong><br>แน่ใจหรือไม่?`,
+            html: `คุณกำลังจะบังคับเปลี่ยนสถานะโครงการบริการวิชาการเป็น<br><strong class="text-danger">"${statusText}"</strong><br>แน่ใจหรือไม่?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#6c757d',
             confirmButtonText: 'ยืนยัน, บังคับเปลี่ยนสถานะ!',
             cancelButtonText: 'ยกเลิก',
-            // 🔥 ปิดไม่ให้กดยกเลิกตอนโหลด
             allowOutsideClick: false 
         }).then((result) => {
             
-            // 🌟 ดักให้ครอบคลุมทุกเวอร์ชันของ SweetAlert
             if (result.isConfirmed || result.value) {
                 
-                console.log("📍 [Step 2] ยิง AJAX ออกไปแล้ว! 🚀");
-                
+                // โชว์ Loading สวยๆ ระหว่างรอเซิร์ฟเวอร์
                 Swal.fire({ 
                     title: 'กำลังอัปเดตสถานะ...', 
                     allowOutsideClick: false, 
@@ -82,33 +74,35 @@ $(document).ready(function() {
                 
                 $.ajax({
                     url: url,
-                    type: 'POST',
+                    type: 'POST', // ส่งเป็น POST (ในฟอร์มมี @method('PATCH') อยู่แล้ว Laravel จะจัดการต่อเอง)
                     data: form.serialize(),
                     success: function(response) {
-                        console.log("✅ [Step 3] ตอบกลับสำเร็จ: ", response);
-                        if (response.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'สำเร็จ!',
-                                text: response.message,
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                location.reload(); 
-                            });
-                        }
+                        console.log("✅ อัปเดตสำเร็จ: ", response);
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'สำเร็จ!',
+                            text: response.message || 'เปลี่ยนสถานะโครงการเรียบร้อยแล้ว',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload(); // รีเฟรชหน้าเว็บเพื่อโชว์สถานะใหม่
+                        });
                     },
                     error: function(xhr) {
-                        console.error("❌ [Step 3] Error หลังบ้าน: ", xhr);
+                        console.error("❌ Error หลังบ้าน: ", xhr);
                         let errMsg = 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะ';
+                        
+                        // ดึงข้อความ Error จาก Controller (ถ้ามีส่งมา)
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errMsg = xhr.responseJSON.message;
                         }
+                        
                         Swal.fire('ผิดพลาด', errMsg, 'error');
                     }
                 });
             } else {
-                console.log("📍 ยกเลิกการเปลี่ยนสถานะ");
+                console.log("📍 ยกเลิกการทำรายการ");
             }
         });
     });

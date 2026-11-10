@@ -8,7 +8,7 @@
         </h3>
 
         <p class="text-muted mb-0 mt-1">
-            รหัสโครงการ: <span class="badge badge-success px-2 py-1" style="font-size: 1em;">{{ $project->project_code }}</span>
+            รหัสโครงการ: <span class="badge badge-success px-2 py-1" style="font-size: 1em;">{{ $project->id }}</span>
             <span class="mx-2">|</span>
             สถานะ:
             <strong class="text-dark">
@@ -61,7 +61,7 @@
                 <tbody>
                     <tr>
                         <th width="20%" class="bg-light text-right align-middle">รหัสโครงการ :</th>
-                        <td width="30%" class="align-middle font-weight-bold text-success">{{ $project->project_code }}</td>
+                        <td width="30%" class="align-middle font-weight-bold text-success">{{ $project->id }}</td>
                         <th width="20%" class="bg-light text-right align-middle">ปีงบประมาณ :</th>
                         <td width="30%" class="align-middle font-weight-bold">
                             {{ $fiscalYears->where('id', $project->fiscal_year_id)->first()->fiscal_year_be ?? '-' }}
@@ -216,8 +216,7 @@
                                 $typeBadge = '<span class="badge badge-primary px-2" style="font-size:0.8em; font-weight:normal;">บุคลากรในคณะ</span>';
                                 } else {
                                 $ext = $externals->where('id', $comm->external_id)->first();
-                                $prefixName = isset($ext->prefix) ? $ext->prefix->name_th : '';
-                                $name = $ext ? $prefixName . $ext->firstname . ' ' . $ext->lastname : '-';
+                                $name = $ext ? $ext->firstname . ' ' . $ext->lastname : '-';
                                 $typeBadge = '<span class="badge badge-secondary px-2" style="font-size:0.8em; font-weight:normal;">บุคคลภายนอก</span>';
                                 }
                                 @endphp
